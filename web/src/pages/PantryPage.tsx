@@ -470,8 +470,8 @@ function ItemCard({ item, showMax, onEdit, onDelete, onAddToList }: ItemCardProp
         <NutritionPanel nutrition={item.nutrition} />
       )}
 
-      {/* Action bar — visible on hover */}
-      <div className="flex items-center gap-1 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Action bar */}
+      <div className="card-actions-bar flex items-center gap-1 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
         <Button ghost size="icon" className="h-6 w-6" onClick={onEdit} aria-label="Edit">
           <Edit2 className="h-3 w-3" />
         </Button>
@@ -643,7 +643,8 @@ export default function PantryPage() {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef  = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setTitle("Inventory"); }, [setTitle]);
   useEffect(() => { saveItems(items); }, [items]);
@@ -1064,30 +1065,35 @@ export default function PantryPage() {
 
   return (
     <div className="cyber-page flex flex-col gap-0">
-      <div className="cyber-content flex flex-col gap-5">
+      <div className="cyber-content flex flex-col gap-5 pb-20 sm:pb-4">
 
         {/* Expiry alerts */}
         <ExpiryBanner items={items} />
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-44">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Search — full width on mobile */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary pointer-events-none" />
             <Input
               placeholder={`Search ${activeLocation.toLowerCase()}…`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-11 sm:h-9"
             />
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" onClick={openAdd}>
+          {/* Action row */}
+          <div className="cyber-toolbar-actions flex items-center gap-2">
+            {/* Hidden on mobile — FAB handles add; shown on desktop */}
+            <Button size="sm" onClick={openAdd} className="hidden sm:flex">
               <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Item
             </Button>
 
-            <Button outlined size="sm" onClick={() => imageInputRef.current?.click()}>
-              <Camera className="h-3.5 w-3.5 mr-1.5" /> Scan Image
+            <Button outlined size="sm" onClick={() => imageInputRef.current?.click()}
+              className="flex-1 sm:flex-none h-10 sm:h-8">
+              <Camera className="h-3.5 w-3.5 mr-1.5 sm:mr-1" />
+              <span>Scan</span>
             </Button>
             <input
               ref={imageInputRef}
@@ -1100,17 +1106,30 @@ export default function PantryPage() {
                 e.target.value = "";
               }}
             />
+            {/* Camera-capture input (mobile direct camera) */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleImageFile(f);
+                e.target.value = "";
+              }}
+            />
 
             {/* Current / Max toggle */}
             <button
               onClick={() => setShowMax((v) => !v)}
               className={cn(
-                "px-3 py-1 rounded text-[11px] font-mono tracking-widest uppercase border transition-all",
+                "toolbar-toggle flex-1 sm:flex-none px-3 py-2 sm:py-1 rounded text-[11px] font-mono tracking-widest uppercase border transition-all h-10 sm:h-8",
                 showMax
                   ? "border-[rgba(0,229,255,0.5)] text-[#00e5ff] bg-[rgba(0,229,255,0.08)]"
                   : "border-current/15 text-text-tertiary hover:border-[rgba(0,229,255,0.3)] hover:text-[#00e5ff]",
               )}
-              title={showMax ? "Showing max qty — click for current" : "Showing current qty — click for max"}
+              title={showMax ? "Showing max qty — tap for current" : "Showing current qty — tap for max"}
             >
               {showMax ? "MAX QTY" : "CURR QTY"}
             </button>
@@ -1119,10 +1138,14 @@ export default function PantryPage() {
               outlined
               size="sm"
               onClick={() => setListOpen(true)}
-              className={listCount > 0 ? "border-[rgba(255,0,110,0.4)] text-[#ff006e]" : ""}
+              className={cn(
+                "flex-1 sm:flex-none h-10 sm:h-8",
+                listCount > 0 ? "border-[rgba(255,0,110,0.4)] text-[#ff006e]" : "",
+              )}
             >
               <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-              List
+              <span className="hidden sm:inline">List</span>
+              <span className="sm:hidden">Cart</span>
               {listCount > 0 && (
                 <span
                   className="ml-1.5 rounded px-1 text-[10px] font-bold text-black"
@@ -1185,11 +1208,11 @@ export default function PantryPage() {
                 : "No items match your search."}
             </p>
             {items.filter((i) => i.storageLocation === activeLocation).length === 0 && (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={openAdd}>
+              <div className="flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+                <Button size="sm" onClick={openAdd} className="flex-1 h-11 sm:h-8">
                   <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Item
                 </Button>
-                <Button size="sm" outlined onClick={() => imageInputRef.current?.click()}>
+                <Button size="sm" outlined onClick={() => imageInputRef.current?.click()} className="flex-1 h-11 sm:h-8">
                   <Camera className="h-3.5 w-3.5 mr-1.5" /> Scan Image
                 </Button>
               </div>
@@ -1213,9 +1236,19 @@ export default function PantryPage() {
         {/* Guide section */}
         <GuideSection />
 
+        {/* ── Mobile FAB ─────────────────────────────────────────────── */}
+        {/* Only shown on small screens; desktop uses the toolbar button */}
+        <button
+          className="cyber-fab sm:hidden"
+          onClick={openAdd}
+          aria-label="Add item"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+
         {/* ── Add / Edit Dialog ──────────────────────────────────────── */}
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
+          <DialogContent className="mobile-bottom-sheet sm:max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
             <DialogHeader>
               <DialogTitle>{editTarget ? "Edit Item" : "Add Item"}</DialogTitle>
               <DialogDescription>South African inventory — Durban region</DialogDescription>
@@ -1452,7 +1485,7 @@ export default function PantryPage() {
 
         {/* ── Image Scan Dialog ─────────────────────────────────────── */}
         <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
+          <DialogContent className="mobile-bottom-sheet sm:max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
             <DialogHeader>
               <DialogTitle>Scan Image</DialogTitle>
               <DialogDescription>
@@ -1471,20 +1504,27 @@ export default function PantryPage() {
                 />
               )}
 
+              {/* Image source buttons */}
               <div className="flex gap-2">
-                <Button outlined size="sm" className="flex-1" onClick={() => imageInputRef.current?.click()}>
+                <Button outlined size="sm" className="flex-1 h-10"
+                  onClick={() => cameraInputRef.current?.click()}>
+                  <Camera className="h-3.5 w-3.5 mr-1.5" />
+                  Camera
+                </Button>
+                <Button outlined size="sm" className="flex-1 h-10"
+                  onClick={() => imageInputRef.current?.click()}>
                   <Upload className="h-3.5 w-3.5 mr-1.5" />
-                  {imgPreview ? "Change" : "Select Image"}
+                  {imgPreview ? "Change" : "Gallery"}
                 </Button>
                 <Button
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 h-10"
                   onClick={analyzeImage}
                   disabled={!imgDataUrl || scanning}
                 >
                   {scanning
                     ? <><Spinner className="h-3.5 w-3.5 mr-1.5" />Scanning…</>
-                    : <><Camera className="h-3.5 w-3.5 mr-1.5" />Detect Items</>}
+                    : <>Detect Items</>}
                 </Button>
               </div>
 
@@ -1582,7 +1622,7 @@ export default function PantryPage() {
 
         {/* ── Shopping List Dialog ──────────────────────────────────── */}
         <Dialog open={listOpen} onOpenChange={setListOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
+          <DialogContent className="mobile-bottom-sheet sm:max-w-lg max-h-[90vh] overflow-y-auto cyber-scroll">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4" />
@@ -1779,7 +1819,7 @@ export default function PantryPage() {
 
         {/* ── Delete Confirm ─────────────────────────────────────────── */}
         <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-          <DialogContent>
+          <DialogContent className="mobile-bottom-sheet sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Remove Item</DialogTitle>
               <DialogDescription>
