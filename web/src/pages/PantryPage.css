@@ -1,0 +1,301 @@
+/* ─── Cyberpunk Inventory Manager Theme ──────────────────── */
+
+.cyber-page {
+  --cp-cyan: #00e5ff;
+  --cp-pink: #ff006e;
+  --cp-green: #39ff14;
+  --cp-amber: #ff9500;
+  position: relative;
+}
+
+.cyber-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cyber-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Location Tabs ──────────────────── */
+
+.cyber-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+  gap: 0;
+  overflow-x: auto;
+}
+
+.cyber-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cyber-tab:hover {
+  color: var(--cp-cyan);
+  background: rgba(0, 229, 255, 0.04);
+}
+
+.cyber-tab-pantry.cyber-tab-active {
+  color: var(--cp-cyan);
+  border-bottom-color: var(--cp-cyan);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
+}
+
+.cyber-tab-fridge.cyber-tab-active {
+  color: #80d8ff;
+  border-bottom-color: #80d8ff;
+  text-shadow: 0 0 10px rgba(128, 216, 255, 0.8);
+}
+
+.cyber-tab-freezer.cyber-tab-active {
+  color: #b3e5fc;
+  border-bottom-color: #b3e5fc;
+  text-shadow: 0 0 10px rgba(179, 229, 252, 0.8);
+}
+
+/* ── Item Cards ─────────────────────── */
+
+.cyber-card {
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.03) 0%, transparent 60%);
+  border-radius: 6px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-card:hover {
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.08), inset 0 0 32px rgba(0, 229, 255, 0.025);
+}
+
+.cyber-card.cyber-fridge {
+  border-color: rgba(128, 216, 255, 0.12);
+  background: linear-gradient(135deg, rgba(128, 216, 255, 0.03) 0%, transparent 60%);
+}
+
+.cyber-card.cyber-fridge:hover {
+  border-color: rgba(128, 216, 255, 0.38);
+  box-shadow: 0 0 20px rgba(128, 216, 255, 0.08);
+}
+
+.cyber-card.cyber-freezer {
+  border-color: rgba(179, 229, 252, 0.12);
+  background: linear-gradient(135deg, rgba(179, 229, 252, 0.03) 0%, transparent 60%);
+}
+
+.cyber-card.cyber-freezer:hover {
+  border-color: rgba(179, 229, 252, 0.38);
+  box-shadow: 0 0 20px rgba(179, 229, 252, 0.08);
+}
+
+.cyber-card.expiry-warning {
+  border-color: rgba(255, 149, 0, 0.35);
+}
+
+.cyber-card.expiry-expired {
+  border-color: rgba(255, 0, 110, 0.4);
+  box-shadow: 0 0 12px rgba(255, 0, 110, 0.06);
+}
+
+/* ── Status Labels ──────────────────── */
+
+.cyber-status-ok {
+  color: #39ff14;
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.8);
+}
+
+.cyber-status-low {
+  color: #ff9500;
+  text-shadow: 0 0 6px rgba(255, 149, 0, 0.8);
+}
+
+.cyber-status-out {
+  color: #ff006e;
+  text-shadow: 0 0 6px rgba(255, 0, 110, 0.8);
+}
+
+/* ── Stock Bar ──────────────────────── */
+
+.cyber-stock-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+
+.cyber-stock-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.cyber-stock-fill.ok  { background: #39ff14; box-shadow: 0 0 6px #39ff14; }
+.cyber-stock-fill.low { background: #ff9500; box-shadow: 0 0 6px #ff9500; }
+.cyber-stock-fill.out { background: #ff006e; box-shadow: 0 0 6px #ff006e; }
+
+/* ── Category Chips ─────────────────── */
+
+.cyber-cat-chip {
+  padding: 0.22rem 0.7rem;
+  border-radius: 2px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  color: rgba(255, 255, 255, 0.35);
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.cyber-cat-chip:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  color: var(--cp-cyan);
+}
+
+.cyber-cat-chip.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: var(--cp-cyan);
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+}
+
+/* ── Expiry Banner ──────────────────── */
+
+.cyber-expiry-banner {
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.06) 0%, rgba(255, 0, 110, 0.03) 100%);
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  box-shadow: 0 0 24px rgba(255, 149, 0, 0.07);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* ── Nutrition Table ────────────────── */
+
+.cyber-nutrition-panel {
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  background: rgba(0, 229, 255, 0.02);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+/* ── Scan Item Row ──────────────────── */
+
+.cyber-scan-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  background: rgba(0, 229, 255, 0.03);
+  transition: all 0.18s;
+}
+
+.cyber-scan-row.deselected {
+  opacity: 0.4;
+  border-color: rgba(255, 255, 255, 0.06);
+  background: transparent;
+}
+
+/* ── Guide Section ──────────────────── */
+
+.cyber-guide {
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.02) 0%, rgba(255, 0, 110, 0.01) 100%);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cyber-guide-header {
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.15em;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--cp-cyan);
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  background: none;
+  border: none;
+}
+
+.cyber-guide-header:hover {
+  opacity: 1;
+}
+
+.cyber-guide-card {
+  background: rgba(0, 229, 255, 0.025);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cyber-guide-icon {
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.cyber-guide-title {
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.cyber-guide-desc {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.55;
+}
+
+/* ── Section divider label ──────────── */
+
+.cyber-section-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cp-cyan);
+  opacity: 0.65;
+}
+
+/* ── Cyberpunk scrollbar ────────────── */
+
+.cyber-scroll::-webkit-scrollbar { width: 4px; }
+.cyber-scroll::-webkit-scrollbar-track { background: transparent; }
+.cyber-scroll::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 2px; }
+.cyber-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.4); }
