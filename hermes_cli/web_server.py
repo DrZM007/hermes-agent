@@ -2486,12 +2486,66 @@ class PantryAnalyzeImageRequest(BaseModel):
     data_url: str
 
 
+class PantryNutritionRequest(BaseModel):
+    item_name: str
+    brand: Optional[str] = None
+
+
 _MAX_PANTRY_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB
+
+_SA_CATEGORIES = (
+    "Dairy", "Meat & Fish", "Produce", "Grains & Starches",
+    "Canned Goods", "Snacks", "Beverages", "Condiments & Sauces",
+    "Baking", "Frozen", "Spices & Herbs", "Braai & Deli", "Other"
+)
+
+_SA_BRANDS_HINT = (
+    "Koo, All Gold, Clover, Lancewood, Sasko, Albany, Lucky Star, Simba, "
+    "Ina Paarman's, Robertsons, Rajah, Rhodes, Woolworths Food, Pick n Pay, "
+    "Checkers, Denny, Jungle Oats, Weet-Bix, Pronutro, Mageu, Ayrshire, "
+    "Freshpak, Joko, Sea Harvest, I&J, Black Cat, Blue Ribbon, Stork, "
+    "Snowflake, Bakers, Parmalat, Ladismith, Tiger Brands, Premier Foods"
+)
+
+
+def _extract_json_array(text: str) -> list:
+    """Extract the first JSON array from a text string."""
+    import re as _re
+    # Try bare JSON array first
+    m = _re.search(r'\[.*?\]', text, _re.DOTALL)
+    if m:
+        try:
+            result = json.loads(m.group(0))
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+    # Try greedy array match
+    m2 = _re.search(r'\[.*\]', text, _re.DOTALL)
+    if m2:
+        try:
+            result = json.loads(m2.group(0))
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+    # Try full JSON parse
+    try:
+        parsed = json.loads(text.strip())
+        if isinstance(parsed, list):
+            return parsed
+    except json.JSONDecodeError:
+        pass
+    return []
 
 
 @app.post("/api/pantry/analyze-image")
 async def pantry_analyze_image(payload: PantryAnalyzeImageRequest):
-    """Analyze an image to detect pantry items using the vision model."""
+    """Analyze an image to detect ALL pantry items using the vision model.
+
+    Optimised for South African (Durban) grocery products and brands.
+    Returns every visible item — the frontend adds them all to inventory.
+    """
     data_url = (payload.data_url or "").strip()
     if not data_url.startswith("data:") or "," not in data_url:
         raise HTTPException(status_code=400, detail="Invalid image payload")
@@ -2512,7 +2566,7 @@ async def pantry_analyze_image(payload: PantryAnalyzeImageRequest):
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Image is empty")
     if len(image_bytes) > _MAX_PANTRY_IMAGE_BYTES:
-        raise HTTPException(status_code=413, detail="Image is too large")
+        raise HTTPException(status_code=413, detail="Image is too large (max 20 MB)")
 
     ext = ".jpg"
     if "png" in mime_type:
@@ -2534,15 +2588,20 @@ async def pantry_analyze_image(payload: PantryAnalyzeImageRequest):
 
         from tools.vision_tools import vision_analyze_tool
 
+        categories_str = ", ".join(_SA_CATEGORIES)
         prompt = (
-            "You are a pantry inventory assistant. Analyze this image and identify all food "
-            "and pantry items visible. For each item, provide: name, estimated quantity (number), "
-            "unit (e.g. 'cans', 'boxes', 'kg', 'g', 'L', 'ml', 'bottles', 'bags', 'pcs', or ''), "
-            "and category (one of: Dairy, Meat & Fish, Produce, Grains & Pasta, Canned Goods, "
-            "Snacks, Beverages, Condiments & Sauces, Baking, Frozen, Spices & Herbs, Other). "
-            "Return ONLY a JSON array with objects having keys: name, quantity (number), unit, category. "
-            "Example: [{\"name\": \"Pasta\", \"quantity\": 2, \"unit\": \"boxes\", \"category\": \"Grains & Pasta\"}]. "
-            "If no pantry items are visible, return an empty array []."
+            "You are a pantry inventory assistant specialising in South African grocery products. "
+            "This image was taken in the Durban, South Africa area. "
+            "Identify EVERY individual food and pantry item visible in this image — "
+            "do not skip any item, count each package/can/bottle/box separately. "
+            f"Recognise South African brands where possible: {_SA_BRANDS_HINT}. "
+            "For each item return: brand (string, SA brand name or empty string if unknown), "
+            "name (string, product name), quantity (number, count of that item visible), "
+            f"unit (string: cans/boxes/kg/g/L/ml/bottles/bags/pcs/loaves/packets), "
+            f"category (exactly one of: {categories_str}). "
+            "Return ONLY a valid JSON array, no other text. "
+            'Example: [{"name":"Baked Beans","brand":"Koo","quantity":3,"unit":"cans","category":"Canned Goods"}]. '
+            "If no pantry items are visible, return []."
         )
 
         loop = asyncio.get_running_loop()
@@ -2562,39 +2621,113 @@ async def pantry_analyze_image(payload: PantryAnalyzeImageRequest):
             except OSError:
                 pass
 
-    try:
-        result = json.loads(result_str) if isinstance(result_str, str) else result_str
-    except (json.JSONDecodeError, TypeError):
-        result = {"success": False, "analysis": str(result_str)}
-
-    if isinstance(result, dict) and not result.get("success"):
-        raise HTTPException(
-            status_code=400,
-            detail=result.get("analysis") or "Image analysis failed",
-        )
-
+    # Parse the vision model output
     analysis_text = ""
-    if isinstance(result, dict):
-        analysis_text = result.get("analysis", "")
-    elif isinstance(result, str):
-        analysis_text = result
+    if isinstance(result_str, str):
+        try:
+            parsed = json.loads(result_str)
+            if isinstance(parsed, dict):
+                analysis_text = parsed.get("analysis", result_str)
+                if not parsed.get("success", True):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=parsed.get("analysis") or "Image analysis failed",
+                    )
+            else:
+                analysis_text = result_str
+        except (json.JSONDecodeError, TypeError):
+            analysis_text = result_str
+    else:
+        analysis_text = str(result_str or "")
 
-    items = []
+    items = _extract_json_array(analysis_text)
+
+    # Sanitise each item
+    valid_cats = set(_SA_CATEGORIES)
+    clean_items = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+        cat = str(raw.get("category") or "Other").strip()
+        if cat not in valid_cats:
+            cat = "Other"
+        try:
+            qty = float(raw.get("quantity") or 1)
+        except (TypeError, ValueError):
+            qty = 1.0
+        clean_items.append({
+            "name": name,
+            "brand": str(raw.get("brand") or "").strip(),
+            "quantity": qty,
+            "unit": str(raw.get("unit") or "").strip(),
+            "category": cat,
+        })
+
+    return {"ok": True, "items": clean_items, "count": len(clean_items)}
+
+
+@app.post("/api/pantry/nutrition")
+async def pantry_nutrition_lookup(payload: PantryNutritionRequest):
+    """Look up approximate nutritional info (per 100 g) for a South African pantry item.
+
+    Uses the configured LLM to return values consistent with SA food labelling
+    regulations (Regulation R146 — energy in kJ, macros in g, sodium in mg).
+    """
+    name = (payload.item_name or "").strip()
+    brand = (payload.brand or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Item name required")
+
+    item_desc = f"{brand} {name}".strip() if brand else name
+    prompt = (
+        f"You are a South African registered dietitian with access to local food composition data. "
+        f'Provide typical nutritional values per 100 g for the South African product: "{item_desc}". '
+        f"Use actual values for known SA brands (Koo, Sasko, Clover, Albany, Lucky Star, etc.) "
+        f"or reasonable estimates for generic products. "
+        f"South African food labels show energy in kJ (primary) and kcal (secondary). "
+        f"Return ONLY the following JSON object with numeric values (use 0 for truly unknown fields):\n"
+        f'{{"serving_size":"100g","energy_kj":0,"energy_kcal":0,'
+        f'"protein_g":0,"carbohydrates_g":0,"sugars_g":0,'
+        f'"fat_g":0,"saturated_fat_g":0,"fibre_g":0,"sodium_mg":0}}'
+    )
+
     try:
-        # Try to extract JSON array from the analysis text
+        from agent.auxiliary_client import async_call_llm, extract_content_or_reasoning
         import re as _re
-        array_match = _re.search(r'\[.*\]', analysis_text, _re.DOTALL)
-        if array_match:
-            items = json.loads(array_match.group(0))
-        else:
-            # Try parsing the entire analysis as JSON
-            parsed = json.loads(analysis_text)
-            if isinstance(parsed, list):
-                items = parsed
-    except (json.JSONDecodeError, AttributeError):
-        pass
 
-    return {"ok": True, "items": items, "raw": analysis_text}
+        response = await async_call_llm(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.05,
+            max_tokens=400,
+        )
+        text = extract_content_or_reasoning(response) or ""
+        # Pull first {...} JSON object from the response
+        m = _re.search(r'\{[^{}]+\}', text, _re.DOTALL)
+        if not m:
+            raise ValueError(f"No JSON object in response: {text[:200]!r}")
+        data = json.loads(m.group(0))
+
+        # Coerce all numeric fields
+        numeric_fields = [
+            "energy_kj", "energy_kcal", "protein_g", "carbohydrates_g",
+            "sugars_g", "fat_g", "saturated_fat_g", "fibre_g", "sodium_mg",
+        ]
+        for field in numeric_fields:
+            try:
+                data[field] = float(data.get(field) or 0)
+            except (TypeError, ValueError):
+                data[field] = 0.0
+        data.setdefault("serving_size", "100g")
+
+        return {"ok": True, "nutrition": data}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _log.warning("Pantry nutrition lookup failed for %r: %s", item_desc, exc)
+        raise HTTPException(status_code=500, detail=f"Nutrition lookup failed: {exc}")
 
 
 class TTSSpeakRequest(BaseModel):
