@@ -2482,6 +2482,121 @@ async def transcribe_audio_upload(payload: AudioTranscriptionRequest):
     }
 
 
+class PantryAnalyzeImageRequest(BaseModel):
+    data_url: str
+
+
+_MAX_PANTRY_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+@app.post("/api/pantry/analyze-image")
+async def pantry_analyze_image(payload: PantryAnalyzeImageRequest):
+    """Analyze an image to detect pantry items using the vision model."""
+    data_url = (payload.data_url or "").strip()
+    if not data_url.startswith("data:") or "," not in data_url:
+        raise HTTPException(status_code=400, detail="Invalid image payload")
+
+    header, encoded = data_url.split(",", 1)
+    if ";base64" not in header:
+        raise HTTPException(status_code=400, detail="Image payload must be base64 encoded")
+
+    mime_type = header[5:].split(";", 1)[0].strip() or "image/jpeg"
+    if not mime_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Payload must be an image")
+
+    try:
+        image_bytes = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=400, detail="Image payload is not valid base64")
+
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Image is empty")
+    if len(image_bytes) > _MAX_PANTRY_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="Image is too large")
+
+    ext = ".jpg"
+    if "png" in mime_type:
+        ext = ".png"
+    elif "webp" in mime_type:
+        ext = ".webp"
+    elif "gif" in mime_type:
+        ext = ".gif"
+
+    temp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            prefix="hermes-pantry-vision-",
+            suffix=ext,
+            delete=False,
+        ) as tmp:
+            tmp.write(image_bytes)
+            temp_path = tmp.name
+
+        from tools.vision_tools import vision_analyze_tool
+
+        prompt = (
+            "You are a pantry inventory assistant. Analyze this image and identify all food "
+            "and pantry items visible. For each item, provide: name, estimated quantity (number), "
+            "unit (e.g. 'cans', 'boxes', 'kg', 'g', 'L', 'ml', 'bottles', 'bags', 'pcs', or ''), "
+            "and category (one of: Dairy, Meat & Fish, Produce, Grains & Pasta, Canned Goods, "
+            "Snacks, Beverages, Condiments & Sauces, Baking, Frozen, Spices & Herbs, Other). "
+            "Return ONLY a JSON array with objects having keys: name, quantity (number), unit, category. "
+            "Example: [{\"name\": \"Pasta\", \"quantity\": 2, \"unit\": \"boxes\", \"category\": \"Grains & Pasta\"}]. "
+            "If no pantry items are visible, return an empty array []."
+        )
+
+        loop = asyncio.get_running_loop()
+        result_str = await loop.run_in_executor(
+            None,
+            lambda: asyncio.run(vision_analyze_tool(temp_path, prompt)),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _log.exception("Pantry image analysis failed")
+        raise HTTPException(status_code=500, detail=f"Image analysis failed: {exc}")
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+    try:
+        result = json.loads(result_str) if isinstance(result_str, str) else result_str
+    except (json.JSONDecodeError, TypeError):
+        result = {"success": False, "analysis": str(result_str)}
+
+    if isinstance(result, dict) and not result.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("analysis") or "Image analysis failed",
+        )
+
+    analysis_text = ""
+    if isinstance(result, dict):
+        analysis_text = result.get("analysis", "")
+    elif isinstance(result, str):
+        analysis_text = result
+
+    items = []
+    try:
+        # Try to extract JSON array from the analysis text
+        import re as _re
+        array_match = _re.search(r'\[.*\]', analysis_text, _re.DOTALL)
+        if array_match:
+            items = json.loads(array_match.group(0))
+        else:
+            # Try parsing the entire analysis as JSON
+            parsed = json.loads(analysis_text)
+            if isinstance(parsed, list):
+                items = parsed
+    except (json.JSONDecodeError, AttributeError):
+        pass
+
+    return {"ok": True, "items": items, "raw": analysis_text}
+
+
 class TTSSpeakRequest(BaseModel):
     text: str
 
