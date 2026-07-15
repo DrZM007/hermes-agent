@@ -739,6 +739,8 @@ a { color: inherit; }
 .sys-event-mark { color: var(--delta-up); flex: 0 0 auto; }
 .sys-event-bad .sys-event-mark { color: var(--status-serious); }
 .sys-event-name { flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sys-proposals { color: var(--muted); }
+.sys-proposals-open { color: var(--accent); font-weight: 600; }
 .sys-autonomy { color: var(--delta-up); font-weight: 600; }
 .sys-autonomy-frozen { color: var(--status-serious); }
 .sys-freeze-btn { margin-left: 10px; }
@@ -752,6 +754,25 @@ a { color: inherit; }
   letter-spacing: 0.06em;
   margin-bottom: 8px;
 }
+
+/* ---------- self-evolution inbox ---------- */
+
+.evolve-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.evolve-head .btn { flex: 0 0 auto; }
+.evolve-section { margin: 12px 0 4px; letter-spacing: 0.1em; }
+.evolve-row {
+  display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--hairline);
+}
+.evolve-row:last-child { border-bottom: none; }
+.evolve-main { min-width: 0; }
+.evolve-title { font-weight: 600; font-size: 13px; }
+.evolve-payload { margin-top: 3px; color: var(--ink-2); font-style: italic; overflow-wrap: anywhere; }
+.evolve-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+.evolve-actions .btn { padding: 4px 12px; font-size: 12px; }
+.evolve-status { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); flex: 0 0 auto; }
+.evolve-applied, .evolve-auto-applied { color: var(--delta-up); }
+.evolve-dismissed { color: var(--muted); }
 
 /* ---------- focus timer ---------- */
 

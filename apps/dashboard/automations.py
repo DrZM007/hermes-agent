@@ -31,7 +31,7 @@ MAX_RULES = 50
 
 LEVEL_RANK = {"stable": 0, "watch": 1, "elevated": 2, "critical": 3}
 VALID_TRIGGERS = ("daily", "market", "worldstate")
-VALID_ACTIONS = ("notify", "briefing", "backup")
+VALID_ACTIONS = ("notify", "briefing", "backup", "reflect")
 
 
 def validate_rule(rule: dict) -> str | None:
@@ -260,6 +260,16 @@ class Automations:
             except Exception as exc:  # keep the engine alive; report the failure
                 body = f"Backup failed: {exc}"
             self._notify(f"💾 {rule['name']}", body, rule["id"])
+        elif action["type"] == "reflect":
+            try:
+                created = self.api.evolve.reflect()
+                pending = self.api.evolve.pending_count()
+                body = (f"Reflection queued {len(created)} proposal(s); "
+                        f"{pending} awaiting review." if created
+                        else "Reflection found nothing to change.")
+            except Exception as exc:
+                body = f"Reflection failed: {exc}"
+            self._notify(f"🧠 {rule['name']}", body, rule["id"])
         else:
             body = action.get("message", "")
             if extra:

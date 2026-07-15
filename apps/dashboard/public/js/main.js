@@ -6,6 +6,7 @@ import { initSync } from "./sync.js";
 import { initNotifications } from "./notifications.js";
 import { openSources } from "./sources.js";
 import { openCalendars } from "./calendars.js";
+import { openEvolve } from "./evolve.js";
 
 import { openViewer } from "./viewer.js";
 import { summarizeButton } from "./summarize.js";
@@ -339,6 +340,10 @@ function renderSettingsMenu() {
       type: "button",
       onclick: () => openCalendars(),
     }, "Calendar feeds…"),
+    h("button.menu-item", {
+      type: "button",
+      onclick: () => openEvolve(),
+    }, "Agent proposals…"),
     h("button.menu-item", {
       type: "button",
       onclick: () => {

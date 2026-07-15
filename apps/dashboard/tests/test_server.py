@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import assistant  # noqa: E402
 import ics  # noqa: E402
 import router as router_mod  # noqa: E402
+import evolve as evolve_mod  # noqa: E402
 import server  # noqa: E402
 import telemetry as telemetry_mod  # noqa: E402
 
@@ -1090,6 +1091,84 @@ class RouterTests(unittest.TestCase):
         self.assertIsNone(status["routing"])
 
 
+class EvolveTests(unittest.TestCase):
+    def _api(self):
+        return server.Api(offline=True, data_dir=Path(tempfile.mkdtemp()))
+
+    def test_dedupe_memory(self):
+        text = "# mem\n- (2026-01-01) cat is Milo\n- (2026-02-02) cat is Milo\n- dog is Rex\n"
+        out, removed = evolve_mod.dedupe_memory(text)
+        self.assertEqual(len(removed), 1)
+        self.assertEqual(out.count("cat is Milo"), 1)
+        self.assertIn("dog is Rex", out)
+
+    def test_memory_prune_auto_applies(self):
+        api = self._api()
+        api.memory_append("cat is Milo")
+        api.memory_append("cat is Milo")
+        created = api.evolve.reflect()
+        prune = [p for p in created if p["kind"] == "memory_prune"]
+        self.assertEqual(len(prune), 1)
+        self.assertEqual(prune[0]["status"], "auto-applied")     # auto policy
+        self.assertEqual(api.memory_read().count("cat is Milo"), 1)
+        self.assertTrue(prune[0]["snapshot"].startswith("hub-"))  # reversible
+
+    def test_denied_tool_becomes_pending_addendum(self):
+        api = self._api()
+        for _ in range(2):
+            api.telemetry.record({"kind": "tool", "name": "add_app", "ok": False, "approved": False})
+        api.evolve.reflect()
+        pending = [p for p in api.evolve.list_proposals() if p["status"] == "pending"]
+        self.assertTrue(any(p["kind"] == "prompt_addendum" and "add_app" in p["title"] for p in pending))
+
+    def test_apply_addendum_writes_agent_notes_and_injects(self):
+        api = self._api()
+        for _ in range(2):
+            api.telemetry.record({"kind": "tool", "name": "open_url", "ok": False, "approved": False})
+        api.evolve.reflect()
+        pid = next(p["id"] for p in api.evolve.list_proposals() if p["status"] == "pending")
+        result = api.evolve.apply(pid)
+        self.assertEqual(result["status"], "applied")
+        self.assertIn("open_url", api.agent_notes_read())
+        # the guideline is injected into the system prompt
+        system, _ = api.assistant._prepare_claude_request([{"role": "user", "content": "hi"}], {})
+        self.assertTrue(any("open_url" in b["text"] for b in system))
+
+    def test_dismiss_and_no_duplicate_stacking(self):
+        api = self._api()
+        for _ in range(2):
+            api.telemetry.record({"kind": "tool", "name": "add_app", "ok": False, "approved": False})
+        api.evolve.reflect()
+        first = [p for p in api.evolve.list_proposals() if p["status"] == "pending"]
+        api.evolve.reflect()  # same finding still open → must not stack
+        second = [p for p in api.evolve.list_proposals() if p["status"] == "pending"]
+        self.assertEqual(len(first), len(second))
+        api.evolve.dismiss(first[0]["id"])
+        self.assertEqual(
+            next(p["status"] for p in api.evolve.list_proposals() if p["id"] == first[0]["id"]),
+            "dismissed")
+
+    def test_apply_twice_rejected(self):
+        api = self._api()
+        for _ in range(2):
+            api.telemetry.record({"kind": "tool", "name": "add_app", "ok": False, "approved": False})
+        api.evolve.reflect()
+        pid = next(p["id"] for p in api.evolve.list_proposals() if p["status"] == "pending")
+        api.evolve.apply(pid)
+        with self.assertRaises(ValueError):
+            api.evolve.apply(pid)
+
+    def test_reflect_automation_action(self):
+        api = self._api()
+        api.memory_append("x"); api.memory_append("x")
+        rule = api.automations.create_rule({
+            "name": "nightly reflect", "trigger": {"type": "daily", "time": "00:00"},
+            "action": {"type": "reflect"}})
+        api.automations._fire(rule)
+        notifs = api.automations.notifications_after(0)["notifications"]
+        self.assertTrue(any("Reflection" in n["body"] or "proposal" in n["body"] for n in notifs))
+
+
 class NeedsEscalationTests(unittest.TestCase):
     def test_detects_low_confidence(self):
         for t in ["I'm not sure about that", "It's unclear to me",
@@ -1360,6 +1439,24 @@ class BackupHttpTests(unittest.TestCase):
     def test_killswitch_rejects_bad_body(self):
         status, _ = self.request("/api/killswitch", {"frozen": "yes"})
         self.assertEqual(status, 400)
+
+    def test_evolve_reflect_and_apply_over_http(self):
+        # seed a denied tool so reflection has a pending proposal to act on
+        self.request("/api/assistant/telemetry", {"name": "add_app", "ok": False, "approved": False})
+        self.request("/api/assistant/telemetry", {"name": "add_app", "ok": False, "approved": False})
+        status, data = self.request("/api/evolve/reflect", {})
+        self.assertEqual(status, 200)
+        status, data = self.request("/api/evolve")
+        self.assertEqual(status, 200)
+        pending = [p for p in data["proposals"] if p["status"] == "pending"]
+        self.assertTrue(pending)
+        status, data = self.request("/api/evolve/proposal", {"op": "apply", "id": pending[0]["id"]})
+        self.assertEqual(status, 200)
+        self.assertIn(data["proposal"]["status"], ("applied", "auto-applied"))
+
+    def test_evolve_proposal_bad_id_404(self):
+        status, _ = self.request("/api/evolve/proposal", {"op": "apply", "id": 99999})
+        self.assertEqual(status, 404)
 
 
 if __name__ == "__main__":

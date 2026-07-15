@@ -121,6 +121,9 @@ export const api = {
   recordTelemetry: (event) => postJSON("/api/assistant/telemetry", event),
   killswitch: () => getJSON("/api/killswitch"),
   setKillswitch: (frozen) => postJSON("/api/killswitch", { frozen }),
+  evolve: () => getJSON("/api/evolve"),
+  evolveReflect: () => postJSON("/api/evolve/reflect", {}),
+  evolveProposal: (op, id) => postJSON("/api/evolve/proposal", { op, id }),
   chat: (messages, context) => postJSON("/api/assistant/chat", { messages, context }),
   chatStream: (messages, context, onDelta) =>
     streamJSON("/api/assistant/chat-stream", { messages, context }, onDelta),

@@ -5,6 +5,7 @@
 // /api/assistant/telemetry. Polls every few seconds; ↻ refreshes on demand.
 
 import { h, clear } from "../utils.js";
+import { openEvolve } from "../evolve.js";
 
 const TIER_LABEL = { fast: "FAST", core: "CORE", deep: "DEEP" };
 
@@ -34,8 +35,9 @@ export default {
       }
     };
 
-    const draw = (status, tel, ks) => {
+    const draw = (status, tel, ks, ev) => {
       const frozen = !!(ks && ks.frozen);
+      const pending = ev ? ev.pending : 0;
       const rows = [];
       const engine = status.mode === "claude"
         ? (status.routing && !status.routing.pinned ? "CLAUDE · ROUTED" : `CLAUDE · ${status.model}`)
@@ -66,6 +68,17 @@ export default {
         h("span.sys-val", {},
           `${s.tool_calls} tool call${s.tool_calls === 1 ? "" : "s"} · ${s.denied} denied`
           + (s.escalations ? ` · ${s.escalations} escalated` : ""))));
+
+      // self-evolution proposals awaiting review
+      rows.push(h("div.sys-row", {},
+        h("span.sys-key", {}, "PROPOSALS"),
+        h("span.sys-val", {},
+          h("span", { class: pending ? "sys-proposals sys-proposals-open" : "sys-proposals" },
+            pending ? `${pending} pending` : "none"),
+          h("button.link-btn.sys-review-btn", {
+            type: "button", title: "Review agent proposals",
+            onclick: () => openEvolve(),
+          }, "review"))));
 
       // kill switch — one toggle freezes all autonomous behaviour
       rows.push(h("div.sys-row", {},
@@ -100,10 +113,10 @@ export default {
 
     const load = async () => {
       try {
-        const [status, tel, ks] = await Promise.all([
-          api.assistantStatus(), api.telemetry(), api.killswitch()]);
-        last = { status, tel, ks };
-        draw(status, tel, ks);
+        const [status, tel, ks, ev] = await Promise.all([
+          api.assistantStatus(), api.telemetry(), api.killswitch(), api.evolve()]);
+        last = { status, tel, ks, ev };
+        draw(status, tel, ks, ev);
       } catch (err) {
         if (!last) clear(body).append(h("div.widget-error", {}, `System status unavailable: ${err.message}`));
       }

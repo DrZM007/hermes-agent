@@ -18,7 +18,7 @@ server, SSE, the automations daemon thread and SQLite already cover.
 | D. Orchestrator / server | **Done (stdlib)** | `server.py` — REST + SSE, session-less (history lives client-side + synced), permission boundary at the API |
 | E. Memory store | **Partial** | `data/memory.md` (facts) + `hub.db` (synced state) + `telemetry.jsonl` (routing + tool outcomes, Phase 3 **done**). Vector recall still optional |
 | F. Permission / safety gate | **Done** | auto/confirm/blocked tiers + approval card in the Agent widget (`assistant.TOOL_TIERS`) |
-| G. Self-evolution loop | **Deferred** | Highest risk. Not until F + telemetry are solid; keep human-approval on every structural change |
+| G. Self-evolution loop | **Done (bounded)** | Reflection over telemetry/memory → approval inbox; only memory cleanup auto-applies, every apply snapshots first (`evolve.py`) |
 | H. Dashboard integration | **Done** | Chat panel + streaming + approval inbox + System status widget |
 | I. Model router / advisor | **Done (routing)** | Cost-aware tiering in `router.py`; live advisor escalation is Phase 5 |
 
@@ -70,11 +70,17 @@ visible "escalating…" note. The deep-tier rate cap bounds it (advise returns
 None when the budget is spent → escalation is skipped), and each escalation is
 logged to telemetry and counted in the System widget.
 
-**Phase 6 — Bounded self-evolution (Layer G).** Nightly reflection over
-telemetry proposes prompt tweaks / new-tool specs / memory pruning. Safe
-changes auto-apply; structural changes queue in the approval inbox; every
-applied change is git-committed for rollback. Explicitly last, explicitly
-gated. Do not start until Phases 1–5 are stable with logged data.
+**Phase 6 — Bounded self-evolution (Layer G). ✅ DONE.** `evolve.py` runs a
+reflection over telemetry + memory and queues proposals in an approval inbox
+(⚙ → *Agent proposals…*, or the System widget's PROPOSALS row). Per the chosen
+policy **only memory cleanup auto-applies** (de-dup of `memory.md`); learned
+prompt guidelines and structural suggestions wait for a human click. Applyable
+changes touch data files only — never code: `memory_prune` (auto) and
+`prompt_addendum` (approval; appended to `data/agent_notes.md` and injected into
+the system prompt). Every apply snapshots the whole hub first (the backup
+system) so it is one-click reversible, and a `reflect` automation action lets it
+run nightly. Model-augmented reflection (letting Claude write richer proposals)
+is a future enhancement on top of the current deterministic heuristics.
 
 ## Deliberately rejected (keeps the ethos intact)
 

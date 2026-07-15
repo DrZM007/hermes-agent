@@ -142,6 +142,15 @@ autonomous behaviour — no automation fires while it's engaged (the freeze is
 checked before every evaluation, server-side, so it holds even with no browser
 open). It persists across restarts and shows a red banner when active.
 
+**Self-evolution (bounded).** The agent periodically reflects on its own
+telemetry and memory and proposes small, reversible improvements — de-duping
+memory, or learning a guideline like "stop offering X, the user keeps declining
+it." Review them in ⚙ → *Agent proposals…* (or the System widget's PROPOSALS
+row). **Only memory cleanup applies automatically**; prompt/behaviour changes
+wait for your click. Applied changes touch data files only (never code) and the
+hub is snapshotted first, so anything can be rolled back. A `reflect` automation
+action can run it nightly.
+
 Every widget (and every news story, and the article viewer) has a **∑**
 button that summarizes that piece of data with the active engine. In
 Claude mode, replies stream in live (SSE) and type out as they arrive.
@@ -222,11 +231,12 @@ public/            zero-build frontend (ES modules, design-system CSS)
 tests/
   router.py        cost-aware model routing (Jarvis Layer I)
   telemetry.py     bounded routing + tool-call telemetry (Jarvis Phase 3)
-  test_server.py   131 unit tests (feeds+sources, worldstate, reader, assistant,
+  evolve.py        bounded self-evolution / reflection engine (Jarvis Phase 6)
+  test_server.py   140 unit tests (feeds+sources, worldstate, reader, assistant,
                    sync, auth, automations, memory, watchlist, SSE, ICS,
                    backups, model router, permission tiers, telemetry,
-                   kill switch, advisor escalation, HTTP)
-  e2e.mjs          106-check Playwright suite (needs playwright-core + Chromium)
+                   kill switch, advisor escalation, self-evolution, HTTP)
+  e2e.mjs          109-check Playwright suite (needs playwright-core + Chromium)
                    — also runs in CI (.github/workflows/dashboard.yml)
 ```
 

@@ -569,6 +569,10 @@ class Assistant:
         if memory.strip():
             # after the cached block, so editing memory never invalidates it
             system.append({"type": "text", "text": "Long-term memory about the user:\n" + memory[-4000:]})
+        # learned operating guidelines from self-evolution (approved addenda)
+        notes = self.services.agent_notes_read() if self.services else ""
+        if notes.strip():
+            system.append({"type": "text", "text": notes[-2000:]})
         return system, request_messages
 
     @staticmethod

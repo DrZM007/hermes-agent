@@ -40,6 +40,7 @@ from pathlib import Path
 
 import assistant as assistant_module
 from automations import Automations
+from evolve import Reflection
 from ics import parse_ics
 from telemetry import Telemetry
 
@@ -954,6 +955,7 @@ class Api:
         self.feeds = FeedConfig(self.data_dir / "feeds.json")
         self.calendars = CalendarConfig(self.data_dir / "calendars.json")
         self.telemetry = Telemetry(self.data_dir / "telemetry.jsonl")
+        self.evolve = Reflection(self.data_dir / "proposals.json", self)
         self._ics_epoch = 0
         self._memory_lock = threading.Lock()
 
@@ -991,6 +993,34 @@ class Api:
             if len(facts) > 200:
                 kept = [lines[0]] + facts[-200:]
                 self.memory_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+
+    def memory_overwrite(self, text: str) -> None:
+        with self._memory_lock:
+            self.memory_path.parent.mkdir(parents=True, exist_ok=True)
+            self.memory_path.write_text(text, encoding="utf-8")
+
+    # -- learned operating guidelines (self-evolution addenda) --------------
+    @property
+    def agent_notes_path(self) -> Path:
+        return self.data_dir / "agent_notes.md"
+
+    def agent_notes_read(self) -> str:
+        try:
+            return self.agent_notes_path.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+
+    def agent_notes_append(self, text: str) -> None:
+        text = " ".join((text or "").split())[:400]
+        if not text:
+            return
+        with self._memory_lock:
+            self.agent_notes_path.parent.mkdir(parents=True, exist_ok=True)
+            existing = self.agent_notes_read()
+            with self.agent_notes_path.open("a", encoding="utf-8") as f:
+                if not existing:
+                    f.write("# Learned operating guidelines\n")
+                f.write(f"- {text}\n")
 
     def _cached(self, key: str, ttl: float, live_fn, sample_fn):
         cached = CACHE.get(key)
@@ -1227,6 +1257,31 @@ class Api:
             raise ApiError(400, "after must be an integer") from None
         return self.automations.notifications_after(after)
 
+    # -- self-evolution (Phase 6) -------------------------------------------
+    def evolve_list(self, params: dict) -> dict:
+        return {"proposals": self.evolve.list_proposals(), "pending": self.evolve.pending_count()}
+
+    def evolve_reflect(self, body: dict) -> dict:
+        created = self.evolve.reflect()
+        return {"created": created, "pending": self.evolve.pending_count()}
+
+    def evolve_proposal(self, body: dict) -> dict:
+        op = body.get("op")
+        try:
+            pid = int(body.get("id", 0))
+        except (TypeError, ValueError):
+            raise ApiError(400, "id must be an integer") from None
+        try:
+            if op == "apply":
+                return {"proposal": self.evolve.apply(pid)}
+            if op == "dismiss":
+                return {"proposal": self.evolve.dismiss(pid)}
+        except KeyError:
+            raise ApiError(404, "no such proposal") from None
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from None
+        raise ApiError(400, "op must be apply or dismiss")
+
     # -- kill switch (Phase 4) ----------------------------------------------
     def killswitch_get(self, params: dict) -> dict:
         return {"frozen": self.automations.is_frozen()}
@@ -1430,6 +1485,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/backups": "backups_list",
         "/api/assistant/telemetry": "telemetry_get",
         "/api/killswitch": "killswitch_get",
+        "/api/evolve": "evolve_list",
     }
 
     POST_ROUTES = {
@@ -1445,6 +1501,8 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/backup/restore": "backup_restore",
         "/api/assistant/telemetry": "telemetry_post",
         "/api/killswitch": "killswitch_set",
+        "/api/evolve/reflect": "evolve_reflect",
+        "/api/evolve/proposal": "evolve_proposal",
     }
 
     # POST endpoints that write their own (streaming) response.

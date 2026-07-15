@@ -321,6 +321,30 @@ await page.locator(".widget-system .sys-freeze-btn").click(); // resume
 await page.waitForSelector(".widget-system .sys-frozen-banner", { state: "detached", timeout: 10000 });
 check("resume clears the frozen banner", true);
 
+// ---- self-evolution: agent proposals inbox (Phase 6) ----------------------------
+// guarantee a pending proposal: two denials of the same tool feed reflection
+await page.evaluate(async () => {
+  for (let i = 0; i < 2; i++) {
+    await fetch("/api/assistant/telemetry", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "add_app", tier: "confirm", ok: false, approved: false }) });
+  }
+});
+await page.locator(".topbar-actions .menu-wrap .btn").click();
+await page.locator(".menu-item", { hasText: "Agent proposals" }).click();
+await page.waitForSelector(".sum-pop", { timeout: 10000 });
+check("agent proposals panel opens", true);
+await page.locator(".evolve-head .btn-primary").click(); // Reflect now
+await page.waitForSelector(".evolve-row .evolve-actions .btn-primary", { timeout: 10000 });
+check("reflection queues a pending proposal", true);
+const pendingBefore = await page.locator(".evolve-row .evolve-actions").count();
+await page.locator(".evolve-row .evolve-actions .btn-primary").first().click(); // Apply
+await page.waitForFunction((n) =>
+  document.querySelectorAll(".evolve-row .evolve-actions").length < n, pendingBefore, { timeout: 10000 });
+check("applying a proposal clears it from the queue", true);
+await page.keyboard.press("Escape");
+await page.waitForSelector(".sum-pop", { state: "detached" });
+
 // ---- streaming chat endpoint (the agent turns above already used it) ----------
 const streamShape = await page.evaluate(async () => {
   const res = await fetch("/api/assistant/chat-stream", {
