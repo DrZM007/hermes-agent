@@ -726,6 +726,25 @@ a { color: inherit; }
 .cal-event-cal { flex: 0 0 auto; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
 .cal-upcoming { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--hairline); display: grid; gap: 3px; }
 
+/* ---------- focus timer ---------- */
+
+.focus-presets { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 6px; }
+.focus-preset-on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-dim); }
+.focus-clock {
+  font-size: 44px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.focus-clock.focus-break { color: var(--accent); }
+.focus-mode { text-align: center; letter-spacing: 0.14em; margin-top: 2px; }
+.focus-controls { display: flex; gap: 8px; justify-content: center; margin: 10px 0 6px; }
+.focus-controls .btn { padding: 5px 18px; }
+.focus-stats { text-align: center; padding-top: 6px; border-top: 1px solid var(--hairline); }
+
 /* ---------- markets ---------- */
 
 .market-rows { display: flex; flex-direction: column; }
@@ -972,7 +991,16 @@ a { color: inherit; }
   cursor: pointer;
 }
 .palette-item:hover, .palette-active { background: var(--accent-dim); color: var(--ink); }
+.palette-item .muted { flex: 0 0 auto; white-space: nowrap; }
+.palette-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .palette-empty { padding: 16px; text-align: center; }
+
+/* pulse a widget when the palette jumps to a search hit */
+.widget-flash { animation: widget-flash 1.4s ease-out; }
+@keyframes widget-flash {
+  0%, 100% { box-shadow: none; }
+  15% { box-shadow: 0 0 0 2px var(--accent), 0 0 18px var(--accent-dim); }
+}
 
 /* ---------- agent ---------- */
 

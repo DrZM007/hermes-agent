@@ -111,7 +111,7 @@ check("topbar brand", await page.locator(".brand-name").innerText() === "HERMES/
 check("dark theme default", await page.evaluate(() => document.documentElement.dataset.theme) === "dark");
 
 // ---- widgets render --------------------------------------------------------
-for (const type of ["clock", "worldstate", "agent", "weather", "launcher", "news", "reading", "tasks", "markets", "calendar", "notes"]) {
+for (const type of ["clock", "worldstate", "agent", "weather", "launcher", "news", "reading", "tasks", "markets", "calendar", "notes", "focus"]) {
   await page.waitForSelector(`.widget-${type}`, { timeout: 10000 });
   check(`widget ${type} present`, true);
 }
@@ -449,8 +449,29 @@ await page.keyboard.press("Control+k");
 await page.waitForSelector(".palette", { timeout: 5000 });
 await page.locator(".palette-input").fill("github");
 check("palette filters commands", (await page.locator(".palette-item").count()) >= 1);
-await page.keyboard.press("Escape");
-await page.waitForSelector(".palette", { state: "detached" });
+// palette also searches personal data (the "E2E: buy coffee beans" task exists by now)
+await page.locator(".palette-input").fill("coffee");
+await page.waitForFunction(() =>
+  [...document.querySelectorAll(".palette-item")].some((el) => /coffee/i.test(el.textContent) && /task/i.test(el.textContent)),
+  null, { timeout: 5000 });
+check("palette searches personal data (tasks)", true);
+await page.locator(".palette-item", { hasText: /coffee/i }).first().click();
+await page.waitForSelector(".widget-tasks.widget-flash", { timeout: 3000 });
+check("palette jump flashes the target widget", true);
+
+// ---- focus timer ----------------------------------------------------------------
+await page.waitForSelector(".widget-focus .focus-clock", { timeout: 10000 });
+check("focus timer shows 25:00 idle",
+  (await page.locator(".widget-focus .focus-clock").innerText()).trim() === "25:00");
+await page.locator(".widget-focus .focus-controls .btn-primary").click(); // Start
+await page.waitForFunction(() =>
+  /RUNNING/.test(document.querySelector(".widget-focus .focus-mode")?.textContent || ""),
+  null, { timeout: 3000 });
+check("focus timer starts running", true);
+await page.locator(".widget-focus .focus-presets .note-tab", { hasText: "Break 5" }).click();
+check("focus preset switches to 05:00 break",
+  (await page.locator(".widget-focus .focus-clock").innerText()).trim() === "05:00");
+check("focus break mode styled", (await page.locator(".widget-focus .focus-clock.focus-break").count()) === 1);
 
 // ---- edit mode: add/resize/remove/drag persistence -------------------------------
 await page.locator("#edit-toggle").click();

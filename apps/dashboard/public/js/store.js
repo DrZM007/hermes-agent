@@ -21,6 +21,7 @@ function defaultState() {
       { id: uid(), type: "markets", size: "m" },
       { id: uid(), type: "calendar", size: "m" },
       { id: uid(), type: "notes", size: "m" },
+      { id: uid(), type: "focus", size: "s" },
     ],
     launcher: {
       links: [
@@ -65,6 +66,7 @@ function defaultState() {
     },
     calendar: { events: [] },
     agent: { history: [] },
+    focus: { running: false, endsAt: null, remainingMs: 25 * 60000, minutes: 25, mode: "focus", sessions: [] },
     weather: { locations: [], active: 0 }, // empty → server default city
     news: { topic: "top" },
     reading: { items: [] },

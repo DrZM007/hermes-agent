@@ -176,8 +176,13 @@ Rules live in `data/automations.json`; triggers are `daily`, `market` and
   devices like everything else.
 - **Lists, Notes, Calendar** — multiple task lists with progress, autosaving
   notes, month calendar with events. All stored in `localStorage`.
+- **Focus timer** — a minimalist Pomodoro (25 / 50 focus, 5 break) with a
+  reload- and sync-proof countdown (only the target end-time is stored, so
+  every device shows the same remaining time) and a daily session log.
 - **Universal search** — engine picker + bang prefixes (`g` `ddg` `yt` `w`
-  `gh`), `/` focuses search, `Ctrl/⌘-K` opens the command palette.
+  `gh`), `/` focuses search, `Ctrl/⌘-K` opens the command palette. The palette
+  also searches your own data — tasks, notes, events, reading list and apps —
+  and jumps to the match (pulsing the widget it lives in).
 - **Layout** — drag-and-drop reordering, per-widget resize, add/remove
   widgets, masonry packing, dark/light/auto theme, export/import backup.
 
@@ -201,7 +206,7 @@ tests/
   test_server.py   114 unit tests (feeds+sources, worldstate, reader, assistant,
                    sync, auth, automations, memory, watchlist, SSE, ICS,
                    backups, model router, permission tiers, HTTP)
-  e2e.mjs          91-check Playwright suite (needs playwright-core + Chromium)
+  e2e.mjs          98-check Playwright suite (needs playwright-core + Chromium)
                    — also runs in CI (.github/workflows/dashboard.yml)
 ```
 

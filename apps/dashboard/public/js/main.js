@@ -20,9 +20,10 @@ import calendar from "./widgets/calendar.js";
 import markets from "./widgets/markets.js";
 import worldstate from "./widgets/worldstate.js";
 import reading from "./widgets/reading.js";
+import focus from "./widgets/focus.js";
 
 const WIDGETS = Object.fromEntries(
-  [clock, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets]
+  [clock, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, focus]
     .map((w) => [w.type, w]),
 );
 
@@ -392,7 +393,63 @@ function renderSettingsMenu() {
 // ---------------------------------------------------------------------------
 let paletteEl = null;
 
-function paletteCommands() {
+/** Scroll a widget into view and pulse it — used when jumping to a search hit. */
+function flashWidget(type) {
+  const el = document.querySelector(`.widget-${type}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("widget-flash");
+  void el.offsetWidth; // restart the animation if already flashing
+  el.classList.add("widget-flash");
+  setTimeout(() => el.classList.remove("widget-flash"), 1400);
+}
+
+/** Search across the user's own data (tasks, notes, events, reading, apps). */
+function paletteDataMatches(q) {
+  const matches = [];
+  const state = store.state;
+  for (const list of state.tasks.lists) {
+    for (const item of list.items) {
+      if (item.text.toLowerCase().includes(q)) {
+        matches.push({
+          label: item.text, hint: `task · ${list.name}${item.done ? " ✓" : ""}`,
+          run: () => {
+            store.update((s) => { s.tasks.activeList = list.id; }, "tasks-external");
+            flashWidget("tasks");
+          },
+        });
+      }
+    }
+  }
+  for (const note of state.notes.items) {
+    const title = (note.text || "").split("\n")[0].slice(0, 60) || "(untitled note)";
+    if ((note.text || "").toLowerCase().includes(q)) {
+      matches.push({
+        label: title, hint: "note",
+        run: () => {
+          store.update((s) => { s.notes.activeNote = note.id; }, "notes-external");
+          flashWidget("notes");
+        },
+      });
+    }
+  }
+  for (const ev of state.calendar.events) {
+    if ((ev.title || "").toLowerCase().includes(q)) {
+      matches.push({ label: ev.title, hint: `event · ${ev.date}`, run: () => flashWidget("calendar") });
+    }
+  }
+  for (const item of state.reading.items || []) {
+    if ((item.title || "").toLowerCase().includes(q)) {
+      matches.push({
+        label: item.title, hint: "reading",
+        run: () => openViewer({ url: item.url, title: item.title, mode: "reader" }),
+      });
+    }
+  }
+  return matches.slice(0, 8);
+}
+
+function paletteCommands(query = "") {
   const commands = [
     { label: "Toggle edit layout", hint: "layout", run: () => document.getElementById("edit-toggle").click() },
     { label: "Switch theme", hint: "appearance", run: cycleTheme },
@@ -422,6 +479,9 @@ function paletteCommands() {
       },
     });
   }
+  // Data hits are query-specific; they lead the list so "find my stuff" is fast.
+  const q = query.trim().toLowerCase();
+  if (q) return [...paletteDataMatches(q), ...commands];
   return commands;
 }
 
@@ -441,7 +501,7 @@ function openPalette() {
 
   const refresh = () => {
     const q = input.value.trim().toLowerCase();
-    filtered = paletteCommands().filter((c) => c.label.toLowerCase().includes(q));
+    filtered = paletteCommands(q).filter((c) => c.label.toLowerCase().includes(q));
     selectedIdx = Math.min(selectedIdx, Math.max(0, filtered.length - 1));
     clear(list);
     filtered.slice(0, 12).forEach((cmd, i) => {
@@ -451,9 +511,9 @@ function openPalette() {
         "aria-selected": String(i === selectedIdx),
         class: i === selectedIdx ? "palette-item palette-active" : "palette-item",
         onclick: () => { closePalette(); cmd.run(); },
-      }, h("span", {}, cmd.label), h("span.muted.small", {}, cmd.hint)));
+      }, h("span.palette-label", {}, cmd.label), h("span.muted.small", {}, cmd.hint)));
     });
-    if (!filtered.length) list.append(h("div.muted.palette-empty", {}, "No matching commands"));
+    if (!filtered.length) list.append(h("div.muted.palette-empty", {}, "No matches"));
   };
 
   input.addEventListener("input", () => { selectedIdx = 0; refresh(); });
