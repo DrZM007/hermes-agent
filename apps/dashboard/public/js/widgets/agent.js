@@ -326,10 +326,20 @@ export default {
     renderLog();
 
     api.assistantStatus().then((status) => {
-      modeChip.textContent = status.mode === "claude"
-        ? `CLAUDE · ${status.model}` : "LOCAL MODE";
-      modeChip.title = status.hint || "Full Claude agent active";
-      modeChip.className = status.mode === "claude" ? "agent-mode agent-mode-ai" : "agent-mode";
+      if (status.mode === "claude") {
+        const r = status.routing;
+        modeChip.textContent = r && !r.pinned ? "CLAUDE · ROUTED" : `CLAUDE · ${status.model}`;
+        modeChip.title = r
+          ? `Cost-aware routing${r.pinned ? " (pinned)" : ""}:\n`
+            + `  fast  ${r.tiers.fast}\n  core  ${r.tiers.core}\n  deep  ${r.tiers.deep}\n`
+            + `deep calls this hour: ${r.deep_calls_last_hour}/${r.deep_cap_per_hour}`
+          : "Full Claude agent active";
+        modeChip.className = "agent-mode agent-mode-ai";
+      } else {
+        modeChip.textContent = "LOCAL MODE";
+        modeChip.title = status.hint || "Rule-based local engine";
+        modeChip.className = "agent-mode";
+      }
     }).catch(() => { modeChip.textContent = "OFFLINE"; });
 
     ctx.onSummarize(() => ({
