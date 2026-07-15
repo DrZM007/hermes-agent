@@ -152,9 +152,26 @@ class SampleFallbackTests(unittest.TestCase):
 
     def test_reader_blocks_private_hosts(self):
         for url in ("http://localhost/x", "http://127.0.0.1/x", "http://10.1.2.3/",
-                    "http://192.168.1.1/", "ftp://example.org/"):
+                    "http://192.168.1.1/", "http://169.254.169.254/latest/meta-data/",
+                    "http://[::1]/", "http://foo.internal/", "ftp://example.org/"):
             with self.assertRaises(server.ApiError, msg=url):
                 self.api.reader({"url": [url]})
+
+    def test_host_is_blocked_helper(self):
+        # loopback / private / link-local / metadata / reserved → blocked
+        for host in ("localhost", "127.0.0.1", "10.0.0.5", "192.168.0.1",
+                     "172.16.0.1", "169.254.169.254", "::1", "0.0.0.0",
+                     "box.local", "svc.internal", ""):
+            self.assertTrue(server.host_is_blocked(host), host)
+        # ordinary public IP literals are allowed
+        for host in ("8.8.8.8", "1.1.1.1"):
+            self.assertFalse(server.host_is_blocked(host), host)
+
+    def test_guarded_redirect_rejects_private_target(self):
+        handler = server._GuardedRedirectHandler()
+        with self.assertRaises(urllib.error.URLError):
+            handler.redirect_request(
+                None, None, 302, "Found", {}, "http://169.254.169.254/")
 
     def test_reader_offline_note(self):
         data = self.api.reader({"url": ["https://example.org/story"]})

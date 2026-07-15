@@ -32,7 +32,10 @@ export default {
 
   render(body, ctx) {
     const expanded = new Set(["geopolitics"]);
+    let lastData = null;
 
+    // Fetch fresh data from the API (shows the loading state). Called on first
+    // load, manual refresh and the periodic timer — NOT on expand/collapse.
     const draw = async () => {
       clear(body).append(h("div.widget-loading", {}, "COMPILING SITUATION BOARD…"));
       let data;
@@ -44,7 +47,12 @@ export default {
       }
       ctx.setBadge(data.source === "sample" ? "sample" : null);
       ctx._track?.(data);
+      paint(data);
+    };
 
+    // Render already-fetched data. Expand/collapse calls this directly so the
+    // widget never blanks to a loading state or hits the network on a click.
+    const paint = (data) => {
       const header = h("div.ws-overall", {},
         h("div.ws-dial", {},
           h("div.ws-score", {}, String(data.overall.score)),
@@ -64,7 +72,7 @@ export default {
           "aria-expanded": String(isOpen),
           onclick: () => {
             isOpen ? expanded.delete(domain.id) : expanded.add(domain.id);
-            draw();
+            paint(data);  // local re-render only — no refetch, no flash
           },
         },
           h("span.ws-caret", { "aria-hidden": "true" }, isOpen ? "▾" : "▸"),
@@ -110,7 +118,6 @@ export default {
         h("p.muted.small.ws-method", {}, data.method));
     };
 
-    let lastData = null;
     ctx.onSummarize(() => lastData && ({
       kind: "world situation board",
       title: `Global index ${lastData.overall.score} (${lastData.overall.level})`,
@@ -119,7 +126,7 @@ export default {
           d.signals.map((s) => s.headline).join("; "))
         .join("\n"),
     }));
-    ctx._track = (data) => { lastData = data; };
+    ctx._track = (data) => { lastData = data; };  // keep latest for summarize/expand
 
     ctx.onRefresh(draw);
     draw();

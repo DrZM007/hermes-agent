@@ -20,6 +20,8 @@ import argparse
 import concurrent.futures
 import email.utils
 import hmac
+import ipaddress
+import socket
 import sqlite3
 import gzip
 import html
@@ -449,7 +451,63 @@ class StateStore:
             return True, new_rev
 
 
-def fetch_url(url: str, timeout: float = FETCH_TIMEOUT) -> bytes:
+# ---------------------------------------------------------------------------
+# SSRF guard for the article reader.  The reader opens arbitrary URLs that
+# arrive from untrusted feed items, so it must not reach loopback, link-local,
+# private or otherwise non-global addresses — otherwise a crafted article link
+# (or a redirect from one) could pull cloud-metadata (169.254.169.254) or poke
+# internal services.  We resolve the host and reject if ANY resolved address is
+# non-global, and re-check every redirect hop (urllib follows redirects, so an
+# initial-URL check alone is bypassable).  News/ICS subscriptions are
+# deliberately user-curated and may legitimately point at a LAN host, so they
+# are not guarded here — only the size cap below applies to every fetch.
+# ---------------------------------------------------------------------------
+MAX_FETCH_BYTES = 8 * 1024 * 1024  # cap responses so a huge upstream can't OOM us
+
+
+def host_is_blocked(host: str) -> bool:
+    if not host:
+        return True
+    host = host.strip("[]").lower()
+    if host == "localhost" or host.endswith((".local", ".internal", ".localhost")):
+        return True
+    # Literal IP: check directly (skip DNS).
+    try:
+        return not ipaddress.ip_address(host).is_global
+    except ValueError:
+        pass
+    # Hostname: resolve and reject if any address is non-global.
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False  # unresolvable — let the fetch fail naturally upstream
+    for info in infos:
+        try:
+            if not ipaddress.ip_address(info[4][0]).is_global:
+                return True
+        except ValueError:
+            return True
+    return False
+
+
+class _GuardedRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Re-validate every redirect target against the SSRF guard."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urllib.parse.urlparse(newurl)
+        if parsed.scheme not in ("http", "https") or host_is_blocked(parsed.hostname or ""):
+            raise urllib.error.URLError("blocked redirect to private/invalid host")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_GUARDED_OPENER = urllib.request.build_opener(_GuardedRedirectHandler())
+
+
+def fetch_url(url: str, timeout: float = FETCH_TIMEOUT, guard: bool = False) -> bytes:
+    if guard:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ("http", "https") or host_is_blocked(parsed.hostname or ""):
+            raise ApiError(400, "refusing to fetch private/internal addresses")
     req = urllib.request.Request(
         url,
         headers={
@@ -458,8 +516,11 @@ def fetch_url(url: str, timeout: float = FETCH_TIMEOUT) -> bytes:
             "Accept-Encoding": "gzip",
         },
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        raw = resp.read()
+    opener = _GUARDED_OPENER.open if guard else urllib.request.urlopen
+    with opener(req, timeout=timeout) as resp:
+        raw = resp.read(MAX_FETCH_BYTES + 1)
+        if len(raw) > MAX_FETCH_BYTES:
+            raise ApiError(502, "upstream response too large")
         if resp.headers.get("Content-Encoding") == "gzip":
             raw = gzip.GzipFile(fileobj=io.BytesIO(raw)).read()
         return raw
@@ -754,21 +815,14 @@ class _ArticleExtractor(HTMLParser):
             self._buffer.append(data)
 
 
-PRIVATE_HOST_RE = re.compile(
-    r"^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|\[::1\]|::1)|(^172\.(1[6-9]|2\d|3[01])\.)",
-    re.IGNORECASE,
-)
-
-
 def live_reader(url: str) -> dict:
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ApiError(400, "only http(s) URLs can be opened")
-    host = parsed.hostname or ""
-    if PRIVATE_HOST_RE.match(host) or host.endswith(".local") or host.endswith(".internal"):
+    if host_is_blocked(parsed.hostname or ""):
         raise ApiError(400, "refusing to fetch private/internal addresses")
 
-    raw = fetch_url(url)
+    raw = fetch_url(url, guard=True)
     extractor = _ArticleExtractor()
     try:
         extractor.feed(raw.decode("utf-8", errors="replace"))
@@ -1169,8 +1223,7 @@ class Api:
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme not in ("http", "https"):
             raise ApiError(400, "only http(s) URLs can be opened")
-        host = parsed.hostname or ""
-        if PRIVATE_HOST_RE.match(host) or host.endswith((".local", ".internal")):
+        if host_is_blocked(parsed.hostname or ""):
             raise ApiError(400, "refusing to fetch private/internal addresses")
         return self._cached(
             f"reader:{url}",
@@ -1580,9 +1633,10 @@ class HubHandler(BaseHTTPRequestHandler):
     def _serve_static(self, path: str) -> None:
         if path in ("/", ""):
             path = "/index.html"
-        # Resolve inside PUBLIC_DIR only (no traversal).
+        # Resolve inside PUBLIC_DIR only (no traversal). is_relative_to avoids the
+        # sibling-prefix bug where "/…/public-secret" would pass a startswith check.
         candidate = (PUBLIC_DIR / path.lstrip("/")).resolve()
-        if not str(candidate).startswith(str(PUBLIC_DIR.resolve())) or not candidate.is_file():
+        if not candidate.is_relative_to(PUBLIC_DIR.resolve()) or not candidate.is_file():
             self._send_bytes(404, b"Not found", "text/plain; charset=utf-8")
             return
         mime = MIME_TYPES.get(candidate.suffix.lower(), "application/octet-stream")
