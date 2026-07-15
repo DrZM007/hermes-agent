@@ -63,7 +63,9 @@ export default {
       const s = tel.summary;
       rows.push(h("div.sys-row", {},
         h("span.sys-key", {}, "ACTIVITY"),
-        h("span.sys-val", {}, `${s.tool_calls} tool call${s.tool_calls === 1 ? "" : "s"} · ${s.denied} denied`)));
+        h("span.sys-val", {},
+          `${s.tool_calls} tool call${s.tool_calls === 1 ? "" : "s"} · ${s.denied} denied`
+          + (s.escalations ? ` · ${s.escalations} escalated` : ""))));
 
       // kill switch — one toggle freezes all autonomous behaviour
       rows.push(h("div.sys-row", {},

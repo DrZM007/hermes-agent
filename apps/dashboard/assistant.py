@@ -298,6 +298,33 @@ def tool_tier(name: str) -> str:
     return TOOL_TIERS.get(name, "blocked")
 
 
+# Jarvis Phase 5 — advisor escalation. When the core model's own reply signals
+# it is stuck, the deep tier is consulted as a scoped advisor (guidance only,
+# no tools, no final answer) and the core model finishes with that guidance.
+ADVISOR_SYSTEM = (
+    "You are a senior advisor to a junior AI agent that has become stuck. "
+    "Given the problem (and any context), reply with concise, concrete guidance "
+    "or a short plan the junior can act on. Do NOT write the final answer for "
+    "the user and do NOT call any tools — advise only, in 2-5 sentences."
+)
+ADVISOR_INJECT = (
+    "A senior advisor was consulted because the previous attempt was uncertain. "
+    "Their guidance:\n{guidance}\n\nUse it to give the user a confident, complete "
+    "answer now."
+)
+_LOW_CONFIDENCE = re.compile(
+    r"(i'?m not sure|i am not sure|not entirely sure|i can'?t (?:tell|determine|be sure)|"
+    r"i do(?:n'?t| not) (?:have enough|know)|unclear to me|i'?m unsure|not certain|"
+    r"unable to (?:determine|tell)|hard to say|\[escalate\])",
+    re.IGNORECASE,
+)
+
+
+def needs_escalation(text: str) -> bool:
+    """True when a model reply self-reports low confidence (an escalation cue)."""
+    return bool(text and _LOW_CONFIDENCE.search(text))
+
+
 def _credentials_available() -> bool:
     if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
         return True
@@ -318,6 +345,30 @@ class Assistant:
         if tel is not None:
             tel.record({"kind": "route", "task": decision["task"],
                         "tier": decision["tier"], "model": decision["model"]})
+
+    def advise(self, problem: str, context: dict | None = None) -> str | None:
+        """Consult the deep tier as a scoped advisor (guidance only, no tools).
+
+        Returns None when the deep-tier budget is exhausted, so the rate cap
+        directly bounds how often escalation can happen.
+        """
+        decision = self.router.route("advisor")
+        if decision["tier"] != "deep":
+            return None  # capped — skip escalation this time
+        self._log_route(decision)
+        tel = getattr(self.services, "telemetry", None) if self.services else None
+        if tel is not None:
+            tel.record({"kind": "advisor", "model": decision["model"]})
+        prompt = problem if not context else (
+            problem + "\n\nContext:\n" + json.dumps(context, ensure_ascii=False)[:4000])
+        response = self._get_client().messages.create(
+            model=decision["model"],
+            max_tokens=1024,
+            system=ADVISOR_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = next((b.text for b in response.content if b.type == "text"), "").strip()
+        return text or None
 
     @staticmethod
     def _last_user_text(messages: list) -> str:
@@ -460,12 +511,36 @@ class Assistant:
             tools=DASHBOARD_TOOLS,
             messages=request_messages,
         )
+        content = self._convert_content(response)
+        escalated = False
+
+        # Advisor escalation: only on a final text turn that self-reports doubt.
+        if response.stop_reason == "end_turn":
+            text = " ".join(b["text"] for b in content if b.get("type") == "text")
+            if needs_escalation(text):
+                guidance = self.advise(text, context)
+                if guidance:
+                    system2 = system + [{"type": "text", "text": ADVISOR_INJECT.format(guidance=guidance)}]
+                    d2 = self.router.route("chat", self._last_user_text(messages))
+                    self._log_route(d2)
+                    response = self._get_client().messages.create(
+                        model=d2["model"],
+                        max_tokens=4096,
+                        thinking={"type": "adaptive"},
+                        system=system2,
+                        tools=DASHBOARD_TOOLS,
+                        messages=request_messages,
+                    )
+                    content = self._convert_content(response)
+                    escalated = True
+
         return {
             "mode": "claude",
             "tier": decision["tier"],
             "model": decision["model"],
+            "escalated": escalated,
             "stop_reason": response.stop_reason,
-            "content": self._convert_content(response),
+            "content": content,
         }
 
     def _prepare_claude_request(self, messages: list, context: dict) -> tuple[list, list]:
@@ -542,12 +617,41 @@ class Assistant:
             for text in stream.text_stream:
                 yield "delta", {"text": text}
             response = stream.get_final_message()
+        content = self._convert_content(response)
+        escalated = False
+
+        # Advisor escalation: consult the deep tier, then stream a confident
+        # second pass, all inside the same SSE turn.
+        if response.stop_reason == "end_turn":
+            text = " ".join(b["text"] for b in content if b.get("type") == "text")
+            if needs_escalation(text):
+                guidance = self.advise(text, context)
+                if guidance:
+                    yield "delta", {"text": "\n\n↑ escalating to a deeper model…\n\n"}
+                    system2 = system + [{"type": "text", "text": ADVISOR_INJECT.format(guidance=guidance)}]
+                    d2 = self.router.route("chat", self._last_user_text(messages))
+                    self._log_route(d2)
+                    with self._get_client().messages.stream(
+                        model=d2["model"],
+                        max_tokens=4096,
+                        thinking={"type": "adaptive"},
+                        system=system2,
+                        tools=DASHBOARD_TOOLS,
+                        messages=request_messages,
+                    ) as stream2:
+                        for text in stream2.text_stream:
+                            yield "delta", {"text": text}
+                        response = stream2.get_final_message()
+                    content = self._convert_content(response)
+                    escalated = True
+
         yield "done", {
             "mode": "claude",
             "tier": decision["tier"],
             "model": decision["model"],
+            "escalated": escalated,
             "stop_reason": response.stop_reason,
-            "content": self._convert_content(response),
+            "content": content,
         }
 
     # Local command grammar: "add task X [to LIST]", "complete/finish X",

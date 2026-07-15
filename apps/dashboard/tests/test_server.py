@@ -1090,6 +1090,113 @@ class RouterTests(unittest.TestCase):
         self.assertIsNone(status["routing"])
 
 
+class NeedsEscalationTests(unittest.TestCase):
+    def test_detects_low_confidence(self):
+        for t in ["I'm not sure about that", "It's unclear to me",
+                  "I don't have enough information", "[ESCALATE] please help",
+                  "I'm unsure how to proceed"]:
+            self.assertTrue(assistant.needs_escalation(t), t)
+
+    def test_ignores_confident_text(self):
+        for t in ["Sure, here it is.", "Done.", "Version 2.1 fixed it.", ""]:
+            self.assertFalse(assistant.needs_escalation(t), t)
+
+
+class _FakeBlock:
+    def __init__(self, text):
+        self.type = "text"
+        self.text = text
+
+
+class _FakeResponse:
+    def __init__(self, text, stop_reason="end_turn"):
+        self.content = [_FakeBlock(text)]
+        self.stop_reason = stop_reason
+
+
+class _FakeStream:
+    def __init__(self, response):
+        self._response = response
+        self.text_stream = [b.text for b in response.content]
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def get_final_message(self): return self._response
+
+
+class _FakeMessages:
+    def __init__(self, script):
+        self.script = list(script)
+        self.calls = []
+    def create(self, **kw):
+        self.calls.append(kw)
+        return self.script.pop(0)
+    def stream(self, **kw):
+        self.calls.append(kw)
+        return _FakeStream(self.script.pop(0))
+
+
+class _FakeClient:
+    def __init__(self, script):
+        self.messages = _FakeMessages(script)
+
+
+class EscalationTests(unittest.TestCase):
+    def _assistant(self, script):
+        from unittest import mock
+        data_dir = Path(tempfile.mkdtemp())
+        api = server.Api(offline=True, data_dir=data_dir)
+        a = api.assistant
+        a._client = _FakeClient(script)
+        self._mode = mock.patch.object(type(a), "mode", new_callable=mock.PropertyMock,
+                                       return_value="claude")
+        self._mode.start()
+        self.addCleanup(self._mode.stop)
+        return a, api
+
+    def test_low_confidence_triggers_advisor_then_confident_answer(self):
+        a, api = self._assistant([
+            _FakeResponse("Honestly I'm not sure about that."),  # 1st chat: uncertain
+            _FakeResponse("Advisor: check the changelog and compare versions."),  # advise()
+            _FakeResponse("Here is the confident, complete answer."),  # 2nd chat
+        ])
+        result = a._chat_claude([{"role": "user", "content": "which version fixed it?"}], {})
+        self.assertTrue(result["escalated"])
+        self.assertEqual(result["content"][0]["text"], "Here is the confident, complete answer.")
+        self.assertEqual(len(a._client.messages.calls), 3)
+        # the advisor call carries no tools and the advisor system prompt
+        advisor_call = a._client.messages.calls[1]
+        self.assertNotIn("tools", advisor_call)
+        self.assertIn("senior advisor", advisor_call["system"])
+        # telemetry recorded the escalation
+        self.assertEqual(api.telemetry.summary()["escalations"], 1)
+
+    def test_confident_reply_does_not_escalate(self):
+        a, _ = self._assistant([_FakeResponse("Sure — version 2.1 fixed it.")])
+        result = a._chat_claude([{"role": "user", "content": "which version?"}], {})
+        self.assertFalse(result["escalated"])
+        self.assertEqual(len(a._client.messages.calls), 1)
+
+    def test_tool_use_turn_is_not_escalated(self):
+        # even if the text looks uncertain, a tool_use turn is a real action
+        a, _ = self._assistant([_FakeResponse("I'm not sure", stop_reason="tool_use")])
+        result = a._chat_claude([{"role": "user", "content": "add a task"}], {})
+        self.assertFalse(result["escalated"])
+        self.assertEqual(len(a._client.messages.calls), 1)
+
+    def test_advise_returns_none_when_deep_budget_exhausted(self):
+        a, _ = self._assistant([_FakeResponse("unused")])
+        a.router = router_mod.Router(max_deep_per_hour=0)
+        self.assertIsNone(a.advise("stuck on something"))
+        self.assertEqual(len(a._client.messages.calls), 0)  # never called the model
+
+    def test_budget_exhaustion_skips_escalation_in_chat(self):
+        a, _ = self._assistant([_FakeResponse("I'm not sure at all.")])
+        a.router = router_mod.Router(max_deep_per_hour=0)
+        result = a._chat_claude([{"role": "user", "content": "?"}], {})
+        self.assertFalse(result["escalated"])
+        self.assertEqual(len(a._client.messages.calls), 1)  # first reply only
+
+
 class KillSwitchTests(unittest.TestCase):
     def _api(self):
         return server.Api(offline=True, data_dir=Path(tempfile.mkdtemp()))

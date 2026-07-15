@@ -116,6 +116,13 @@ finance-sensitive turns — and rate-caps the expensive tier. Override any tier
 with `HERMES_HUB_MODEL_FAST` / `_CORE` / `_DEEP`, or pin one model for
 everything with `HERMES_HUB_MODEL`.
 
+**Advisor escalation.** If the core model's own answer signals it's stuck, the
+deep tier is consulted as a *scoped advisor* (guidance only, no tools) and the
+core model produces a confident answer with that guidance — you'll see a brief
+"escalating to a deeper model…" note when it happens. It's bounded by the same
+deep-tier budget, so it never runs away, and each escalation shows in the
+System widget.
+
 **Permission gate.** Every tool call is classified server-side (Jarvis Layer F,
 not agent-editable). Read-only and reversible edits (tasks, notes, events,
 research) run instantly; outward-facing or unattended-effect actions (adding a
@@ -215,10 +222,10 @@ public/            zero-build frontend (ES modules, design-system CSS)
 tests/
   router.py        cost-aware model routing (Jarvis Layer I)
   telemetry.py     bounded routing + tool-call telemetry (Jarvis Phase 3)
-  test_server.py   124 unit tests (feeds+sources, worldstate, reader, assistant,
+  test_server.py   131 unit tests (feeds+sources, worldstate, reader, assistant,
                    sync, auth, automations, memory, watchlist, SSE, ICS,
                    backups, model router, permission tiers, telemetry,
-                   kill switch, HTTP)
+                   kill switch, advisor escalation, HTTP)
   e2e.mjs          106-check Playwright suite (needs playwright-core + Chromium)
                    — also runs in CI (.github/workflows/dashboard.yml)
 ```

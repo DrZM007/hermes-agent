@@ -63,6 +63,7 @@ class Telemetry:
             "total": len(evs),
             "tool_calls": len(tools),
             "denied": sum(1 for e in tools if e.get("approved") is False),
+            "escalations": sum(1 for e in evs if e.get("kind") == "advisor"),
             "by_tier": dict(Counter(e.get("tier") for e in routes if e.get("tier"))),
             "by_tool": dict(Counter(e.get("name") for e in tools if e.get("name"))),
         }

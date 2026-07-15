@@ -60,10 +60,15 @@ autonomous behaviour — `automations.tick()` fires nothing while frozen, checke
 inside the lock before every evaluation. State persists (`data/automations.json`),
 is exposed via GET/POST `/api/killswitch`, and shows a red banner when engaged.
 
-**Phase 5 — Advisor escalation, live (rest of Layer I).** When the core model
-self-reports low confidence or fails a subtask twice, call the deep tier as a
-*scoped advisor* (guidance only, no tools, no final output), inject its answer,
-and resume at the core tier. Needs Phase 3 telemetry to tune thresholds.
+**Phase 5 — Advisor escalation, live (rest of Layer I). ✅ DONE.** When the core
+model's own reply self-reports low confidence (`needs_escalation`), the deep
+tier is consulted as a *scoped advisor* — `advise()` calls it with an
+advisor-only system prompt and **no tools**, returns guidance, and the core
+model produces a confident second answer with that guidance injected. Applies
+to both the streaming and non-streaming chat paths; the streaming path shows a
+visible "escalating…" note. The deep-tier rate cap bounds it (advise returns
+None when the budget is spent → escalation is skipped), and each escalation is
+logged to telemetry and counted in the System widget.
 
 **Phase 6 — Bounded self-evolution (Layer G).** Nightly reflection over
 telemetry proposes prompt tweaks / new-tool specs / memory pruning. Safe
