@@ -55,9 +55,10 @@ routing + tool-call telemetry (`data/telemetry.jsonl`, `telemetry.py`); the
 System widget shows active engine/tier, tier line-up, deep-tier budget, the
 permission split, and a feed of recent tool calls (name · tier · outcome).
 
-**Phase 4 — Kill switch + hardening (Phase 6 in spec).** One dashboard toggle
-freezes automations and any autonomous run; checked before every tick. Audit
-log surfaced read-only.
+**Phase 4 — Kill switch. ✅ DONE.** One toggle in the System widget freezes all
+autonomous behaviour — `automations.tick()` fires nothing while frozen, checked
+inside the lock before every evaluation. State persists (`data/automations.json`),
+is exposed via GET/POST `/api/killswitch`, and shows a red banner when engaged.
 
 **Phase 5 — Advisor escalation, live (rest of Layer I).** When the core model
 self-reports low confidence or fails a subtask twice, call the deep tier as a

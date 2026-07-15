@@ -25,7 +25,17 @@ export default {
     const { api } = ctx;
     let last = null;
 
-    const draw = (status, tel) => {
+    const toggleFreeze = async (frozen) => {
+      try {
+        await api.setKillswitch(frozen);
+        load();
+      } catch (err) {
+        clear(body).append(h("div.widget-error", {}, `Could not change autonomy: ${err.message}`));
+      }
+    };
+
+    const draw = (status, tel, ks) => {
+      const frozen = !!(ks && ks.frozen);
       const rows = [];
       const engine = status.mode === "claude"
         ? (status.routing && !status.routing.pinned ? "CLAUDE · ROUTED" : `CLAUDE · ${status.model}`)
@@ -55,6 +65,18 @@ export default {
         h("span.sys-key", {}, "ACTIVITY"),
         h("span.sys-val", {}, `${s.tool_calls} tool call${s.tool_calls === 1 ? "" : "s"} · ${s.denied} denied`)));
 
+      // kill switch — one toggle freezes all autonomous behaviour
+      rows.push(h("div.sys-row", {},
+        h("span.sys-key", {}, "AUTONOMY"),
+        h("span.sys-val", {},
+          h("span", { class: frozen ? "sys-autonomy sys-autonomy-frozen" : "sys-autonomy" },
+            frozen ? "FROZEN" : "ACTIVE"),
+          h("button.link-btn.sys-freeze-btn", {
+            type: "button",
+            title: frozen ? "Resume automations" : "Freeze all autonomous behaviour",
+            onclick: () => toggleFreeze(!frozen),
+          }, frozen ? "resume" : "freeze"))));
+
       const toolEvents = tel.events.filter((e) => e.kind === "tool").slice(-6).reverse();
       const feed = h("div.sys-feed", {},
         toolEvents.length
@@ -64,7 +86,11 @@ export default {
             h("span.muted.small", {}, `${e.tier}${e.approved === false ? " · denied" : ""} · ${ago(e.at)}`)))
           : h("div.muted.small", {}, "No agent activity yet."));
 
-      clear(body).append(
+      clear(body);
+      if (frozen) {
+        body.append(h("div.sys-frozen-banner", {}, "⛔ AUTONOMY FROZEN — automations paused"));
+      }
+      body.append(
         h("div.sys-grid", {}, ...rows),
         h("div.muted.small.sys-feed-head", {}, "RECENT TOOL CALLS"),
         feed);
@@ -72,9 +98,10 @@ export default {
 
     const load = async () => {
       try {
-        const [status, tel] = await Promise.all([api.assistantStatus(), api.telemetry()]);
-        last = { status, tel };
-        draw(status, tel);
+        const [status, tel, ks] = await Promise.all([
+          api.assistantStatus(), api.telemetry(), api.killswitch()]);
+        last = { status, tel, ks };
+        draw(status, tel, ks);
       } catch (err) {
         if (!last) clear(body).append(h("div.widget-error", {}, `System status unavailable: ${err.message}`));
       }

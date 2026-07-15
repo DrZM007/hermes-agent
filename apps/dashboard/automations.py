@@ -162,12 +162,29 @@ class Automations:
         self._data["notifications"].append(entry)
         self._data["notifications"] = self._data["notifications"][-MAX_NOTIFICATIONS:]
 
+    # -- kill switch (Jarvis Phase 4) --------------------------------------------
+    def is_frozen(self) -> bool:
+        with self._lock:
+            return bool(self._data.get("frozen", False))
+
+    def set_frozen(self, value: bool) -> bool:
+        with self._lock:
+            self._data["frozen"] = bool(value)
+            self._save()
+            return bool(value)
+
     # -- evaluation ---------------------------------------------------------------
     def tick(self, now: datetime | None = None) -> int:
-        """Evaluate all rules once. Returns how many fired. Thread-safe."""
+        """Evaluate all rules once. Returns how many fired. Thread-safe.
+
+        When the kill switch is engaged, no rule fires — the single freeze
+        governs every autonomous action.
+        """
         now = now or datetime.now()
         fired = 0
         with self._lock:
+            if self._data.get("frozen"):
+                return 0
             for rule in self._data["rules"]:
                 if not rule.get("enabled"):
                     continue

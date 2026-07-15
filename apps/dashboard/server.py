@@ -1227,6 +1227,17 @@ class Api:
             raise ApiError(400, "after must be an integer") from None
         return self.automations.notifications_after(after)
 
+    # -- kill switch (Phase 4) ----------------------------------------------
+    def killswitch_get(self, params: dict) -> dict:
+        return {"frozen": self.automations.is_frozen()}
+
+    def killswitch_set(self, body: dict) -> dict:
+        if "frozen" not in body or not isinstance(body["frozen"], bool):
+            raise ApiError(400, "body needs a boolean 'frozen'")
+        frozen = self.automations.set_frozen(body["frozen"])
+        self.telemetry.record({"kind": "killswitch", "frozen": frozen})
+        return {"frozen": frozen}
+
     # -- agent telemetry (Phase 3) ------------------------------------------
     def telemetry_get(self, params: dict) -> dict:
         return {"events": self.telemetry.recent(50), "summary": self.telemetry.summary()}
@@ -1418,6 +1429,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/events": "ics_events",
         "/api/backups": "backups_list",
         "/api/assistant/telemetry": "telemetry_get",
+        "/api/killswitch": "killswitch_get",
     }
 
     POST_ROUTES = {
@@ -1432,6 +1444,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/backup": "backup_now",
         "/api/backup/restore": "backup_restore",
         "/api/assistant/telemetry": "telemetry_post",
+        "/api/killswitch": "killswitch_set",
     }
 
     # POST endpoints that write their own (streaming) response.

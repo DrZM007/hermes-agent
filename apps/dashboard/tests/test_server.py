@@ -1090,6 +1090,33 @@ class RouterTests(unittest.TestCase):
         self.assertIsNone(status["routing"])
 
 
+class KillSwitchTests(unittest.TestCase):
+    def _api(self):
+        return server.Api(offline=True, data_dir=Path(tempfile.mkdtemp()))
+
+    def test_freeze_blocks_firing_and_resume_restores(self):
+        api = self._api()
+        api.automations.create_rule({
+            "name": "d", "trigger": {"type": "daily", "time": "00:00"},
+            "action": {"type": "notify", "message": "hi"}})
+        api.automations._data["rules"][0]["state"] = {}
+        self.assertEqual(api.automations.tick(), 1)          # active → fires
+
+        api.automations._data["rules"][0]["state"] = {}
+        api.automations.set_frozen(True)
+        self.assertTrue(api.automations.is_frozen())
+        self.assertEqual(api.automations.tick(), 0)          # frozen → nothing
+
+        api.automations.set_frozen(False)
+        api.automations._data["rules"][0]["state"] = {}
+        self.assertEqual(api.automations.tick(), 1)          # resumed → fires
+
+    def test_frozen_state_persists(self):
+        data_dir = Path(tempfile.mkdtemp())
+        server.Api(offline=True, data_dir=data_dir).automations.set_frozen(True)
+        self.assertTrue(server.Api(offline=True, data_dir=data_dir).automations.is_frozen())
+
+
 class TelemetryTests(unittest.TestCase):
     def setUp(self):
         self.path = Path(tempfile.mkdtemp()) / "telemetry.jsonl"
@@ -1209,6 +1236,22 @@ class BackupHttpTests(unittest.TestCase):
 
     def test_telemetry_post_requires_name(self):
         status, _ = self.request("/api/assistant/telemetry", {"tier": "auto", "ok": True})
+        self.assertEqual(status, 400)
+
+    def test_killswitch_get_set_over_http(self):
+        status, data = self.request("/api/killswitch")
+        self.assertEqual(status, 200)
+        self.assertFalse(data["frozen"])
+        status, data = self.request("/api/killswitch", {"frozen": True})
+        self.assertEqual(status, 200)
+        self.assertTrue(data["frozen"])
+        status, data = self.request("/api/killswitch")
+        self.assertTrue(data["frozen"])
+        # cleanup so other tests on this shared server see a resumed state
+        self.request("/api/killswitch", {"frozen": False})
+
+    def test_killswitch_rejects_bad_body(self):
+        status, _ = self.request("/api/killswitch", {"frozen": "yes"})
         self.assertEqual(status, 400)
 
 

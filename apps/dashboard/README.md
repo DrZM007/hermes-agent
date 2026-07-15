@@ -130,6 +130,11 @@ the deep-tier budget, the permission split, and a feed of recent tool calls
 server telemetry (`data/telemetry.jsonl`) — routing decisions plus tool
 outcomes, tool *names* only, never their arguments or results.
 
+**Kill switch.** The System widget has one **freeze** toggle that halts all
+autonomous behaviour — no automation fires while it's engaged (the freeze is
+checked before every evaluation, server-side, so it holds even with no browser
+open). It persists across restarts and shows a red banner when active.
+
 Every widget (and every news story, and the article viewer) has a **∑**
 button that summarizes that piece of data with the active engine. In
 Claude mode, replies stream in live (SSE) and type out as they arrive.
@@ -210,10 +215,11 @@ public/            zero-build frontend (ES modules, design-system CSS)
 tests/
   router.py        cost-aware model routing (Jarvis Layer I)
   telemetry.py     bounded routing + tool-call telemetry (Jarvis Phase 3)
-  test_server.py   120 unit tests (feeds+sources, worldstate, reader, assistant,
+  test_server.py   124 unit tests (feeds+sources, worldstate, reader, assistant,
                    sync, auth, automations, memory, watchlist, SSE, ICS,
-                   backups, model router, permission tiers, telemetry, HTTP)
-  e2e.mjs          102-check Playwright suite (needs playwright-core + Chromium)
+                   backups, model router, permission tiers, telemetry,
+                   kill switch, HTTP)
+  e2e.mjs          106-check Playwright suite (needs playwright-core + Chromium)
                    — also runs in CI (.github/workflows/dashboard.yml)
 ```
 

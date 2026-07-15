@@ -101,6 +101,11 @@ await page.evaluate(async () => {
       body: JSON.stringify({ op: "remove", url: cal.url }),
     });
   }
+  // ensure autonomy isn't left frozen by an aborted prior run
+  await fetch("/api/killswitch", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ frozen: false }),
+  });
 });
 await page.waitForTimeout(1600); // debounced sync push of the reset
 await page.reload({ waitUntil: "networkidle" });
@@ -299,6 +304,22 @@ check("system widget shows status rows",
 // the denied add_app is counted even once it scrolls out of the recent feed
 check("system widget records the denied tool",
   /[1-9]\d* denied/.test(await page.locator(".widget-system").innerText()));
+
+// ---- kill switch (freeze all autonomy) -------------------------------------------
+check("system widget shows autonomy control",
+  (await page.locator(".widget-system .sys-freeze-btn").count()) === 1);
+await page.locator(".widget-system .sys-freeze-btn").click(); // freeze
+await page.waitForSelector(".widget-system .sys-frozen-banner", { timeout: 10000 });
+check("freeze shows frozen banner", true);
+const frozenTick = await page.evaluate(async () => {
+  const r = await fetch("/api/automations", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "tick" }) });
+  return (await r.json()).fired;
+});
+check("frozen: automations do not fire on tick", frozenTick === 0);
+await page.locator(".widget-system .sys-freeze-btn").click(); // resume
+await page.waitForSelector(".widget-system .sys-frozen-banner", { state: "detached", timeout: 10000 });
+check("resume clears the frozen banner", true);
 
 // ---- streaming chat endpoint (the agent turns above already used it) ----------
 const streamShape = await page.evaluate(async () => {
