@@ -2083,6 +2083,18 @@ class Api:
         return self._cached(f"pubmed:{query.lower()}", PUBMED_TTL,
                             lambda: live_pubmed(query), lambda: sample_pubmed(query))
 
+    def pubmed_grounding_cached(self, query: str) -> dict:
+        """Recent PubMed articles + abstracts for grounding SA MedBot. Offline-safe:
+        returns sample article titles with no abstract text when offline."""
+        query = " ".join((query or "").split())[:200]
+        if not query:
+            return {"articles": [], "text": ""}
+        sample = lambda: {"articles": sample_pubmed(query)["articles"], "text": ""}
+        if self.offline:
+            return sample()
+        return self._cached(f"pmground:{query.lower()}", PUBMED_TTL,
+                            lambda: pubmed_grounding(query), sample)
+
     def pubmed_grounding(self, query: str) -> dict:
         """Grounding context for the MedBot (live only; empty offline)."""
         if self.offline:

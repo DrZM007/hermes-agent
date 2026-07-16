@@ -809,19 +809,20 @@ class Assistant:
             yield "done", {"mode": "local", "stop_reason": "end_turn",
                            "content": [{"type": "text", "text": self.MED_LOCAL_REPLY}]}
             return
-        # Route medical reasoning to the deep tier when available (falls back to
-        # core under the deep budget cap), and consult without dashboard tools.
-        decision = self.router.route("chat", "clinical medicine diagnosis treatment")
-        self._log_route(decision)
+        # Answer on the CORE tier (Sonnet). If Sonnet self-reports low confidence,
+        # the DEEP tier (Opus) is consulted as a scoped advisor and Sonnet finishes
+        # with that guidance — so Opus assists only when Sonnet can't.
+        core_model = self.router.pin or TIERS["core"]
+        self._log_route({"task": "medchat", "tier": "core", "model": core_model})
         system = [{"type": "text", "text": MED_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
 
         # Retrieval grounding: search PubMed on the question and inject recent
         # abstracts so the answer can be evidence-based and cite sources.
-        sources = []
+        question = self._last_user_text(messages)
         ground = {"articles": [], "text": ""}
-        if getattr(self.services, "pubmed_grounding", None):
+        if getattr(self.services, "pubmed_grounding_cached", None):
             try:
-                ground = self.services.pubmed_grounding(self._last_user_text(messages))
+                ground = self.services.pubmed_grounding_cached(question)
             except Exception:
                 ground = {"articles": [], "text": ""}
         sources = ground.get("articles", [])
@@ -832,19 +833,36 @@ class Assistant:
                      "ground your answer and cite entries inline by PMID (e.g. [PMID]); "
                      "note publication dates and that these are international unless SA-"
                      "specific. Do NOT fabricate citations beyond this list.\n\n"
-                     f"References:\n{refs}\n\nAbstracts:\n{ground.get('text', '')}")
+                     f"References:\n{refs}\n\nAbstracts:\n{ground.get('text', '')[:6000]}")
             system.append({"type": "text", "text": block})
 
-        with self._get_client().messages.stream(
-            model=decision["model"], max_tokens=4096, thinking={"type": "adaptive"},
-            system=system, messages=list(messages),
-        ) as stream:
-            for text in stream.text_stream:
-                yield "delta", {"text": text}
-            response = stream.get_final_message()
+        def run(sys):
+            with self._get_client().messages.stream(
+                model=core_model, max_tokens=4096, thinking={"type": "adaptive"},
+                system=sys, messages=list(messages),
+            ) as stream:
+                for text in stream.text_stream:
+                    yield "delta", {"text": text}
+                self._med_final = stream.get_final_message()
+
+        yield from run(system)
+        response = self._med_final
         text = " ".join(b.text for b in response.content if b.type == "text")
-        yield "done", {"mode": "claude", "tier": decision["tier"], "model": decision["model"],
-                       "stop_reason": response.stop_reason, "sources": sources,
+        escalated = False
+
+        if response.stop_reason == "end_turn" and needs_escalation(text):
+            guidance = self.advise(text, {"clinical_question": question})
+            if guidance:
+                yield "delta", {"text": "\n\n↑ consulting a senior model…\n\n"}
+                system2 = system + [{"type": "text", "text": ADVISOR_INJECT.format(guidance=guidance)}]
+                yield from run(system2)
+                response = self._med_final
+                text = " ".join(b.text for b in response.content if b.type == "text")
+                escalated = True
+
+        yield "done", {"mode": "claude", "tier": "core", "model": core_model,
+                       "escalated": escalated, "stop_reason": response.stop_reason,
+                       "sources": sources,
                        "content": [{"type": "text", "text": text}]}
 
     # -- summarize ------------------------------------------------------------

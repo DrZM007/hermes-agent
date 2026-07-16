@@ -657,7 +657,7 @@ class MarketsWatchlistTests(unittest.TestCase):
         client.messages.stream.return_value = _Stream()
         with mock.patch.object(type(api.assistant), "mode", new_callable=mock.PropertyMock, return_value="claude"), \
              mock.patch.object(api.assistant, "_get_client", return_value=client), \
-             mock.patch.object(api, "pubmed_grounding", return_value={"articles": arts, "text": "abstract text"}):
+             mock.patch.object(api, "pubmed_grounding_cached", return_value={"articles": arts, "text": "abstract text"}):
             events = list(api.assistant.med_chat_stream({"messages": [{"role": "user", "content": "SA TB treatment?"}]}))
         done = next(p for k, p in events if k == "done")
         self.assertEqual(done["sources"], arts)          # citations surfaced to the UI
