@@ -116,7 +116,7 @@ check("topbar brand", await page.locator(".brand-name").innerText() === "HERMES/
 check("dark theme default", await page.evaluate(() => document.documentElement.dataset.theme) === "dark");
 
 // ---- widgets render --------------------------------------------------------
-for (const type of ["clock", "worldstate", "agent", "weather", "launcher", "news", "reading", "tasks", "markets", "scores", "socials", "gaming", "calendar", "notes", "focus", "system"]) {
+for (const type of ["clock", "worldstate", "agent", "weather", "launcher", "news", "reading", "tasks", "markets", "stocks", "scores", "socials", "gaming", "calendar", "notes", "focus", "system"]) {
   await page.waitForSelector(`.widget-${type}`, { timeout: 10000 });
   check(`widget ${type} present`, true);
 }
@@ -491,6 +491,16 @@ await page.evaluate(async (base) => {
 await page.waitForSelector(".cal-event-ext", { state: "detached", timeout: 10000 });
 check("unsubscribe clears external events", true);
 
+// ---- stocks / indices / FX -------------------------------------------------------
+await page.waitForSelector(".widget-stocks .market-row");
+check("stocks rows render", (await page.locator(".widget-stocks .market-row").count()) >= 3);
+await page.locator(".widget-stocks .market-row").first().click();
+await page.waitForSelector(".detail-pop .coin-chart-wrap rect", { timeout: 8000 });
+check("stock detail chart renders", (await page.locator(".detail-pop .coin-chart-wrap rect").count()) > 10);
+check("stock detail shows signals", (await page.locator(".detail-pop .coin-signal").count()) >= 3);
+await page.keyboard.press("Escape");
+await page.waitForSelector(".detail-pop", { state: "detached" });
+
 // ---- gaming (free games + deals) -------------------------------------------------
 await page.waitForSelector(".widget-gaming .game-free, .widget-gaming .game-deal");
 check("gaming free games render", (await page.locator(".widget-gaming .game-free").count()) >= 1);
@@ -550,18 +560,18 @@ await page.waitForSelector(".detail-pop", { state: "detached" });
 check("coin detail closes", true);
 
 // ---- markets watchlist editor ---------------------------------------------------
-await page.waitForSelector(".market-row");
-const marketCountBefore = await page.locator(".market-row").count();
+await page.waitForSelector(".widget-markets .market-row");
+const marketCountBefore = await page.locator(".widget-markets .market-row").count();
 page.once("dialog", (dialog) => dialog.accept("solana"));
 // remove SOL first (edit mode), then re-add it via the prompt
 await page.locator("#edit-toggle").click();
-await page.waitForSelector(".market-row .icon-btn[title='Remove from watchlist']");
-await page.locator(".market-row", { hasText: "SOL" }).locator(".icon-btn[title='Remove from watchlist']").click();
-await page.waitForFunction((n) => document.querySelectorAll(".market-row").length === n - 1,
+await page.waitForSelector(".widget-markets .market-row .icon-btn[title='Remove from watchlist']");
+await page.locator(".widget-markets .market-row", { hasText: "SOL" }).locator(".icon-btn[title='Remove from watchlist']").click();
+await page.waitForFunction((n) => document.querySelectorAll(".widget-markets .market-row").length === n - 1,
   marketCountBefore, { timeout: 10000 });
 check("watchlist remove works", true);
-await page.locator(".market-note-row .link-btn").click(); // prompt answered above
-await page.waitForFunction((n) => document.querySelectorAll(".market-row").length === n,
+await page.locator(".widget-markets .market-note-row .link-btn").click(); // prompt answered above
+await page.waitForFunction((n) => document.querySelectorAll(".widget-markets .market-row").length === n,
   marketCountBefore, { timeout: 10000 });
 check("watchlist add works", true);
 await page.locator("#edit-toggle").click();

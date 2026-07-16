@@ -24,13 +24,14 @@ import markets from "./widgets/markets.js";
 import scores from "./widgets/scores.js";
 import socials from "./widgets/socials.js";
 import gaming from "./widgets/gaming.js";
+import stocks from "./widgets/stocks.js";
 import worldstate from "./widgets/worldstate.js";
 import reading from "./widgets/reading.js";
 import focus from "./widgets/focus.js";
 import system from "./widgets/system.js";
 
 const WIDGETS = Object.fromEntries(
-  [clock, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, socials, gaming, focus, system]
+  [clock, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, socials, gaming, stocks, focus, system]
     .map((w) => [w.type, w]),
 );
 

@@ -20,6 +20,7 @@ function defaultState() {
       { id: uid(), type: "reading", size: "m" },
       { id: uid(), type: "tasks", size: "m" },
       { id: uid(), type: "markets", size: "m" },
+      { id: uid(), type: "stocks", size: "m" },
       { id: uid(), type: "scores", size: "m" },
       { id: uid(), type: "socials", size: "m" },
       { id: uid(), type: "gaming", size: "m" },
@@ -79,6 +80,7 @@ function defaultState() {
     markets: { ids: ["bitcoin", "ethereum", "solana", "dogecoin"], holdings: {} },
     sports: { league: "nba" },
     socials: { network: "hn", sub: "popular" },
+    stocks: { symbols: ["^spx", "^ndq", "^dji", "aapl.us", "msft.us", "eurusd"] },
     search: { engine: "google" },
   };
 }

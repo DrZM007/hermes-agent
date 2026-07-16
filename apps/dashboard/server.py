@@ -942,6 +942,100 @@ def sample_scores(league: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Stocks / indices / FX — Stooq CSV (no key)
+# ---------------------------------------------------------------------------
+import csv as _csv
+
+STOCKS_TTL = 90
+STOCKS_HIST_TTL = 30 * 60
+STOCK_NAMES = {
+    "^spx": "S&P 500", "^ndq": "Nasdaq 100", "^dji": "Dow Jones",
+    "aapl.us": "Apple", "msft.us": "Microsoft", "nvda.us": "NVIDIA",
+    "tsla.us": "Tesla", "amzn.us": "Amazon", "googl.us": "Alphabet",
+    "eurusd": "EUR/USD", "gbpusd": "GBP/USD", "usdjpy": "USD/JPY",
+}
+
+
+def _num(v):
+    try:
+        f = float(v)
+        return f
+    except (TypeError, ValueError):
+        return None
+
+
+def live_stocks(symbols: list[str]) -> dict:
+    joined = ",".join(symbols)
+    raw = fetch_url(f"https://stooq.com/q/l/?s={joined}&f=sd2t2ohlcv&h&e=csv").decode("utf-8", "replace")
+    rows = list(_csv.DictReader(io.StringIO(raw)))
+    assets = []
+    for r in rows:
+        o = _num(r.get("Open"))
+        c = _num(r.get("Close"))
+        if c is None:
+            continue  # Stooq returns N/D off-hours / for bad symbols
+        sym = (r.get("Symbol") or "").lower()
+        change = (c - o) if (o is not None) else None
+        assets.append({
+            "symbol": sym.upper().replace(".US", ""),
+            "id": sym,
+            "name": STOCK_NAMES.get(sym, sym.upper()),
+            "price": c,
+            "change": change,
+            "changePct": (change / o * 100) if (o and change is not None) else None,
+        })
+    if not assets:
+        raise RuntimeError("no stock rows")
+    return {"source": "live", "assets": assets}
+
+
+def live_stock_history(symbol: str) -> dict:
+    raw = fetch_url(f"https://stooq.com/q/d/l/?s={symbol}&i=d").decode("utf-8", "replace")
+    rows = list(_csv.DictReader(io.StringIO(raw)))[-90:]
+    candles = []
+    for r in rows:
+        o, hi, lo, c = _num(r.get("Open")), _num(r.get("High")), _num(r.get("Low")), _num(r.get("Close"))
+        if None in (o, hi, lo, c):
+            continue
+        candles.append({"t": r.get("Date"), "o": o, "h": hi, "l": lo, "c": c})
+    if len(candles) < 2:
+        raise RuntimeError("no history")
+    closes = [c["c"] for c in candles]
+    return {"source": "live", "symbol": symbol, "candles": candles,
+            "overlays": {"sma20": indicators.sma(closes, 20), "sma50": indicators.sma(closes, 50)},
+            "signals": indicators.read_signals(closes)}
+
+
+def sample_stocks(symbols: list[str]) -> dict:
+    import random
+    base = {"^spx": 5600, "^ndq": 19800, "^dji": 41200, "aapl.us": 211.9,
+            "msft.us": 448.3, "nvda.us": 128.4, "eurusd": 1.087, "gbpusd": 1.271}
+    assets = []
+    for sym in symbols:
+        rng = random.Random(sym)
+        price = base.get(sym, 100.0)
+        chg = rng.uniform(-2.5, 2.5)
+        assets.append({
+            "symbol": sym.upper().replace(".US", ""), "id": sym,
+            "name": STOCK_NAMES.get(sym, sym.upper()),
+            "price": round(price, 4 if price < 10 else 2),
+            "change": round(price * chg / 100, 2), "changePct": round(chg, 2),
+        })
+    return {"source": "sample", "assets": assets}
+
+
+def sample_stock_history(symbol: str) -> dict:
+    base = {"^spx": 5600, "^ndq": 19800, "aapl.us": 211.9, "eurusd": 1.087}.get(symbol, 100.0)
+    candles = _synth_candles(symbol, 90, base)
+    for c in candles:  # stocks use date strings, not ms timestamps
+        c["t"] = None
+    closes = [c["c"] for c in candles]
+    return {"source": "sample", "symbol": symbol, "candles": candles,
+            "overlays": {"sma20": indicators.sma(closes, 20), "sma50": indicators.sma(closes, 50)},
+            "signals": indicators.read_signals(closes)}
+
+
+# ---------------------------------------------------------------------------
 # Gaming data — Epic free games + Steam specials (both no-key)
 # ---------------------------------------------------------------------------
 GAMING_TTL = 30 * 60
@@ -1650,6 +1744,21 @@ class Api:
             lambda: sample_coin_chart(coin_id, days),
         )
 
+    def stocks(self, params: dict) -> dict:
+        raw = params.get("symbols", [""])[0]
+        syms = [s for s in (re.sub(r"[^a-z0-9.^-]", "", p.lower()) for p in raw.split(",")) if s][:15]
+        syms = syms or ["^spx", "^ndq", "^dji", "aapl.us", "msft.us", "eurusd"]
+        key = "stocks:" + ",".join(syms)
+        return self._cached(key, STOCKS_TTL,
+                            lambda: live_stocks(syms), lambda: sample_stocks(syms))
+
+    def stocks_history(self, params: dict) -> dict:
+        sym = re.sub(r"[^a-z0-9.^-]", "", params.get("symbol", ["^spx"])[0].lower())[:20]
+        if not sym:
+            raise ApiError(400, "missing symbol")
+        return self._cached(f"stockhist:{sym}", STOCKS_HIST_TTL,
+                            lambda: live_stock_history(sym), lambda: sample_stock_history(sym))
+
     def gaming_free(self, params: dict) -> dict:
         return self._cached("gaming:free", GAMING_TTL, live_free_games, sample_free_games)
 
@@ -2105,6 +2214,8 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/social": "social",
         "/api/gaming/free": "gaming_free",
         "/api/gaming/deals": "gaming_deals",
+        "/api/stocks": "stocks",
+        "/api/stocks/history": "stocks_history",
         "/api/worldstate": "worldstate",
         "/api/reader": "reader",
         "/api/health": "health",

@@ -503,6 +503,28 @@ class MarketsWatchlistTests(unittest.TestCase):
         self.assertTrue(t["coins"])
         self.assertIn("symbol", t["coins"][0])
 
+    def test_stocks_sample_and_history(self):
+        d = self.api.stocks({})
+        self.assertTrue(d["assets"])
+        a = d["assets"][0]
+        for k in ("symbol", "name", "price", "changePct"):
+            self.assertIn(k, a)
+        hist = self.api.stocks_history({"symbol": ["^spx"]})
+        self.assertGreaterEqual(len(hist["candles"]), 2)
+        self.assertIn("sma20", hist["overlays"])
+
+    def test_stocks_csv_normalizer_skips_nd(self):
+        csv_text = ("Symbol,Date,Time,Open,High,Low,Close,Volume\n"
+                    "AAPL.US,2026-07-16,22:00:00,200,205,199,204,1000\n"
+                    "BADX.US,N/D,N/D,N/D,N/D,N/D,N/D,N/D\n")
+        import unittest.mock as mock
+        with mock.patch.object(server, "fetch_url", return_value=csv_text.encode()):
+            out = server.live_stocks(["aapl.us", "badx.us"])
+        self.assertEqual(len(out["assets"]), 1)          # N/D row skipped
+        a = out["assets"][0]
+        self.assertEqual(a["symbol"], "AAPL")
+        self.assertAlmostEqual(a["changePct"], (204 - 200) / 200 * 100)
+
     def test_scores_sample_shape(self):
         for league in ("nba", "nfl", "epl"):
             d = self.api.scores({"league": [league]})
