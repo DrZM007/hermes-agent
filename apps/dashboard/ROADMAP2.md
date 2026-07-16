@@ -28,10 +28,12 @@ Effort key: **S** < ½ day · **M** ~1 day · **L** multi-day.
 - ✅ **§2.2 standings** (scores detail) · ✅ **§3.1 Google News follow-a-search**
   · ✅ **§3.2 richer reader** (image/byline/reading time) · ✅ **§4.2 at-a-glance
   hero** — shipped.
+- ✅ **§5 intel widgets (first batch)** — world clock, seismic monitor (USGS),
+  currency converter (Frankfurter) — shipped on a new "Intel" page.
 - ⬜ Still pending: §0.3 registry, §1.6 smarter alerts, §1.7 crypto converter,
-  §2.3 follow teams, §3.3 topic detail window, §3.4 podcasts, and the
-  §5 intel/utility widgets (world clock, FX converter, air/pollen, weather
-  alerts, earthquakes, space weather, flights, RSS-reader folders).
+  §2.3 follow teams, §3.3 topic detail window, §3.4 podcasts, and the remaining
+  §5 widgets (air quality/pollen, weather alerts, space weather, flights,
+  RSS-reader folders).
 
 ---
 
