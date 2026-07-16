@@ -537,6 +537,20 @@ await page.locator(".palette-item", { hasText: /coffee/i }).first().click();
 await page.waitForSelector(".widget-tasks.widget-flash", { timeout: 3000 });
 check("palette jump flashes the target widget", true);
 
+// palette can run typed text as an agent command (reuses the agent loop)
+await page.keyboard.press("Control+k");
+await page.waitForSelector(".palette", { timeout: 5000 });
+await page.locator(".palette-input").fill("add task E2E palette wins");
+await page.waitForFunction(() =>
+  [...document.querySelectorAll(".palette-item")].some((el) => /as a command/i.test(el.textContent)),
+  null, { timeout: 5000 });
+check("palette offers run-as-command", true);
+await page.locator(".palette-item", { hasText: /as a command/i }).click();
+await page.waitForFunction(() =>
+  [...document.querySelectorAll(".task-text")].some((el) => el.textContent.includes("E2E palette wins")),
+  null, { timeout: 8000 });
+check("palette runs command through the agent", true);
+
 // ---- focus timer ----------------------------------------------------------------
 await page.waitForSelector(".widget-focus .focus-clock", { timeout: 10000 });
 check("focus timer shows 25:00 idle",

@@ -539,6 +539,22 @@ function paletteDataMatches(q) {
   return matches.slice(0, 8);
 }
 
+// Run typed text as an agent command by driving the Agent widget's own form,
+// so it reuses the entire agent loop (local parser or Claude) and its
+// permission gate — the palette just hands off the text.
+function runAgentCommand(text) {
+  const input = document.querySelector(".agent-input");
+  const submit = document.querySelector(".agent-form .btn-primary");
+  if (!input || !submit) {
+    toast("Add the Agent widget to run commands", "error");
+    return;
+  }
+  flashWidget("agent");
+  input.value = text;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  submit.click();
+}
+
 function paletteCommands(query = "") {
   const commands = [
     { label: "Toggle edit layout", hint: "layout", run: () => document.getElementById("edit-toggle").click() },
@@ -570,8 +586,17 @@ function paletteCommands(query = "") {
     });
   }
   // Data hits are query-specific; they lead the list so "find my stuff" is fast.
+  // After them, an explicit "run this as a command" hands the text to the agent.
   const q = query.trim().toLowerCase();
-  if (q) return [...paletteDataMatches(q), ...commands];
+  if (q) {
+    const runCmd = {
+      label: `Run “${query.trim()}” as a command`,
+      hint: "agent",
+      keep: true, // survive the label-substring filter in refresh()
+      run: () => runAgentCommand(query.trim()),
+    };
+    return [...paletteDataMatches(q), runCmd, ...commands];
+  }
   return commands;
 }
 
@@ -590,8 +615,11 @@ function openPalette() {
   let selectedIdx = 0;
 
   const refresh = () => {
-    const q = input.value.trim().toLowerCase();
-    filtered = paletteCommands(q).filter((c) => c.label.toLowerCase().includes(q));
+    // Pass the original-case text to paletteCommands (so a run-command keeps
+    // the user's casing); lowercase only for the label-substring filter.
+    const raw = input.value.trim();
+    const q = raw.toLowerCase();
+    filtered = paletteCommands(raw).filter((c) => c.keep || c.label.toLowerCase().includes(q));
     selectedIdx = Math.min(selectedIdx, Math.max(0, filtered.length - 1));
     clear(list);
     filtered.slice(0, 12).forEach((cmd, i) => {
