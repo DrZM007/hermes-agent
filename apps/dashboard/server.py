@@ -2747,6 +2747,10 @@ def make_server(
     run_automations: bool = False,
 ) -> ThreadingHTTPServer:
     data_dir = data_dir or APP_DIR / "data"
+    # Honour the documented HERMES_HUB_API_KEY by mapping it to the variable the
+    # anthropic SDK actually reads, so either name enables the live agent.
+    if os.environ.get("HERMES_HUB_API_KEY") and not os.environ.get("ANTHROPIC_API_KEY"):
+        os.environ["ANTHROPIC_API_KEY"] = os.environ["HERMES_HUB_API_KEY"]
     store = StateStore(data_dir / "hub.db")
     api = Api(offline=offline, state_store=store, data_dir=data_dir)
     if run_automations:
