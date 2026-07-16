@@ -1453,6 +1453,38 @@ class Api:
             })
         return {"backups": out}
 
+    def backup_get(self, params: dict) -> dict:
+        """Return a named server-side backup's full snapshot (for off-box download)."""
+        name = params.get("name", [""])[0]
+        if not re.fullmatch(r"hub-[0-9-]+\.json", name):
+            raise ApiError(400, "bad backup name")
+        path = self.backups_dir / name
+        if not path.is_file():
+            raise ApiError(404, "no such backup")
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            raise ApiError(500, "backup file is unreadable") from None
+
+    def backup_import(self, body: dict) -> dict:
+        """Adopt an uploaded snapshot into the server-side backup set.
+
+        Lets a backup that was downloaded off-box (before a container reset) be
+        brought back in, then restored via /api/backup/restore. Validated the
+        same way as restore; the snapshot is not applied until restore is called.
+        """
+        snap = body.get("snapshot")
+        if not isinstance(snap, dict) or snap.get("kind") != "hermes-hub-backup":
+            raise ApiError(400, "not a hermes hub backup")
+        self.backups_dir.mkdir(parents=True, exist_ok=True)
+        name = f"hub-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.json"
+        path = self.backups_dir / name
+        path.write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
+        files = sorted(self.backups_dir.glob("hub-*.json"))
+        for old in files[:-BACKUP_KEEP]:
+            old.unlink()
+        return {"name": name, "count": min(len(files), BACKUP_KEEP)}
+
     def backup_restore(self, body: dict) -> dict:
         name = str(body.get("name", ""))
         if not re.fullmatch(r"hub-[0-9-]+\.json", name):
@@ -1592,6 +1624,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/calendars": "calendars_list",
         "/api/events": "ics_events",
         "/api/backups": "backups_list",
+        "/api/backup/get": "backup_get",
         "/api/assistant/telemetry": "telemetry_get",
         "/api/killswitch": "killswitch_get",
         "/api/evolve": "evolve_list",
@@ -1609,6 +1642,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/calendars": "calendars_op",
         "/api/backup": "backup_now",
         "/api/backup/restore": "backup_restore",
+        "/api/backup/import": "backup_import",
         "/api/assistant/telemetry": "telemetry_post",
         "/api/killswitch": "killswitch_set",
         "/api/assistant/routing": "routing_set",

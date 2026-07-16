@@ -425,6 +425,38 @@ function renderSettingsMenu() {
         picker.click();
       },
     }, "Import data…"),
+    h("button.menu-item", {
+      type: "button",
+      title: "Download a full server-side snapshot (state, feeds, calendars, automations, memory) to keep off-box",
+      onclick: async () => {
+        try {
+          const { name } = await api.backupNow();
+          const snap = await api.backupGet(name);
+          const blob = new Blob([JSON.stringify(snap)], { type: "application/json" });
+          const a = h("a", { href: URL.createObjectURL(blob), download: name });
+          a.click();
+          URL.revokeObjectURL(a.href);
+          toast("Server backup downloaded");
+        } catch (err) { toast(`Backup failed: ${err.message}`, "error"); }
+      },
+    }, "Download server backup…"),
+    h("button.menu-item", {
+      type: "button",
+      title: "Import a downloaded server backup and restore the whole hub from it",
+      onclick: () => {
+        const picker = h("input", { type: "file", accept: "application/json" });
+        picker.addEventListener("change", async () => {
+          try {
+            const snapshot = JSON.parse(await picker.files[0].text());
+            const { name } = await api.backupImport(snapshot);
+            await api.backupRestore(name);
+            toast("Server backup restored");
+            location.reload();
+          } catch (err) { toast(`Restore failed: ${err.message}`, "error"); }
+        });
+        picker.click();
+      },
+    }, "Restore server backup…"),
     h("button.menu-item.menu-danger", {
       type: "button",
       onclick: () => {

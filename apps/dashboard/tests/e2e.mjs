@@ -703,6 +703,23 @@ await page.locator(".accent-swatch[aria-label='Accent cyan']").click();
 check("accent reset clears override", await page.evaluate(() =>
   document.documentElement.style.getPropertyValue("--accent") === ""));
 
+// ---- server backup download + import roundtrip ------------------------------
+const backupOk = await page.evaluate(async () => {
+  const post = (url, body) => fetch(url, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+  const mk = await post("/api/backup", {});
+  const snap = await (await fetch("/api/backup/get?name=" + mk.name)).json();
+  if (snap.kind !== "hermes-hub-backup") return false;
+  const imp = await post("/api/backup/import", { snapshot: snap });
+  return /^hub-/.test(imp.name || "");
+});
+check("server backup download+import roundtrip", backupOk === true);
+await page.locator(".menu-wrap > .btn").click();
+check("server backup menu items present",
+  (await page.locator(".menu-item", { hasText: "Download server backup" }).count()) === 1 &&
+  (await page.locator(".menu-item", { hasText: "Restore server backup" }).count()) === 1);
+await page.locator(".menu-wrap > .btn").click(); // toggle the menu closed again
+
 // ---- model routing overrides (Phase 1 UI) -----------------------------------
 await page.locator(".menu-wrap > .btn").click();
 await page.locator(".menu-item", { hasText: "Model routing" }).click();

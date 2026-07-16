@@ -1024,6 +1024,37 @@ class BackupTests(unittest.TestCase):
             self.api.backup_now({})
         self.assertEqual(len(self.api.backups_list({})["backups"]), server.BACKUP_KEEP)
 
+    def test_backup_get_returns_snapshot_and_validates_name(self):
+        self.api.memory_append("marker fact")
+        name = self.api.backup_now({})["name"]
+        snap = self.api.backup_get({"name": [name]})
+        self.assertEqual(snap["kind"], "hermes-hub-backup")
+        self.assertIn("marker fact", snap["memory"])
+        with self.assertRaises(server.ApiError):
+            self.api.backup_get({"name": ["../etc/passwd"]})
+        with self.assertRaises(server.ApiError):
+            self.api.backup_get({"name": ["hub-nope.json"]})
+
+    def test_backup_import_roundtrips_via_get(self):
+        self.api.memory_append("offbox fact")
+        name = self.api.backup_now({})["name"]
+        snap = self.api.backup_get({"name": [name]})
+        # simulate wiping the box, then re-importing the downloaded snapshot
+        for f in self.api.backups_dir.glob("hub-*.json"):
+            f.unlink()
+        info = self.api.backup_import({"snapshot": snap})
+        self.assertRegex(info["name"], r"^hub-[0-9-]+\.json$")
+        self.assertEqual(len(self.api.backups_list({})["backups"]), 1)
+        # and it restores
+        result = self.api.backup_restore({"name": info["name"]})
+        self.assertIn("memory", result["restored"])
+
+    def test_backup_import_rejects_non_backup(self):
+        with self.assertRaises(server.ApiError):
+            self.api.backup_import({"snapshot": {"kind": "something-else"}})
+        with self.assertRaises(server.ApiError):
+            self.api.backup_import({"snapshot": "not-a-dict"})
+
     def test_restore_roundtrips_state_and_config(self):
         self.api.calendars.add("Work", "https://example.org/work.ics")
         self.api.feeds.add_topic("gadgets")
