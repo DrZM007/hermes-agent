@@ -273,6 +273,36 @@ a { color: inherit; }
 .menu-item:hover { background: var(--accent-dim); color: var(--ink); }
 .menu-danger:hover { background: rgba(208, 59, 59, 0.12); color: var(--danger); }
 
+.menu-accents {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 6px;
+  border-top: 1px solid var(--hairline);
+  margin-top: 4px;
+}
+.menu-accents-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-right: auto;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+.accent-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hairline-2);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 120ms, box-shadow 120ms;
+}
+.accent-swatch:hover { transform: scale(1.15); }
+.accent-swatch-on {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px currentColor;
+}
+
 /* ---------- grid & widget cards ---------- */
 
 .grid {
@@ -573,6 +603,14 @@ a { color: inherit; }
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   background: var(--accent-dim);
 }
+
+.news-search {
+  width: 100%;
+  margin: 8px 0 6px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+}
+.news-search::placeholder { color: var(--muted); }
 
 .news-list {
   display: flex;

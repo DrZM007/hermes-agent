@@ -654,6 +654,37 @@ if (process.env.AUTH_URL && process.env.AUTH_TOKEN) {
   console.log("  – auth lock-screen checks skipped (set AUTH_URL + AUTH_TOKEN)");
 }
 
+// ---- news search (client-side filter, no refetch) ---------------------------
+// Run late so the transient toasts these steps raise can't race earlier checks.
+await page.locator(".tab", { hasText: "Top" }).click();
+await page.waitForSelector(".news-item");
+const newsBefore = await page.locator(".news-item").count();
+const firstHeadline = (await page.locator(".news-title").first().innerText()).split(" ")[0];
+await page.locator(".news-search").fill(firstHeadline);
+await page.waitForFunction(
+  (n) => document.querySelectorAll(".news-item").length <= n,
+  newsBefore, { timeout: 4000 });
+check("news search filters results", (await page.locator(".news-item").count()) <= newsBefore);
+await page.locator(".news-search").fill("zzzznotarealheadlinexyzzy");
+await page.waitForFunction(() => document.querySelectorAll(".news-item").length === 0, null, { timeout: 4000 });
+check("news search shows empty state on no match",
+  (await page.locator(".news-list .muted").count()) >= 1);
+await page.locator(".news-search").fill("");
+await page.waitForSelector(".news-item");
+check("clearing news search restores items", (await page.locator(".news-item").count()) > 2);
+
+// ---- accent presets ----------------------------------------------------------
+await page.locator(".menu-wrap > .btn").click();
+await page.locator(".accent-swatch[aria-label='Accent amber']").click();
+check("accent preset applies", await page.evaluate(() =>
+  getComputedStyle(document.documentElement).getPropertyValue("--accent").trim().toLowerCase() === "#f2b13c"));
+check("accent persists to state", await page.evaluate(() =>
+  JSON.parse(localStorage.getItem("hermesHub.v1"))?.accent === "amber"));
+await page.locator(".menu-wrap > .btn").click();
+await page.locator(".accent-swatch[aria-label='Accent cyan']").click();
+check("accent reset clears override", await page.evaluate(() =>
+  document.documentElement.style.getPropertyValue("--accent") === ""));
+
 // ---- console health -----------------------------------------------------------------
 const realErrors = errors.filter((e) => !e.includes("favicon"));
 check(`no console/page errors (${realErrors.length})`, realErrors.length === 0);

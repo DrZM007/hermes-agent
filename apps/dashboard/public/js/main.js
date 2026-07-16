@@ -49,6 +49,31 @@ function applyTheme() {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
 
+// Accent presets — each stays within the intelligence-agency aesthetic. "cyan"
+// is the house default; picking it clears the overrides so the per-theme tokens
+// (which differ light/dark) apply. Others set the three accent vars inline.
+const ACCENTS = {
+  cyan:   null,
+  amber:  { accent: "#f2b13c", dim: "rgba(242,177,60,0.13)",  ink: "#1a1206" },
+  green:  { accent: "#35d07f", dim: "rgba(53,208,127,0.13)",  ink: "#04120b" },
+  magenta:{ accent: "#e26bd0", dim: "rgba(226,107,208,0.13)", ink: "#1a0616" },
+};
+const ACCENT_ORDER = Object.keys(ACCENTS);
+
+function applyAccent() {
+  const root = document.documentElement;
+  const preset = ACCENTS[store.state.accent] ?? null;
+  if (!preset) {
+    root.style.removeProperty("--accent");
+    root.style.removeProperty("--accent-dim");
+    root.style.removeProperty("--accent-ink");
+    return;
+  }
+  root.style.setProperty("--accent", preset.accent);
+  root.style.setProperty("--accent-dim", preset.dim);
+  root.style.setProperty("--accent-ink", preset.ink);
+}
+
 function cycleTheme() {
   const order = ["auto", "light", "dark"];
   const next = order[(order.indexOf(store.state.theme) + 1) % order.length];
@@ -56,6 +81,14 @@ function cycleTheme() {
   applyTheme();
   toast(`Theme: ${next}`);
   renderTopbar();
+}
+
+function setAccent(name) {
+  if (!(name in ACCENTS)) return;
+  store.update((state) => { state.accent = name; }, "accent");
+  applyAccent();
+  renderTopbar();
+  toast(`Accent: ${name}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -344,6 +377,20 @@ function renderSettingsMenu() {
       type: "button",
       onclick: () => openEvolve(),
     }, "Agent proposals…"),
+    h("div.menu-accents", { role: "group", "aria-label": "Accent color" },
+      h("span.menu-accents-label", {}, "ACCENT"),
+      ...ACCENT_ORDER.map((name) =>
+        h("button.accent-swatch", {
+          type: "button",
+          title: name,
+          "aria-label": `Accent ${name}`,
+          "aria-pressed": String(store.state.accent === name),
+          class: store.state.accent === name ? "accent-swatch accent-swatch-on" : "accent-swatch",
+          style: { background: ACCENTS[name] ? ACCENTS[name].accent : "#41d3ea" },
+          onclick: (ev) => { ev.stopPropagation(); setAccent(name); },
+        }),
+      ),
+    ),
     h("button.menu-item", {
       type: "button",
       onclick: () => {
@@ -575,6 +622,7 @@ function bindShortcuts() {
 
 function boot() {
   applyTheme();
+  applyAccent();
   renderTopbar();
   renderGrid();
   renderFooter();

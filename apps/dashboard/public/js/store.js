@@ -8,6 +8,7 @@ function defaultState() {
   return {
     version: 1,
     theme: "dark", // auto | light | dark — dark is the house style
+    accent: "cyan", // cyan (default) | amber | green | magenta
     editMode: false,
     layout: [
       { id: uid(), type: "clock", size: "m" },

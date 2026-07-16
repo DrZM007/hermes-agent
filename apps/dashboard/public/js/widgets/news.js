@@ -23,6 +23,13 @@ export default {
 
   render(body, ctx) {
     const { store } = ctx;
+    let query = "";        // client-side search filter (never refetches)
+
+    const matches = (item) => {
+      if (!query) return true;
+      const hay = `${item.title} ${item.summary || ""} ${item.source}`.toLowerCase();
+      return query.split(/\s+/).every((term) => hay.includes(term));
+    };
 
     const draw = async () => {
       const active = store.state.news.topic;
@@ -41,10 +48,21 @@ export default {
         ),
       );
 
+      const search = h("input.input.news-search", {
+        type: "search",
+        placeholder: "Filter headlines…",
+        "aria-label": "Filter headlines",
+        value: query,
+        oninput: (ev) => {
+          query = ev.target.value.trim().toLowerCase();
+          renderItems();
+        },
+      });
+
       const list = h("div.news-list", {
         onscroll: () => { lastScroll = list.scrollTop; },
       }, h("div.widget-loading", {}, "Fetching headlines…"));
-      clear(body).append(tabs, list);
+      clear(body).append(tabs, search, list);
 
       let data;
       try {
@@ -55,13 +73,22 @@ export default {
       }
       ctx.setBadge(data.source === "sample" ? "sample" : null);
       ctx._trackItems?.(data.items);
+      lastItems = data.items;
 
+      // renderItems paints lastItems through the current filter — the search
+      // box calls it directly, so typing never hits the network.
+      renderItems = () => {
       clear(list);
-      if (!data.items.length) {
+      const items = lastItems.filter(matches);
+      if (!lastItems.length) {
         list.append(h("div.muted", {}, "No stories right now."));
         return;
       }
-      for (const item of data.items) {
+      if (!items.length) {
+        list.append(h("div.muted", {}, `No headlines match “${query}”.`));
+        return;
+      }
+      for (const item of items) {
         const anchor = h("a.news-item", {
             href: item.url, target: "_blank", rel: "noopener noreferrer",
             class: isRead(item.url) ? "news-item news-read" : "news-item",
@@ -106,8 +133,11 @@ export default {
         }));
       }
       list.scrollTop = lastScroll; // keep the reading position across redraws
+      };
+      renderItems();
     };
 
+    let renderItems = () => {};  // reassigned by draw() once data is fetched
     let lastItems = [];
     let lastScroll = 0;
     ctx.onSummarize(() => ({
