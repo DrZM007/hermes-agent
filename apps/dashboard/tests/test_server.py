@@ -214,11 +214,27 @@ class AssistantLocalTests(unittest.TestCase):
 
     def test_add_task_command(self):
         actions = self._actions(self._chat("add task buy stamps to errands"))
-        self.assertEqual(actions, [("add_task", {"text": "buy stamps", "list": "Errands"})])
+        self.assertEqual(actions, [("add_task", {"text": "buy stamps", "list": "Errands",
+                                                 "due": None, "priority": None})])
 
     def test_add_task_defaults_to_today(self):
         actions = self._actions(self._chat("task: water plants"))
         self.assertEqual(actions[0][1]["list"], "Today")
+
+    def test_add_task_parses_due_and_priority(self):
+        actions = self._actions(self._chat("add task pay rent !high @2026-07-20 to bills"))
+        name, args = actions[0]
+        self.assertEqual(name, "add_task")
+        self.assertEqual(args["text"], "pay rent")
+        self.assertEqual(args["list"], "Bills")
+        self.assertEqual(args["due"], "2026-07-20")
+        self.assertEqual(args["priority"], "high")
+
+    def test_parse_task_tokens_relative_dates(self):
+        from datetime import date, timedelta
+        _, due, prio = assistant.parse_task_tokens("ship it !low @tomorrow")
+        self.assertEqual(due, (date.today() + timedelta(days=1)).isoformat())
+        self.assertEqual(prio, "low")
 
     def test_complete_command(self):
         actions = self._actions(self._chat("complete pay rent"))

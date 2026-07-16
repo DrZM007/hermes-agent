@@ -176,6 +176,19 @@ check("task added", await page.locator(".task-text", { hasText: "E2E: buy coffee
 await page.locator(".task-item", { hasText: "E2E: buy coffee beans" }).locator("input[type=checkbox]").check();
 check("task toggles done", (await page.locator(".task-done", { hasText: "E2E: buy coffee beans" }).count()) === 1);
 
+// structured tasks: inline !priority and @due tokens
+await taskInput.fill("E2E: file taxes !high @2026-07-20");
+await taskInput.press("Enter");
+const prioTask = page.locator(".task-item", { hasText: "E2E: file taxes" });
+check("task text strips inline tokens",
+  (await prioTask.locator(".task-text").innerText()) === "E2E: file taxes");
+check("high-priority task gets a priority rail",
+  (await page.locator(".task-item.task-prio-high", { hasText: "file taxes" }).count()) === 1);
+check("due date renders a chip", (await prioTask.locator(".task-due").count()) === 1);
+check("due date persisted to state", await page.evaluate(() =>
+  JSON.parse(localStorage.getItem("hermesHub.v1")).tasks.lists
+    .flatMap((l) => l.items).some((t) => t.text === "E2E: file taxes" && t.due === "2026-07-20" && t.priority === "high")));
+
 // ---- notes autosave ----------------------------------------------------------
 await page.locator(".note-pad").fill("E2E note line one\nsecond line");
 await page.waitForTimeout(700); // debounce

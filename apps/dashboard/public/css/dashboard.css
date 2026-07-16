@@ -664,6 +664,28 @@ a { color: inherit; }
 .task-item:last-child { border-bottom: none; }
 .task-item input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
 .task-text { flex: 1; cursor: pointer; }
+
+/* priority: a colored left rail on open tasks */
+.task-prio-high { border-left: 2px solid var(--status-critical); padding-left: 6px; margin-left: -8px; }
+.task-prio-normal { border-left: 2px solid var(--status-warning); padding-left: 6px; margin-left: -8px; }
+.task-prio-low { border-left: 2px solid var(--hairline-2); padding-left: 6px; margin-left: -8px; }
+
+/* due-date chip */
+.task-due {
+  flex: 0 0 auto;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  border: 1px solid var(--hairline-2);
+  border-radius: 2px;
+  padding: 1px 6px;
+}
+.task-due-overdue {
+  color: var(--status-critical);
+  border-color: color-mix(in srgb, var(--status-critical) 45%, transparent);
+  background: color-mix(in srgb, var(--status-critical) 10%, transparent);
+}
 .task-done .task-text { color: var(--muted); text-decoration: line-through; }
 .task-item .icon-btn { opacity: 0; }
 .task-item:hover .icon-btn { opacity: 1; }
@@ -751,7 +773,10 @@ a { color: inherit; }
   width: 5px;
   height: 5px;
 }
+.cal-dot-task { background: var(--status-warning); }
 .cal-cell .cal-dot + .cal-dot-ext { left: calc(50% + 7px); }
+.cal-cell .cal-dot-task:not(:first-of-type) { left: calc(50% + 7px); }
+.cal-event-task .cal-event-title { color: var(--ink-2); }
 .cal-form { display: flex; gap: 8px; margin: 10px 0 6px; }
 .cal-events { list-style: none; margin: 0; padding: 0; }
 .cal-event { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px solid var(--hairline); }

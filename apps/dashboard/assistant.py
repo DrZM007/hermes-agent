@@ -67,15 +67,18 @@ and suggest the closest thing you can do."""
 DASHBOARD_TOOLS = [
     {
         "name": "add_task",
-        "description": "Add a to-do item to one of the user's lists. Call once per task. Use the list name the user mentioned, or 'Today' when unspecified.",
+        "description": "Add a to-do item to one of the user's lists. Call once per task. Use the list name the user mentioned, or 'Today' when unspecified. Set due (YYYY-MM-DD) and/or priority when the user implies a deadline or urgency; otherwise pass null.",
         "strict": True,
         "input_schema": {
             "type": "object",
             "properties": {
                 "text": {"type": "string", "description": "The task text"},
                 "list": {"type": "string", "description": "Target list name, e.g. 'Today' or 'Groceries'"},
+                "due": {"type": ["string", "null"], "description": "Due date YYYY-MM-DD, or null"},
+                "priority": {"type": ["string", "null"], "enum": ["high", "normal", "low", None],
+                             "description": "Task priority, or null"},
             },
-            "required": ["text", "list"],
+            "required": ["text", "list", "due", "priority"],
             "additionalProperties": False,
         },
     },
@@ -949,6 +952,39 @@ _LIST_AUTOS = re.compile(r"^(?:list|show)(?:\s+my)?\s+automations?\.?$", re.I)
 _DELETE_AUTO = re.compile(r"^(?:delete|remove)\s+automation\s+#?(\d+)\.?$", re.I)
 
 
+_PRIO_TOKEN = re.compile(r"(?:^|\s)!(high|hi|urgent|low|med|medium|normal)\b", re.I)
+_DUE_TOKEN = re.compile(r"(?:^|\s)(?:@|by\s+)(\d{4}-\d{2}-\d{2}|today|tomorrow)\b", re.I)
+
+
+def parse_task_tokens(text: str) -> tuple[str, str | None, str | None]:
+    """Extract inline !priority and @due tokens from task text (mirrors the
+    client's parseTaskInput). Returns (clean_text, due|None, priority|None)."""
+    priority = None
+    due = None
+
+    def _prio(m):
+        nonlocal priority
+        k = m.group(1).lower()
+        priority = ("high" if k in ("high", "hi", "urgent")
+                    else "normal" if k in ("med", "medium", "normal") else "low")
+        return " "
+
+    def _due(m):
+        nonlocal due
+        k = m.group(1).lower()
+        if k == "today":
+            due = date.today().isoformat()
+        elif k == "tomorrow":
+            due = date.fromordinal(date.today().toordinal() + 1).isoformat()
+        else:
+            due = m.group(1)
+        return " "
+
+    text = _PRIO_TOKEN.sub(_prio, text)
+    text = _DUE_TOKEN.sub(_due, text)
+    return " ".join(text.split()).strip(), due, priority
+
+
 def _clock(hour: str, minute: str | None, ampm: str | None) -> str:
     h = int(hour) % 24
     if ampm:
@@ -1043,13 +1079,18 @@ def parse_local_command(text: str, context: dict) -> tuple[list, str]:
 
     match = _TASK_CMD.match(text)
     if match and not text.lower().startswith(("what", "how", "why", "brief")):
-        task_text = match.group(1).strip().rstrip(".")
+        raw_text = match.group(1).strip().rstrip(".")
+        task_text, due, priority = parse_task_tokens(raw_text)
         target_list = (match.group(2) or "Today").strip().title()
-        reply = f"Added “{task_text}” to {target_list}."
+        detail = ", ".join(filter(None, [
+            f"due {due}" if due else None,
+            f"{priority} priority" if priority else None]))
+        reply = f"Added “{task_text}” to {target_list}" + (f" ({detail})." if detail else ".")
         suggestion = suggest_automation(task_text)
         if suggestion:
             reply += f" Tip: {suggestion}."
-        return [("add_task", {"text": task_text, "list": target_list})], reply
+        return [("add_task", {"text": task_text, "list": target_list,
+                              "due": due, "priority": priority})], reply
 
     if re.search(r"\b(brief|briefing|focus|plate|agenda|catch me up)\b", text, re.I):
         return [], local_briefing(context)

@@ -46,19 +46,24 @@ function findList(state, name) {
 }
 
 const HANDLERS = {
-  add_task({ text, list }) {
+  add_task({ text, list, due, priority }) {
     if (!text) throw new Error("empty task");
     const listName = list || "Today";
+    const item = { id: uid(), text, done: false };
+    if (due && /^\d{4}-\d{2}-\d{2}$/.test(due)) item.due = due;
+    if (["high", "normal", "low"].includes(priority)) item.priority = priority;
     store.update((state) => {
       let target = findList(state, listName);
       if (!target) {
         target = { id: uid(), name: listName, items: [] };
         state.tasks.lists.push(target);
       }
-      target.items.push({ id: uid(), text, done: false });
+      target.items.push(item);
       state.tasks.activeList = target.id;
     }, "tasks-external");
-    return `added task “${text}” → ${listName}`;
+    const extra = [item.due && `due ${item.due}`, item.priority && `${item.priority} priority`]
+      .filter(Boolean).join(", ");
+    return `added task “${text}” → ${listName}${extra ? ` (${extra})` : ""}`;
   },
 
   complete_task({ text }) {

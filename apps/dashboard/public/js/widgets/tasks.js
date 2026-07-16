@@ -1,5 +1,36 @@
 import { h, clear, uid, toast } from "../utils.js";
 
+const PRIORITY_RANK = { high: 0, normal: 1, low: 2 };
+
+function ymd(date) {
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${m}-${d}`;
+}
+
+// Parse inline tokens from a task's text: "!high"/"!low"/"!med" set priority;
+// "@2026-07-20", "@today", "@tomorrow" (or "by <date>") set a due date. Tokens
+// are stripped from the stored text. Returns {text, due, priority}.
+export function parseTaskInput(raw) {
+  let text = raw;
+  let priority;
+  let due;
+  text = text.replace(/(?:^|\s)!(high|hi|urgent|low|med|medium|normal)\b/i, (_, p) => {
+    const k = p.toLowerCase();
+    priority = (k === "hi" || k === "urgent") ? "high"
+      : (k === "med" || k === "medium" || k === "normal") ? "normal" : k;
+    return "";
+  });
+  text = text.replace(/(?:^|\s)(?:@|by\s+)(\d{4}-\d{2}-\d{2}|today|tomorrow)\b/i, (_, d) => {
+    const k = d.toLowerCase();
+    if (k === "today") due = ymd(new Date());
+    else if (k === "tomorrow") due = ymd(new Date(Date.now() + 86400000));
+    else due = d;
+    return "";
+  });
+  return { text: text.replace(/\s+/g, " ").trim(), due, priority };
+}
+
 export default {
   type: "tasks",
   title: "Lists",
@@ -48,23 +79,56 @@ export default {
 
       const input = h("input.input", {
         type: "text",
-        placeholder: `Add to ${list.name}…`,
+        placeholder: `Add to ${list.name}…  (!high  @2026-07-20)`,
+        title: "Tip: add !high/!low for priority and @YYYY-MM-DD (or @tomorrow) for a due date",
         "aria-label": `Add task to ${list.name}`,
       });
       const form = h("form.task-form", {
         onsubmit: (ev) => {
           ev.preventDefault();
-          const text = input.value.trim();
+          const raw = input.value.trim();
+          if (!raw) return;
+          const { text, due, priority } = parseTaskInput(raw);
           if (!text) return;
           store.update((state) => {
-            state.tasks.lists.find((l) => l.id === list.id).items.push({ id: uid(), text, done: false });
+            const item = { id: uid(), text, done: false };
+            if (due) item.due = due;
+            if (priority) item.priority = priority;
+            state.tasks.lists.find((l) => l.id === list.id).items.push(item);
           }, "tasks");
           draw();
         },
       }, input, h("button.btn.btn-primary", { type: "submit" }, "Add"));
 
+      const todayStr = ymd(new Date());
+      const dueChip = (task) => {
+        if (!task.due || task.done) return null;
+        const overdue = task.due < todayStr;
+        const label = task.due === todayStr ? "today"
+          : task.due === ymd(new Date(Date.now() + 86400000)) ? "tomorrow"
+          : new Date(task.due + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        return h("span.task-due", {
+          class: overdue ? "task-due task-due-overdue" : "task-due",
+          title: `Due ${task.due}${overdue ? " (overdue)" : ""}`,
+        }, overdue ? `⚠ ${label}` : label);
+      };
+
+      // Open tasks sort by priority then due date; done tasks sink to the
+      // bottom in their original order. Sorting is stable on a copy so the
+      // stored list order is untouched.
+      const ordered = list.items.map((t, i) => [t, i]).sort((a, b) => {
+        if (a[0].done !== b[0].done) return a[0].done ? 1 : -1;
+        const pa = PRIORITY_RANK[a[0].priority] ?? 1;
+        const pb = PRIORITY_RANK[b[0].priority] ?? 1;
+        if (pa !== pb) return pa - pb;
+        const da = a[0].due || "9999-99-99";
+        const db = b[0].due || "9999-99-99";
+        if (da !== db) return da < db ? -1 : 1;
+        return a[1] - b[1];
+      }).map(([t]) => t);
+
       const items = h("ul.task-items", { role: "list" });
-      for (const task of list.items) {
+      for (const task of ordered) {
         const checkbox = h("input", {
           type: "checkbox", checked: task.done, id: `task-${task.id}`,
           onchange: () => {
@@ -75,10 +139,14 @@ export default {
             draw();
           },
         });
+        const cls = ["task-item"];
+        if (task.done) cls.push("task-done");
+        if (task.priority && !task.done) cls.push(`task-prio-${task.priority}`);
         items.append(
-          h("li.task-item", { class: task.done ? "task-item task-done" : "task-item" },
+          h("li.task-item", { class: cls.join(" ") },
             checkbox,
             h("label.task-text", { for: `task-${task.id}` }, task.text),
+            dueChip(task),
             h("button.icon-btn", {
               type: "button", "aria-label": `Delete “${task.text}”`, title: "Delete",
               onclick: () => {

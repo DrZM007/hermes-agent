@@ -23,6 +23,10 @@ export default {
     const eventsOn = (dateStr) =>
       store.state.calendar.events.filter((ev) => ev.date === dateStr);
     const externalOn = (dateStr) => external.filter((ev) => ev.date === dateStr);
+    // Open tasks with a due date surface on the calendar as read-only markers.
+    const dueTasksOn = (dateStr) =>
+      (store.state.tasks?.lists || []).flatMap((l) => l.items)
+        .filter((t) => t.due === dateStr && !t.done);
 
     const loadExternal = async () => {
       try {
@@ -63,6 +67,7 @@ export default {
         const isToday = dateStr === ymd(today);
         const hasEvents = eventsOn(dateStr).length > 0;
         const hasExternal = externalOn(dateStr).length > 0;
+        const hasDue = dueTasksOn(dateStr).length > 0;
         grid.append(
           h("button.cal-cell", {
             type: "button",
@@ -78,6 +83,7 @@ export default {
             String(day),
             hasEvents ? h("span.cal-dot", { "aria-hidden": "true" }) : null,
             hasExternal && !hasEvents ? h("span.cal-dot.cal-dot-ext", { "aria-hidden": "true" }) : null,
+            hasDue ? h("span.cal-dot.cal-dot-task", { "aria-hidden": "true" }) : null,
           ),
         );
       }
@@ -128,7 +134,14 @@ export default {
             h("span.muted.small.cal-event-cal", {}, event.calendar),
           ),
         ),
-        !dayEvents.length && !dayExternal.length
+        dueTasksOn(selected).map((task) =>
+          h("li.cal-event.cal-event-task", {},
+            h("span.cal-dot.cal-dot-task", { "aria-hidden": "true" }),
+            h("span.cal-event-title", {}, task.text),
+            h("span.muted.small.cal-event-cal", {}, "task due"),
+          ),
+        ),
+        !dayEvents.length && !dayExternal.length && !dueTasksOn(selected).length
           ? h("li.muted.small", {}, `Nothing on ${selLabel}.`) : null,
       );
 
@@ -169,7 +182,10 @@ export default {
         .join("\n") || "No events scheduled.",
     }));
     ctx.onStore((topic) => {
-      if (topic === "calendar-external") draw();
+      // redraw on calendar edits and on task edits (due-date markers) and
+      // on a full state replace (sync adoption / restore).
+      if (topic === "calendar-external" || topic === "tasks" ||
+          topic === "tasks-external" || topic === "replace") draw();
     });
     window.addEventListener("hub:calendars-changed", loadExternal);
     draw();
