@@ -1552,6 +1552,60 @@ def sample_spaceweather() -> dict:
             "series": series}
 
 
+# ---------------------------------------------------------------------------
+# Weather alerts — US National Weather Service (api.weather.gov, no key)
+# ---------------------------------------------------------------------------
+ALERTS_TTL = 10 * 60
+# NWS severity → tone for the UI (Extreme/Severe → down, Moderate → warn…).
+_ALERT_TONE = {"Extreme": "down", "Severe": "down", "Moderate": "warn",
+               "Minor": "neutral", "Unknown": "neutral"}
+
+
+def live_alerts(lat: float, lon: float, name: str | None) -> dict:
+    url = f"https://api.weather.gov/alerts/active?point={lat:.4f},{lon:.4f}"
+    raw = json.loads(fetch_url(url, timeout=8))
+    alerts = []
+    for f in raw.get("features", [])[:15]:
+        p = f.get("properties") or {}
+        sev = p.get("severity") or "Unknown"
+        alerts.append({
+            "event": p.get("event") or "Alert",
+            "severity": sev,
+            "tone": _ALERT_TONE.get(sev, "neutral"),
+            "urgency": p.get("urgency") or "",
+            "headline": p.get("headline") or "",
+            "area": strip_html(p.get("areaDesc") or "", 120),
+            "effective": p.get("effective"),
+            "expires": p.get("expires"),
+            "sender": p.get("senderName") or "NWS",
+        })
+    # Most severe first (Extreme → Minor), then by soonest expiry.
+    rank = {"Extreme": 0, "Severe": 1, "Moderate": 2, "Minor": 3, "Unknown": 4}
+    alerts.sort(key=lambda a: (rank.get(a["severity"], 4), a["expires"] or ""))
+    return {"source": "live", "location": {"name": name or f"{lat:.2f}, {lon:.2f}"},
+            "alerts": alerts}
+
+
+def sample_alerts(name: str | None = None) -> dict:
+    now = datetime.now(timezone.utc)
+    return {
+        "source": "sample",
+        "location": {"name": name or "New York"},
+        "alerts": [
+            {"event": "Heat Advisory", "severity": "Moderate", "tone": "warn",
+             "urgency": "Expected", "headline": "Heat Advisory until 8 PM",
+             "area": "New York (Manhattan); Bronx", "sender": "NWS New York",
+             "effective": now.isoformat(),
+             "expires": (now + timedelta(hours=6)).isoformat()},
+            {"event": "Severe Thunderstorm Watch", "severity": "Severe", "tone": "down",
+             "urgency": "Expected", "headline": "Severe Thunderstorm Watch this evening",
+             "area": "Southern New York; Northeast New Jersey", "sender": "NWS",
+             "effective": now.isoformat(),
+             "expires": (now + timedelta(hours=4)).isoformat()},
+        ],
+    }
+
+
 def live_fx(base: str, symbols: list[str]) -> dict:
     q = urllib.parse.urlencode({"from": base, "to": ",".join(symbols)})
     raw = json.loads(fetch_url(f"https://api.frankfurter.app/latest?{q}"))
@@ -2304,6 +2358,20 @@ class Api:
             lambda: sample_air(name),
         )
 
+    def alerts(self, params: dict) -> dict:
+        try:
+            lat = float(params.get("lat", ["40.7128"])[0])
+            lon = float(params.get("lon", ["-74.0060"])[0])
+        except ValueError:
+            raise ApiError(400, "lat/lon must be numbers") from None
+        name = params.get("name", [None])[0]
+        return self._cached(
+            f"alerts:{lat:.3f}:{lon:.3f}",
+            ALERTS_TTL,
+            lambda: live_alerts(lat, lon, name),
+            lambda: sample_alerts(name),
+        )
+
     def geocode(self, params: dict) -> dict:
         query = params.get("q", [""])[0].strip()
         if not query:
@@ -2904,6 +2972,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/weather": "weather",
         "/api/air": "air",
         "/api/spaceweather": "spaceweather",
+        "/api/alerts": "alerts",
         "/api/geocode": "geocode",
         "/api/markets": "markets",
         "/api/crypto/coin": "crypto_coin",

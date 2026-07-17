@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores"],
-  Intel: ["worldclock", "quakes", "fx", "convert", "air", "space"],
+  Intel: ["worldclock", "quakes", "fx", "convert", "air", "space", "alerts"],
   Health: ["medbot", "pubmed", "trials"],
 };
 const pageOf = (type) => Object.keys(WIDGET_PAGES).find((p) => WIDGET_PAGES[p].includes(type)) || "Main";
@@ -643,6 +643,12 @@ await page.waitForSelector(".widget-space .sw-kp", { timeout: 5000 });
 check("space weather shows a Kp reading", /Kp\s+[\d.]/.test(await page.locator(".widget-space .sw-kp").innerText()));
 check("space weather band labeled", (await page.locator(".widget-space .sw-band").innerText()).length > 2);
 check("space weather renders Kp history bars", (await page.locator(".widget-space .sw-bar").count()) >= 3);
+
+// ---- weather alerts (NWS) --------------------------------------------------------
+await gotoWidget("alerts");
+await page.waitForSelector(".widget-alerts .wa-card, .widget-alerts .wa-clear", { timeout: 5000 });
+check("weather alerts render cards", (await page.locator(".widget-alerts .wa-card").count()) >= 1);
+check("alert shows a severity label", (await page.locator(".widget-alerts .wa-sev").first().innerText()).length > 2);
 
 // ---- health & medicine (PubMed, trials, SA MedBot) -------------------------------
 await gotoWidget("pubmed");

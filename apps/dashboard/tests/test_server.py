@@ -156,6 +156,31 @@ class SampleFallbackTests(unittest.TestCase):
             self.assertIsNotNone(p["value"])
         self.assertTrue(d["pollen"])
 
+    def test_alerts_offline_shape(self):
+        d = self.api.alerts({"lat": ["40.71"], "lon": ["-74.01"]})
+        self.assertEqual(d["source"], "sample")
+        self.assertTrue(d["alerts"])
+        for a in d["alerts"]:
+            self.assertTrue(a["event"])
+            self.assertIn(a["tone"], ("down", "warn", "neutral"))
+
+    def test_alerts_normalizer_sorts_by_severity(self):
+        import unittest.mock as mock
+        raw = {"features": [
+            {"properties": {"event": "Flood Advisory", "severity": "Minor",
+                            "areaDesc": "County A", "expires": "2026-07-17T20:00:00Z"}},
+            {"properties": {"event": "Tornado Warning", "severity": "Extreme",
+                            "areaDesc": "County B", "expires": "2026-07-17T19:00:00Z"}},
+        ]}
+        with mock.patch.object(server, "fetch_url", return_value=json.dumps(raw)):
+            out = server.live_alerts(40.0, -75.0, "Test")
+        self.assertEqual(out["alerts"][0]["event"], "Tornado Warning")  # Extreme first
+        self.assertEqual(out["alerts"][0]["tone"], "down")
+
+    def test_alerts_rejects_bad_coords(self):
+        with self.assertRaises(server.ApiError):
+            self.api.alerts({"lat": ["x"], "lon": ["1"]})
+
     def test_spaceweather_offline_shape(self):
         d = self.api.spaceweather({})
         self.assertEqual(d["source"], "sample")

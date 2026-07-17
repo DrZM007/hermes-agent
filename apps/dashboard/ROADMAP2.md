@@ -55,8 +55,12 @@ Effort key: **S** < ½ day · **M** ~1 day · **L** multi-day.
 - ✅ **§5 space weather** — NOAA SWPC (no key): planetary K-index with its
   geomagnetic-storm band, 24h peak, aurora outlook, and a Kp history bar
   chart — shipped on the Intel page.
+- ✅ **§5 weather alerts** — US National Weather Service active alerts (no key):
+  advisories/watches/warnings for the active weather location, most-severe
+  first, colour-coded by severity, with a clear "no active alerts" state —
+  shipped on the Intel page.
 - ⬜ Still remaining from the original list:
-  §5 widgets (weather alerts, flights, RSS-reader folders).
+  §5 widgets (flights, RSS-reader folders).
 
 ---
 

@@ -1103,6 +1103,22 @@ a { color: inherit; }
 .aq-pollen-level.pl-high, .aq-pollen-level.pl-very { color: var(--status-critical); }
 .aq-nopollen { margin-top: 8px; }
 
+/* ---------- weather alerts ---------- */
+.wa-loc { margin-bottom: 8px; }
+.wa-list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.wa-card { border: 1px solid var(--hairline); border-left-width: 3px; border-radius: 5px; padding: 8px 10px; }
+.wa-card.wa-severe { border-left-color: var(--status-critical); background: color-mix(in srgb, var(--status-critical) 8%, transparent); }
+.wa-card.wa-warn { border-left-color: var(--status-elevated, orange); background: color-mix(in srgb, var(--status-elevated, orange) 8%, transparent); }
+.wa-card.wa-minor { border-left-color: var(--accent); }
+.wa-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.wa-event { font-weight: 650; }
+.wa-sev { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.wa-headline { margin-top: 3px; line-height: 1.35; }
+.wa-area { margin-top: 3px; }
+.wa-window { margin-top: 4px; }
+.wa-clear { text-align: center; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.wa-clear-mark { font-size: 28px; color: var(--status-stable); }
+
 /* ---------- space weather ---------- */
 .sw-gauge { border-radius: 8px; padding: 12px; text-align: center; border: 1px solid var(--hairline); }
 .sw-gauge.sw-quiet { background: color-mix(in srgb, var(--status-stable) 16%, transparent); border-color: color-mix(in srgb, var(--status-stable) 45%, transparent); }
