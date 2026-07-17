@@ -31,6 +31,7 @@ import quakes from "./widgets/quakes.js";
 import fx from "./widgets/fx.js";
 import convert from "./widgets/convert.js";
 import air from "./widgets/air.js";
+import space from "./widgets/space.js";
 import podcasts from "./widgets/podcasts.js";
 import medbot from "./widgets/medbot.js";
 import pubmed from "./widgets/pubmed.js";
@@ -41,7 +42,7 @@ import focus from "./widgets/focus.js";
 import system from "./widgets/system.js";
 
 const WIDGETS = Object.fromEntries(
-  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, socials, gaming, stocks, worldclock, quakes, fx, convert, air, podcasts, medbot, pubmed, trials, focus, system]
+  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, socials, gaming, stocks, worldclock, quakes, fx, convert, air, space, podcasts, medbot, pubmed, trials, focus, system]
     .map((w) => [w.type, w]),
 );
 

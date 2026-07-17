@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores"],
-  Intel: ["worldclock", "quakes", "fx", "convert", "air"],
+  Intel: ["worldclock", "quakes", "fx", "convert", "air", "space"],
   Health: ["medbot", "pubmed", "trials"],
 };
 const pageOf = (type) => Object.keys(WIDGET_PAGES).find((p) => WIDGET_PAGES[p].includes(type)) || "Main";
@@ -636,6 +636,13 @@ check("air quality gauge shows an AQI", /\d/.test(await page.locator(".widget-ai
 check("air quality band labeled", (await page.locator(".widget-air .aq-band").innerText()).length > 2);
 check("air quality lists pollutants", (await page.locator(".widget-air .aq-cell").count()) >= 3);
 check("air quality shows pollen rows", (await page.locator(".widget-air .aq-pollen-row").count()) >= 1);
+
+// ---- space weather (NOAA SWPC) ---------------------------------------------------
+await gotoWidget("space");
+await page.waitForSelector(".widget-space .sw-kp", { timeout: 5000 });
+check("space weather shows a Kp reading", /Kp\s+[\d.]/.test(await page.locator(".widget-space .sw-kp").innerText()));
+check("space weather band labeled", (await page.locator(".widget-space .sw-band").innerText()).length > 2);
+check("space weather renders Kp history bars", (await page.locator(".widget-space .sw-bar").count()) >= 3);
 
 // ---- health & medicine (PubMed, trials, SA MedBot) -------------------------------
 await gotoWidget("pubmed");

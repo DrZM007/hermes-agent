@@ -156,6 +156,35 @@ class SampleFallbackTests(unittest.TestCase):
             self.assertIsNotNone(p["value"])
         self.assertTrue(d["pollen"])
 
+    def test_spaceweather_offline_shape(self):
+        d = self.api.spaceweather({})
+        self.assertEqual(d["source"], "sample")
+        self.assertIsInstance(d["kp"], (int, float))
+        self.assertIn("label", d["band"])
+        self.assertGreaterEqual(d["peak24h"], d["kp"])
+        self.assertTrue(d["series"])
+        for s in d["series"]:
+            self.assertIn("t", s)
+            self.assertIsInstance(s["kp"], (int, float))
+
+    def test_kp_band_thresholds(self):
+        self.assertEqual(server.kp_band(2)["label"], "Quiet")
+        self.assertEqual(server.kp_band(4.5)["label"], "Unsettled")
+        self.assertEqual(server.kp_band(5)["label"], "G1 minor storm")
+        self.assertEqual(server.kp_band(9)["label"], "G5 extreme storm")
+        self.assertEqual(server.kp_band(None)["label"], "—")
+
+    def test_spaceweather_normalizer_from_fixture(self):
+        import unittest.mock as mock
+        raw = [["time_tag", "Kp", "a_running", "station_count"],
+               ["2026-07-17 00:00:00", "3.00", "5", "8"],
+               ["2026-07-17 03:00:00", "5.67", "20", "8"]]
+        with mock.patch.object(server, "fetch_url", return_value=json.dumps(raw)):
+            out = server.live_spaceweather()
+        self.assertEqual(out["kp"], 5.67)
+        self.assertEqual(out["peak24h"], 5.67)
+        self.assertIn("Aurora", out["aurora"])
+
     def test_air_band_thresholds(self):
         self.assertEqual(server.aqi_band(20)["label"], "Good")
         self.assertEqual(server.aqi_band(75)["label"], "Moderate")

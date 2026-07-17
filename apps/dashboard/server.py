@@ -1495,6 +1495,63 @@ def sample_quakes() -> dict:
         for m, pl, h in demo]}
 
 
+# ---------------------------------------------------------------------------
+# Space weather — NOAA SWPC (no key): planetary K-index + aurora outlook
+# ---------------------------------------------------------------------------
+SPACE_TTL = 30 * 60
+# Kp → geomagnetic storm scale (NOAA G-scale) with a plain-language read.
+_KP_BANDS = [
+    (4, "Quiet", "up"), (4.99, "Unsettled", "neutral"), (5.99, "G1 minor storm", "warn"),
+    (6.99, "G2 moderate storm", "warn"), (7.99, "G3 strong storm", "down"),
+    (8.99, "G4 severe storm", "down"), (99, "G5 extreme storm", "down"),
+]
+
+
+def kp_band(kp) -> dict:
+    if kp is None:
+        return {"label": "—", "tone": "neutral"}
+    for upper, label, tone in _KP_BANDS:
+        if kp <= upper:
+            return {"label": label, "tone": tone}
+    return {"label": "G5 extreme storm", "tone": "down"}
+
+
+def live_spaceweather() -> dict:
+    raw = json.loads(fetch_url(
+        "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"))
+    # First row is the header: [time_tag, Kp, a_running, station_count].
+    rows = raw[1:] if raw and raw[0] and raw[0][0] == "time_tag" else raw
+    series = []
+    for r in rows[-24:]:
+        try:
+            series.append({"t": r[0], "kp": float(r[1])})
+        except (ValueError, IndexError, TypeError):
+            continue
+    if not series:
+        raise RuntimeError("no k-index data")
+    latest = series[-1]["kp"]
+    peak = max(s["kp"] for s in series)
+    aurora = ("Aurora likely at high latitudes" if peak >= 5
+              else "Aurora possible at very high latitudes" if peak >= 4
+              else "No significant aurora expected")
+    return {"source": "live", "kp": latest, "band": kp_band(latest),
+            "peak24h": peak, "aurora": aurora, "series": series}
+
+
+def sample_spaceweather() -> dict:
+    now = datetime.now(timezone.utc)
+    series = []
+    pattern = [2, 2.33, 3, 3.67, 4.33, 5, 4.67, 3.67]
+    for i in range(8):
+        t = (now - timedelta(hours=(8 - i) * 3)).strftime("%Y-%m-%d %H:%M:%S")
+        series.append({"t": t, "kp": pattern[i]})
+    latest = series[-1]["kp"]
+    peak = max(s["kp"] for s in series)
+    return {"source": "sample", "kp": latest, "band": kp_band(latest),
+            "peak24h": peak, "aurora": "Aurora likely at high latitudes",
+            "series": series}
+
+
 def live_fx(base: str, symbols: list[str]) -> dict:
     q = urllib.parse.urlencode({"from": base, "to": ",".join(symbols)})
     raw = json.loads(fetch_url(f"https://api.frankfurter.app/latest?{q}"))
@@ -1995,6 +2052,7 @@ def sample_crypto_trending() -> dict:
 # ---------------------------------------------------------------------------
 SOURCES: dict[str, dict] = {
     "quakes": {"ttl": QUAKES_TTL, "live": live_quakes, "sample": sample_quakes},
+    "spaceweather": {"ttl": SPACE_TTL, "live": live_spaceweather, "sample": sample_spaceweather},
     "crypto:global": {"ttl": CRYPTO_GLOBAL_TTL,
                       "live": live_crypto_global, "sample": sample_crypto_global},
     "crypto:trending": {"ttl": CRYPTO_TRENDING_TTL,
@@ -2358,6 +2416,9 @@ class Api:
 
     def quakes(self, params: dict) -> dict:
         return self.fetch_source("quakes")
+
+    def spaceweather(self, params: dict) -> dict:
+        return self.fetch_source("spaceweather")
 
     def fx(self, params: dict) -> dict:
         base = re.sub(r"[^A-Za-z]", "", params.get("base", ["USD"])[0].upper())[:3] or "USD"
@@ -2842,6 +2903,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/news": "news",
         "/api/weather": "weather",
         "/api/air": "air",
+        "/api/spaceweather": "spaceweather",
         "/api/geocode": "geocode",
         "/api/markets": "markets",
         "/api/crypto/coin": "crypto_coin",

@@ -106,6 +106,7 @@ export const api = {
     getJSON("/api/weather", name ? { lat, lon, name } : { lat, lon }),
   air: (lat, lon, name) =>
     getJSON("/api/air", name ? { lat, lon, name } : { lat, lon }),
+  spaceweather: () => getJSON("/api/spaceweather"),
   geocode: (q) => getJSON("/api/geocode", { q }),
   markets: (ids) => getJSON("/api/markets", ids?.length ? { ids: ids.join(",") } : {}),
   feeds: () => getJSON("/api/feeds"),
