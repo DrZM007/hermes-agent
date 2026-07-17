@@ -678,10 +678,22 @@ class Assistant:
                 ],
             }
         system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
-        memory = self.services.memory_read() if self.services else ""
-        if memory.strip():
+        # Relevance-ranked recall: surface the facts most pertinent to the
+        # current question rather than dumping the whole file (which is newest-
+        # biased and drops old-but-relevant facts once memory fills up).
+        recalled = ""
+        recall = getattr(self.services, "memory_recall", None) if self.services else None
+        if recall:
+            try:
+                facts = recall(self._last_user_text(messages), 14)
+                recalled = "\n".join(f"- {f}" for f in facts)
+            except Exception:
+                recalled = ""
+        if not recalled and self.services:  # fallback: legacy tail dump
+            recalled = (self.services.memory_read() or "")[-4000:].strip()
+        if recalled.strip():
             # after the cached block, so editing memory never invalidates it
-            system.append({"type": "text", "text": "Long-term memory about the user:\n" + memory[-4000:]})
+            system.append({"type": "text", "text": "Long-term memory about the user (most relevant first):\n" + recalled})
         # learned operating guidelines from self-evolution (approved addenda)
         notes = self.services.agent_notes_read() if self.services else ""
         if notes.strip():

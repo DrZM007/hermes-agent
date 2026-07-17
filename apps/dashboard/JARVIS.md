@@ -16,7 +16,7 @@ server, SSE, the automations daemon thread and SQLite already cover.
 | B. Agent runtime / tool loop | **Done** | Custom loop: server relays Claude turns, client executes `tool_use` (`agent.js` + `actions.js`); SSE streaming |
 | C. Tool registry | **Done** | `DASHBOARD_TOOLS` (client-executed) + `SERVER_TOOLS` (research/memory/automation), versioned in one place |
 | D. Orchestrator / server | **Done (stdlib)** | `server.py` — REST + SSE, session-less (history lives client-side + synced), permission boundary at the API |
-| E. Memory store | **Partial** | `data/memory.md` (facts) + `hub.db` (synced state) + `telemetry.jsonl` (routing + tool outcomes, Phase 3 **done**). Vector recall still optional |
+| E. Memory store | **Done** | `data/memory.md` (facts) + `hub.db` (synced state) + `telemetry.jsonl` (routing + tool outcomes). Recall is **relevance-ranked** (`rank_facts`, lexical TF-IDF) — the zero-dependency stand-in for vector recall; the most pertinent facts are injected per question instead of a newest-biased tail dump |
 | F. Permission / safety gate | **Done** | auto/confirm/blocked tiers + approval card in the Agent widget (`assistant.TOOL_TIERS`) |
 | G. Self-evolution loop | **Done (bounded)** | Reflection over telemetry/memory → approval inbox; only memory cleanup auto-applies, every apply snapshots first (`evolve.py`) |
 | H. Dashboard integration | **Done** | Chat panel + streaming + approval inbox + System status widget |
@@ -81,6 +81,15 @@ the system prompt). Every apply snapshots the whole hub first (the backup
 system) so it is one-click reversible, and a `reflect` automation action lets it
 run nightly. Model-augmented reflection (letting Claude write richer proposals)
 is a future enhancement on top of the current deterministic heuristics.
+
+**Phase 7 — Relevance-ranked memory recall (Layer E). ✅ DONE.** Instead of
+dumping the tail of `data/memory.md` into every system prompt (newest-biased,
+loses old-but-relevant facts as memory fills), recall now ranks stored facts by
+lexical **TF-IDF** relevance to the current question (`rank_facts` in
+`server.py`, `Api.memory_recall`) and injects the top matches. Empty or
+no-match queries fall back to recency, so behaviour degrades gracefully. This
+is the zero-dependency stand-in for embedding/vector recall — no model call, no
+index, pure stdlib — and keeps the "leaner but complete" ethos.
 
 ## Adding a data source (the §0.3 convention)
 

@@ -2177,6 +2177,57 @@ SOURCES: dict[str, dict] = {
 
 
 # ---------------------------------------------------------------------------
+# Memory recall — lexical TF-IDF ranking (zero-dependency vector-recall stand-in)
+# ---------------------------------------------------------------------------
+_RECALL_STOP = frozenset(
+    "the a an and or but of to in on at for with my me i you your is are was were "
+    "be been being this that these those it its as by from".split())
+
+
+def _recall_tokens(text: str) -> list[str]:
+    return [t for t in re.findall(r"[a-z0-9]+", (text or "").lower())
+            if len(t) >= 3 and t not in _RECALL_STOP]
+
+
+def rank_facts(facts: list[str], query: str, limit: int = 12) -> list[str]:
+    """Rank `facts` by lexical relevance to `query`. TF-IDF over fact terms:
+    a term is worth more when it is rare across the corpus. Ties and empty
+    queries fall back to recency (facts are stored oldest→newest)."""
+    n = len(facts)
+    if n == 0:
+        return []
+    q = set(_recall_tokens(query))
+    if not q:
+        return facts[-limit:][::-1]  # newest first
+    import math
+    # document frequency of each query term across the facts
+    tokenized = [_recall_tokens(f) for f in facts]
+    df = {term: 0 for term in q}
+    for toks in tokenized:
+        present = set(toks)
+        for term in q:
+            if term in present:
+                df[term] += 1
+    scored = []
+    for idx, toks in enumerate(tokenized):
+        counts = {}
+        for t in toks:
+            if t in q:
+                counts[t] = counts.get(t, 0) + 1
+        score = 0.0
+        for term, tf in counts.items():
+            idf = math.log(1 + n / (1 + df[term]))
+            score += (1 + math.log(tf)) * idf
+        if score > 0:
+            scored.append((score, idx, facts[idx]))
+    if not scored:
+        return facts[-limit:][::-1]
+    # highest score first; newer facts (larger idx) win ties
+    scored.sort(key=lambda s: (s[0], s[1]), reverse=True)
+    return [f for _, _, f in scored[:limit]]
+
+
+# ---------------------------------------------------------------------------
 # API dispatch: try cache → live → sample
 # ---------------------------------------------------------------------------
 class Api:
@@ -2212,6 +2263,14 @@ class Api:
                 return self.memory_path.read_text(encoding="utf-8")
             except OSError:
                 return ""
+
+    def memory_recall(self, query: str, limit: int = 12) -> list[str]:
+        """Return the stored facts most relevant to `query`, newest-first on
+        ties. Lexical TF-IDF ranking — the zero-dependency stand-in for vector
+        recall. Falls back to the most recent facts when the query is empty."""
+        text = self.memory_read()
+        facts = [ln[2:].strip() for ln in text.splitlines() if ln.startswith("- ")]
+        return rank_facts(facts, query, limit)
 
     def memory_append(self, fact: str) -> None:
         fact = " ".join(fact.split())[:500]

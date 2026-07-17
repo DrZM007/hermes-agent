@@ -992,6 +992,28 @@ class MemoryAndToolsTests(unittest.TestCase):
         with self.assertRaises(server.ApiError):
             self.api.memory_append("   ")
 
+    def test_rank_facts_relevance(self):
+        facts = ["likes espresso in the morning", "allergic to penicillin",
+                 "works as a cardiologist", "prefers dark mode"]
+        top = server.rank_facts(facts, "which drugs am I allergic to?", 2)
+        self.assertEqual(top[0], "allergic to penicillin")
+
+    def test_rank_facts_empty_query_is_recency(self):
+        facts = ["oldest fact", "middle fact", "newest fact"]
+        self.assertEqual(server.rank_facts(facts, "", 2), ["newest fact", "middle fact"])
+
+    def test_rank_facts_no_match_falls_back(self):
+        facts = ["likes espresso", "runs on tuesdays"]
+        out = server.rank_facts(facts, "xylophone zeppelin", 1)
+        self.assertEqual(out, ["runs on tuesdays"])   # newest, not empty
+
+    def test_memory_recall_integration(self):
+        for f in ("enjoys hiking", "allergic to shellfish", "uses vim"):
+            self.api.memory_append(f)
+        out = self.api.memory_recall("shellfish reaction", 2)
+        self.assertTrue(any("allergic to shellfish" in f for f in out))
+        self.assertEqual("allergic to shellfish" in out[0], True)  # ranked first
+
     def test_server_tools(self):
         run = self.api.assistant.run_server_tool
         self.assertIn("New York", run("get_weather", {}))
