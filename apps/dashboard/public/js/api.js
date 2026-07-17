@@ -143,6 +143,7 @@ export const api = {
   quakes: () => getJSON("/api/quakes"),
   podcast: (url) => getJSON("/api/podcast", { url }),
   fx: (base, symbols) => getJSON("/api/fx", symbols ? { base, symbols } : { base }),
+  convert: () => getJSON("/api/convert"),
   social: (network, sub) => getJSON("/api/social", sub ? { network, sub } : { network }),
   gamingFree: () => getJSON("/api/gaming/free"),
   gamingDeals: () => getJSON("/api/gaming/deals"),

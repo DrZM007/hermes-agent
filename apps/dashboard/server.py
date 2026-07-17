@@ -1382,6 +1382,7 @@ def sample_podcast(url: str) -> dict:
 QUAKES_TTL = 10 * 60
 FX_TTL = 60 * 60
 FX_DEFAULT = ["EUR", "GBP", "JPY", "CAD", "AUD", "CHF"]
+CONVERT_FIATS = ["EUR", "GBP", "JPY", "ZAR", "AUD", "CAD", "CHF", "CNY", "INR"]
 
 
 def live_quakes() -> dict:
@@ -2136,6 +2137,20 @@ class Api:
         return self._cached(f"fx:{base}:{','.join(syms)}", FX_TTL,
                             lambda: live_fx(base, syms), lambda: sample_fx(base, syms))
 
+    def convert(self, params: dict) -> dict:
+        # A rate table for the coin↔fiat↔coin converter. No new upstream:
+        # reuses cached crypto USD prices + USD-based fiat rates.
+        assets = self.markets({}).get("assets", [])
+        coins = {a["symbol"]: {"name": a["name"], "usd": a["price"]}
+                 for a in assets if a.get("price")}
+        fx = self.fx({"base": ["USD"], "symbols": [",".join(CONVERT_FIATS)]})
+        fiat = {"USD": 1.0}
+        for cur, rate in fx.get("rates", {}).items():
+            if rate:
+                fiat[cur] = rate
+        return {"coins": coins, "fiat": fiat,
+                "asOf": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+
     def standings(self, params: dict) -> dict:
         league = params.get("league", ["nba"])[0].lower()
         if league not in SPORT_LEAGUES:
@@ -2599,6 +2614,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/standings": "standings",
         "/api/quakes": "quakes",
         "/api/fx": "fx",
+        "/api/convert": "convert",
         "/api/podcast": "podcast",
         "/api/pubmed": "pubmed",
         "/api/trials": "trials",

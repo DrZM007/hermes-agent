@@ -721,6 +721,17 @@ class MarketsWatchlistTests(unittest.TestCase):
         self.assertNotIn("EUR", d["rates"])          # base excluded
         self.assertGreater(d["rates"]["USD"], 0)
 
+    def test_convert_rate_table(self):
+        d = self.api.convert({})
+        self.assertIn("USD", d["fiat"])
+        self.assertEqual(d["fiat"]["USD"], 1.0)
+        self.assertTrue(d["coins"])                   # at least one coin priced
+        sym, info = next(iter(d["coins"].items()))
+        self.assertIn("name", info)
+        self.assertGreater(info["usd"], 0)
+        # a coin↔fiat cross-rate is computable from the table
+        self.assertGreater(info["usd"] / d["fiat"]["USD"], 0)
+
     def test_social_sample_shapes(self):
         for net in ("hn", "lobsters", "reddit"):
             d = self.api.social({"network": [net]})

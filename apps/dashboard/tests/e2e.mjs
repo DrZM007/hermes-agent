@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores"],
-  Intel: ["worldclock", "quakes", "fx"],
+  Intel: ["worldclock", "quakes", "fx", "convert"],
   Health: ["medbot", "pubmed", "trials"],
 };
 const pageOf = (type) => Object.keys(WIDGET_PAGES).find((p) => WIDGET_PAGES[p].includes(type)) || "Main";
@@ -617,6 +617,15 @@ await page.locator(".widget-fx .fx-amount").fill("200");
 await page.waitForTimeout(100);
 check("currency recomputes on amount change",
   parseFloat((await page.locator(".widget-fx .fx-val").first().innerText()).replace(/,/g, "")) > 0);
+
+await gotoWidget("convert");
+await page.waitForSelector(".widget-convert .cv-out");
+const cvFirst = parseFloat((await page.locator(".widget-convert .cv-out").innerText()).replace(/,/g, ""));
+check("converter shows a result", cvFirst > 0);
+await page.locator(".widget-convert .cv-amount").fill("2");
+await page.waitForTimeout(100);
+const cvSecond = parseFloat((await page.locator(".widget-convert .cv-out").innerText()).replace(/,/g, ""));
+check("converter recomputes on amount change", cvSecond > cvFirst);
 
 // ---- crypto global bar + trending -----------------------------------------------
 await gotoWidget("markets");

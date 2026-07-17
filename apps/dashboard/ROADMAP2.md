@@ -30,7 +30,9 @@ Effort key: **S** < ½ day · **M** ~1 day · **L** multi-day.
   hero** — shipped.
 - ✅ **§5 intel widgets (first batch)** — world clock, seismic monitor (USGS),
   currency converter (Frankfurter) — shipped on a new "Intel" page.
-- ⬜ Still pending: §0.3 registry, §1.6 smarter alerts, §1.7 crypto converter,
+- ✅ **§1.7 universal converter** — coin↔fiat↔coin on the Intel page (reuses
+  cached crypto USD prices + USD-based fiat rates, no new upstream) — shipped.
+- ⬜ Still pending: §0.3 registry, §1.6 smarter alerts,
   §2.3 follow teams, §3.3 topic detail window, §3.4 podcasts, and the remaining
   §5 widgets (air quality/pollen, weather alerts, space weather, flights,
   RSS-reader folders).
