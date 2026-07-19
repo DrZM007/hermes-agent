@@ -27,6 +27,7 @@ import gzip
 import html
 import io
 import json
+import math
 import os
 import re
 import threading
@@ -2199,7 +2200,6 @@ def rank_facts(facts: list[str], query: str, limit: int = 12) -> list[str]:
     q = set(_recall_tokens(query))
     if not q:
         return facts[-limit:][::-1]  # newest first
-    import math
     # document frequency of each query term across the facts
     tokenized = [_recall_tokens(f) for f in facts]
     df = {term: 0 for term in q}
@@ -2443,12 +2443,23 @@ class Api:
         CACHE.clear()  # cached merged topics may now be stale
         return self.feeds.snapshot()
 
-    def weather(self, params: dict) -> dict:
+    @staticmethod
+    def _latlon(params: dict) -> tuple[float, float]:
+        """Parse and validate lat/lon. Rejects non-numeric, non-finite
+        (inf/nan) and out-of-range values before they reach an upstream URL."""
         try:
             lat = float(params.get("lat", ["40.7128"])[0])
             lon = float(params.get("lon", ["-74.0060"])[0])
-        except ValueError:
+        except (ValueError, TypeError):
             raise ApiError(400, "lat/lon must be numbers") from None
+        if not (math.isfinite(lat) and math.isfinite(lon)):
+            raise ApiError(400, "lat/lon must be finite")
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            raise ApiError(400, "lat/lon out of range")
+        return lat, lon
+
+    def weather(self, params: dict) -> dict:
+        lat, lon = self._latlon(params)
         name = params.get("name", [None])[0]
         return self._cached(
             f"weather:{lat:.3f}:{lon:.3f}",
@@ -2458,11 +2469,7 @@ class Api:
         )
 
     def air(self, params: dict) -> dict:
-        try:
-            lat = float(params.get("lat", ["40.7128"])[0])
-            lon = float(params.get("lon", ["-74.0060"])[0])
-        except ValueError:
-            raise ApiError(400, "lat/lon must be numbers") from None
+        lat, lon = self._latlon(params)
         name = params.get("name", [None])[0]
         return self._cached(
             f"air:{lat:.3f}:{lon:.3f}",
@@ -2472,11 +2479,7 @@ class Api:
         )
 
     def flights(self, params: dict) -> dict:
-        try:
-            lat = float(params.get("lat", ["40.7128"])[0])
-            lon = float(params.get("lon", ["-74.0060"])[0])
-        except ValueError:
-            raise ApiError(400, "lat/lon must be numbers") from None
+        lat, lon = self._latlon(params)
         name = params.get("name", [None])[0]
         return self._cached(
             f"flights:{lat:.2f}:{lon:.2f}",
@@ -2486,11 +2489,7 @@ class Api:
         )
 
     def alerts(self, params: dict) -> dict:
-        try:
-            lat = float(params.get("lat", ["40.7128"])[0])
-            lon = float(params.get("lon", ["-74.0060"])[0])
-        except ValueError:
-            raise ApiError(400, "lat/lon must be numbers") from None
+        lat, lon = self._latlon(params)
         name = params.get("name", [None])[0]
         return self._cached(
             f"alerts:{lat:.3f}:{lon:.3f}",

@@ -247,6 +247,17 @@ class SampleFallbackTests(unittest.TestCase):
         with self.assertRaises(server.ApiError):
             self.api.air({"lat": ["abc"], "lon": ["1"]})
 
+    def test_latlon_rejects_nonfinite_and_out_of_range(self):
+        for endpoint in (self.api.air, self.api.alerts, self.api.flights, self.api.weather):
+            with self.assertRaises(server.ApiError):
+                endpoint({"lat": ["inf"], "lon": ["0"]})
+            with self.assertRaises(server.ApiError):
+                endpoint({"lat": ["nan"], "lon": ["0"]})
+            with self.assertRaises(server.ApiError):
+                endpoint({"lat": ["120"], "lon": ["0"]})    # lat > 90
+            with self.assertRaises(server.ApiError):
+                endpoint({"lat": ["0"], "lon": ["999"]})    # lon > 180
+
     def test_news_all_aggregates_topics(self):
         data = self.api.news({"all": ["1"], "limit": ["40"]})
         self.assertEqual(data["topic"], "all")
