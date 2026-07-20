@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.9.0 |
+| Version | 0.10.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -114,7 +114,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 
 | ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
 |---|---|---|---|---|---|---|
-| AR-042 | Specific on-device resource/performance thresholds for the offline AI processing path are not yet defined. | ADR-001 §9 | Blocks `NonFunctionalRequirements.md`. | Medium | Open | AI/ML Architect |
+| AR-042 | Specific on-device resource/performance thresholds for the offline AI processing path are not yet defined. | ADR-001 §9 | Blocks `NonFunctionalRequirements.md`. | Medium | Open — `NonFunctionalRequirements.md` §4 (NFR-012) restates this as a qualitative requirement without inventing the threshold; see also AR-075/AR-076 | AI/ML Architect |
 | AR-043 | The specific approval/audit mechanism for enabling the optional networked AI processing path is not yet defined. | ADR-001 §9 | Blocks `PrivacyRequirements.md`, `SecurityRequirements.md`. | Medium | Open | Privacy Officer + Security Architect |
 | AR-044 | Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined. | ADR-002 §9 | Blocks `03-Architecture/DeploymentArchitecture.md`. | Medium | Open | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-045 | The precise technical definition of the per-organization "isolation boundary" (what constitutes a violation, how it is enforced/tested) is not yet defined. | ADR-002 §9 | Blocks `SecurityRequirements.md` and `DeploymentArchitecture.md`. | High | Open | Security Architect |
@@ -168,6 +168,19 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-073 | The specific technical mechanism for AI processing data isolation between organizations under the networked opt-in (if shared infrastructure is ever used) is undefined. | `AIRequirements.md` §14.2 (AI-050) | Overlaps AR-045; blocks `AIArchitecture.md`. | High | Open | Security Architect + AI/ML Architect |
 | AR-074 | The specific testing criteria and rollback mechanism for AI Improvement Loop changes are undefined beyond the governance shape (detect → propose → approve → version-control → test → rollback). | `AIRequirements.md` §14.3 (AI-057-AI-058) | Overlaps AR-008; blocks `05-Engineering/TestingStrategy.md`, `ReleaseStrategy.md`. | Medium | Open | AI/ML Architect + QA Lead |
 
+## 7f. Assumptions from Non-Functional Requirements Authoring (Phase 2.5)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-075 | Specific quantitative performance targets (startup time, processing-time ratio, search response time, edit latency, export time) are undefined. | `NonFunctionalRequirements.md` §17.1 (NFR-007) | Blocks `03-Architecture/` design and `09-Testing/TestPlan.md` verification. | Medium | Open | Principal Software Architect + QA Lead |
+| AR-076 | Specific offline AI processing time targets and resource-usage ceilings (CPU/memory/storage) are undefined. | `NonFunctionalRequirements.md` §17.2 (NFR-012) | Overlaps AR-042; blocks `AIArchitecture.md`. | High | Open | AI/ML Architect |
+| AR-077 | Specific endpoint CPU/memory/storage/battery-impact numeric thresholds are undefined. | `NonFunctionalRequirements.md` §17.3 (NFR-019) | Blocks `DesktopArchitecture.md`. | Medium | Open | Principal Software Architect + DevOps/Deployment Engineer |
+| AR-078 | Specific maximum recording duration, participant count, file size, and simultaneous processing capacity are undefined. | `NonFunctionalRequirements.md` §17.4 (NFR-024) | Overlaps AR-022; blocks `FunctionalRequirements.md` scale assumptions and `DatabaseArchitecture.md`. | Medium | Open | Product Manager + Database Architect |
+| AR-079 | Specific uptime/availability targets for any centrally-operated component are undefined. | `NonFunctionalRequirements.md` §17.5 (NFR-032) | Blocks `DeploymentArchitecture.md`. | Low | Open | DevOps/Deployment Engineer |
+| AR-080 | Specific security-quality quantitative targets (e.g., audit-log write latency) are undefined. | `NonFunctionalRequirements.md` §17.6 (NFR-037) | Blocks `SecurityArchitecture.md`. | Low | Open | Security Architect |
+| AR-081 | Specific scalability targets (max users per organization, max transcript volume, max archive size before degradation) are undefined. | `NonFunctionalRequirements.md` §17.7 (NFR-042) | Blocks `DatabaseArchitecture.md`, `SystemArchitecture.md`. | Medium | Open | Principal Software Architect + Database Architect |
+| AR-082 | Specific storage growth-rate expectations and deletion-to-reclamation timeframes are undefined. | `NonFunctionalRequirements.md` §17.8 (NFR-046) | Overlaps AR-062, AR-063; blocks `RetentionPolicy.md`, `DatabaseArchitecture.md`. | Medium | Open | Database Architect + Privacy Officer |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -188,6 +201,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/PrivacyRequirements.md` resolves AR-005 and AR-028 (Data Classification Framework, §6), further informs AR-006, AR-012, AR-026, and AR-036, and seeds AR-058–AR-065 in Section 7c.
 - `02-Requirements/FunctionalRequirements.md` defines the authoritative transcript lifecycle and meeting capture lifecycle state machines (§3), and seeds AR-066–AR-071 in Section 7d.
 - `02-Requirements/AIRequirements.md` further informs AR-008 and AR-060 (defines governance shape without deciding the open question), and seeds AR-072–AR-074 in Section 7e.
+- `02-Requirements/NonFunctionalRequirements.md` further informs AR-042, restates quality attributes qualitatively without inventing numeric targets, and seeds AR-075–AR-082 in Section 7f.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
