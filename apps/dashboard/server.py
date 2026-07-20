@@ -101,6 +101,30 @@ NEWS_SOURCES: dict[str, list[dict[str, str]]] = {
         {"name": "Rock Paper Shotgun", "url": "https://www.rockpapershotgun.com/feed"},
         {"name": "GameSpot", "url": "https://www.gamespot.com/feeds/news/"},
     ],
+    "southafrica": [
+        {"name": "News24", "url": "https://feeds.24.com/articles/news24/TopStories/rss"},
+        {"name": "Daily Maverick", "url": "https://www.dailymaverick.co.za/dmrss/"},
+        {"name": "TimesLIVE", "url": "https://www.timeslive.co.za/rss/"},
+        {"name": "Mail & Guardian", "url": "https://mg.co.za/feed/"},
+        {"name": "IOL", "url": "https://www.iol.co.za/cmlink/1.640"},
+    ],
+    "africa": [
+        {"name": "BBC Africa", "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml"},
+        {"name": "AllAfrica", "url": "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf"},
+        {"name": "Al Jazeera Africa", "url": "https://www.aljazeera.com/xml/rss/all.xml"},
+    ],
+    "ai": [
+        {"name": "MIT Tech Review", "url": "https://www.technologyreview.com/feed/"},
+        {"name": "VentureBeat AI", "url": "https://venturebeat.com/category/ai/feed/"},
+        {"name": "The Verge AI", "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"},
+        {"name": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/technology-lab"},
+    ],
+    "finance": [
+        {"name": "Reuters Markets", "url": "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best"},
+        {"name": "MarketWatch", "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories"},
+        {"name": "Moneyweb (SA)", "url": "https://www.moneyweb.co.za/feed/"},
+        {"name": "Investing.com", "url": "https://www.investing.com/rss/news.rss"},
+    ],
 }
 # "top" aggregates the first feed of every topic.
 NEWS_SOURCES["top"] = [sources[0] for sources in NEWS_SOURCES.values()]
