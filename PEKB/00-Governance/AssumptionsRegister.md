@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.17.0 |
+| Version | 0.18.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -231,6 +231,14 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `03-Architecture/DesktopArchitecture.md` completes the architecture phase, references AR-007/AR-070/AR-072/AR-076 without resolving them, flags the `WebArchitecture.md` scope question for the Architecture Baseline Review, and introduces no new assumptions.
 - `03-Architecture/ArchitectureBaselineReview.md` classifies AR-076 as the sole hard architecture-blocking assumption, confirms AR-051/AR-052 as architecturally resolved with narrow remaining specifics, and seeds AR-086 (WebArchitecture.md disposition) in Section 7j.
 - `00-Governance/ArchitectureDecisionIndex.md` is a new, non-authoritative navigation index of resolved decisions (complementing Glossary.md's terminology index and this Register's open-question index); it introduces no new assumptions.
+- `00-Governance/DesignPrinciples.md` restates existing governance/architecture commitments at design-decision granularity; introduces no new assumptions.
+- `04-Design/ComponentDesign.md` seeds AR-087 (missing acceptance criterion for Update Management integrity verification), surfaced via consistent application of the Testability First principle across all eight components.
+
+## 7k. Assumptions from Component Design Authoring (Phase 4.1)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-087 | No acceptance criterion currently exists verifying Update Management's core integrity-verification behavior ("apply only after verification, never before"). | `ComponentDesign.md` §10-11 (Finding CD-1) | Gap in test coverage for a Critical-priority security property (`DeploymentArchitecture.md` DA-017; `ThreatModel.md` TM-010). | Medium | Open | QA Lead + Security Architect |
 
 ## 7j. Assumptions from Architecture Baseline Review
 
