@@ -7,7 +7,7 @@
 | Document ID | PEKB-02-REQ-004 |
 | Document Title | AI Requirements |
 | PEKB Section | 02-Requirements |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Requirements |
 | Owner Role | AI/ML Architect |
@@ -142,6 +142,25 @@ Priority levels are as defined in `SecurityRequirements.md` §3 (Critical / High
 **AI-029** — A processing failure (e.g., an AI capability unable to produce output at all, such as unintelligible audio) shall be handled per `FunctionalRequirements.md` FR-026–FR-028, providing the user a clear, non-technical explanation and a path to retry or escalate.
 *Priority:* High. *Traceability:* FunctionalRequirements.md FR-026–FR-028.
 
+## 6A. AI Content-Integrity Guardrails (Ethical AI Charter §4)
+
+This section states, as explicit numbered requirements, the six hard prohibitions consolidated in `00-Governance/EthicalAICharter.md` §4. Two are already covered elsewhere in this document — **AI-020** (the AI shall not automatically alter transcript text; it may only suggest) and **AI-026** (segments the AI cannot confidently transcribe are marked uncertain, not silently guessed as confident output) — and are referenced here rather than restated. The remaining four are added below. All requirements in this section are **safety-critical**: per `EthicalAICharter.md` §6.2 they may not be disabled by feature flag, configuration, or extension, and any code path capable of violating one is a defect regardless of functional benefit.
+
+**AI-059** — The AI shall not present reworded, normalized, paraphrased, or summarized text as a verbatim quotation. Any content labeled or exported as verbatim shall be the human-verified source text, not an AI transformation of it.
+*Priority:* Critical. *Rationale:* Presenting a rewrite as verbatim would misrepresent the record and could mislead an auditor, investigator, or court. *Traceability:* EthicalAICharter.md §4.5; ProjectConstitution.md Commitment 2 (Human Authority); Section 11 (AI Transparency).
+
+**AI-060** — Speaker attribution that the AI cannot confidently determine shall be marked as uncertain rather than silently merged into, or assigned to, a definite speaker. Overlapping or ambiguous speech shall surface the uncertainty to the Reviewer.
+*Priority:* Critical. *Rationale:* A confident-looking but wrong speaker attribution can misattribute statements to individuals. *Traceability:* EthicalAICharter.md §4.4; AI-040 (per-meeting speaker labeling); AI-026.
+
+**AI-061** — The AI shall not infer or supply confidential identifiers, values, or attributions (e.g., participant IDs, numbers, dates, names) that are not present in the source recording. Where such a value is absent or unclear, the AI shall preserve the absence or mark the segment uncertain rather than inventing a plausible value.
+*Priority:* Critical. *Rationale:* Fabricating a confidential value is both a data-integrity and a privacy failure. *Traceability:* EthicalAICharter.md §4.3; ProjectConstitution.md Commitments 1, 2.
+
+**AI-062** — The AI shall not delete or omit source-supported content without an explicit, attributable human action recorded in the audit trail. Any AI-identified candidate for removal remains a suggestion until a human applies it; applying it creates an append-only revision, never an in-place deletion.
+*Priority:* Critical. *Rationale:* Silent removal of content would let AI quietly reshape the record. *Traceability:* EthicalAICharter.md §4.6; AI-020; DatabaseArchitecture.md DB-008–DB-011.
+
+**AI-063** — The content-integrity guarantees in AI-020, AI-026, and AI-059–AI-062 together constitute the enforceable form of the `EthicalAICharter.md` §4 hard prohibitions. Each shall have at least one corresponding acceptance criterion in `AcceptanceCriteria.md` whose failure would detect a violation.
+*Priority:* Critical. *Traceability:* EthicalAICharter.md §4, §6; AcceptanceCriteria.md §7.
+
 ## 7. AI Learning Restrictions
 
 **AI-030** — No AI capability within Project Echo shall autonomously self-learn or self-modify its behavior from organizational data during ordinary operation.
@@ -263,6 +282,24 @@ These are consolidated into `AssumptionsRegister.md` as AR-072–AR-074 (see com
 - `03-Architecture/AIArchitecture.md` (pending) must implement the capabilities and constraints this document requires without contradicting ADR-001, ADR-003, or ADR-004.
 - `02-Requirements/NonFunctionalRequirements.md` (pending) must define the performance/resource envelope this document defers in Section 8 (AI-039).
 - `07-Privacy-Compliance/RetentionPolicy.md` (pending) must define the retention values this document defers in Section 9 (AI-045).
+- `00-Governance/EthicalAICharter.md` consolidates this document's AI behavioral guarantees; Section 6A (AI-059–AI-063) is the enforceable form of that Charter's §4 hard prohibitions.
+
+## 16. Challenge the Design
+
+Before this document's v0.2.0 additions are approved:
+
+1. Is each new guardrail (AI-059–AI-062) stated so a test could detect its violation, or is any unenforceable as written?
+2. Do AI-020, AI-026, and AI-059–AI-062 together cover all six Ethical AI Charter §4 prohibitions with no gap?
+3. Could a *combination* of individually-compliant AI behaviors still misrepresent the record (e.g., aggressive normalization that is technically "not verbatim-labeled" but misleads)?
+4. Is "safety-critical / not feature-flag-disableable" the right constraint for all of Section 6A?
+5. What remains deferred (confidence-representation mechanism AR-072), and is it flagged rather than assumed?
+
+## 17. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial AI Requirements: AI principles, capability requirements, learning restrictions, offline requirements, speaker identification, AI security, transparency, improvement governance (AI-001–AI-058). | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Added Section 6A — AI Content-Integrity Guardrails (AI-059–AI-063), the enforceable numbered form of the Ethical AI Charter §4 hard prohibitions (no verbatim misrepresentation, speaker-merge uncertainty, no guessing confidential facts, no removal without human action, plus a consolidation/acceptance-criteria requirement). Marked safety-critical (not feature-flag-disableable). AI-020 and AI-026 referenced as covering the other two prohibitions. Added Challenge-the-Design and Revision History sections per DocumentStandards v0.2.0. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

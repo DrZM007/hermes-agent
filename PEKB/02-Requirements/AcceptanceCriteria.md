@@ -7,7 +7,7 @@
 | Document ID | PEKB-02-REQ-007 |
 | Document Title | Acceptance Criteria |
 | PEKB Section | 02-Requirements |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Requirements |
 | Owner Role | QA Lead |
@@ -244,6 +244,44 @@ Recording Received → Processing → Draft Transcript → Review Required → R
 *Expected Result:* The embedded instruction has no effect beyond being treated as ordinary transcript content; no privileged action occurs.
 *Evidence Required:* Processing output showing the injected instruction was not acted upon; absence of any configuration/role change.
 
+The following criteria (AC-042–AC-047) verify the six hard prohibitions consolidated in `00-Governance/EthicalAICharter.md` §4 and stated as requirements in `AIRequirements.md` §6A. They are safety-critical (per EthicalAICharter §6.2) and are the acceptance criteria referenced by AI-063.
+
+**AC-042**
+*Related Requirement:* AI-020, EthicalAICharter §4.1
+*Scenario:* Given AI transcript-quality assistance identifies a possible correction, When it produces that output, Then the transcript text shall not be modified until a human explicitly applies the change; the output shall be presented only as a suggestion.
+*Expected Result:* No AI-authored change reaches the transcript text without a human action; the suggestion is visibly a suggestion.
+*Evidence Required:* Revision history showing no AI-applied in-place edit; UI state showing the suggestion as unapplied.
+
+**AC-043**
+*Related Requirement:* AI-026, EthicalAICharter §4.2
+*Scenario:* Given a segment of audio the AI cannot confidently transcribe, When the Draft Transcript is produced, Then that segment shall be marked as uncertain (or as inaudible) rather than filled with invented text presented as confident.
+*Expected Result:* Low-confidence/inaudible segments are marked uncertain; no fabricated confident text appears in their place.
+*Evidence Required:* Transcript segment showing the uncertainty/inaudible marker; confidence metadata for the segment.
+
+**AC-044**
+*Related Requirement:* AI-061, EthicalAICharter §4.3
+*Scenario:* Given a confidential value (e.g., a participant ID or number) is absent or unclear in the source audio, When AI output is produced, Then the AI shall not supply an invented plausible value; the absence shall be preserved or the segment marked uncertain.
+*Expected Result:* No fabricated confidential value appears; absence/uncertainty is preserved.
+*Evidence Required:* Output showing the value absent or marked uncertain, compared against the source segment.
+
+**AC-045**
+*Related Requirement:* AI-060, EthicalAICharter §4.4
+*Scenario:* Given overlapping or ambiguous speech the AI cannot confidently attribute, When speaker labeling is produced, Then the uncertain attribution shall be marked as uncertain rather than silently merged into or assigned to a definite speaker.
+*Expected Result:* Uncertain speaker attributions are surfaced as uncertain; no silent definite assignment occurs.
+*Evidence Required:* Speaker-labeling output showing the uncertainty indicator on the ambiguous segment.
+
+**AC-046**
+*Related Requirement:* AI-059, EthicalAICharter §4.5
+*Scenario:* Given the AI has reworded, normalized, or summarized a passage, When that content is displayed or exported, Then it shall not be labeled or exported as a verbatim quotation; only human-verified source text may be presented as verbatim.
+*Expected Result:* AI-transformed text is never presented as verbatim; verbatim output corresponds to verified source text.
+*Evidence Required:* Export/label metadata distinguishing AI-transformed text from verbatim source.
+
+**AC-047**
+*Related Requirement:* AI-062, EthicalAICharter §4.6
+*Scenario:* Given the AI identifies content as a candidate for removal, When no human has applied the removal, Then the content shall remain present; and When a human does apply it, Then the removal shall create an append-only revision and an attributable audit entry, never an in-place deletion.
+*Expected Result:* AI never removes content on its own; human-applied removals are append-only and audited.
+*Evidence Required:* Revision history showing content retained pending human action; audit entry and append-only revision for a human-applied removal.
+
 ## 8. Performance Acceptance Criteria
 
 **AC-029**
@@ -368,6 +406,13 @@ This is consolidated into `AssumptionsRegister.md` as AR-084 (see completion sum
 - This document closes the `02-Requirements/` phase. `03-Architecture/` documents (pending) must be designed to satisfy the requirements this document verifies.
 - `09-Testing/TestPlan.md` and `09-Testing/AcceptanceTesting.md` (pending) must implement test cases referencing each AC-### by ID, per AC-P6.
 - `05-Engineering/ReleaseStrategy.md` (pending) must gate release readiness on AC-### satisfaction for Critical/High priority requirements, per AC-P5.
+
+## 15. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial Acceptance Criteria: principles (AC-P1–AC-P6), verification model, and representative criteria AC-001–AC-041 across security, privacy, functional, AI, performance, UX, and failure/recovery domains. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Added AC-042–AC-047 verifying the six Ethical AI Charter §4 hard prohibitions (no silent alteration, no fabricated/guessed speech, no fabricated confidential values, speaker-merge uncertainty, no verbatim misrepresentation, no removal without human action), each tracing to AIRequirements §6A (AI-020, AI-026, AI-059–AI-062). Added Revision History per DocumentStandards v0.2.0. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

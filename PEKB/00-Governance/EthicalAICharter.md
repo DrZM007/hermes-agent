@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-016 |
 | Document Title | Ethical AI Charter |
 | PEKB Section | 00-Governance |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | AI/ML Architect |
@@ -72,13 +72,13 @@ This model exists because automatic learning from confidential data would violat
 
 This Charter is only meaningful if its guarantees are verifiable. Therefore:
 
-1. Each clause in Sections 3–5 must be traceable to at least one entry in `AcceptanceCriteria.md` (existing or to be authored) that would fail if the guarantee were violated.
+1. Each clause in Sections 3–5 must be traceable to at least one entry in `AcceptanceCriteria.md` that would fail if the guarantee were violated. The six §4 hard prohibitions are now covered: they are stated as numbered requirements in `AIRequirements.md` §6A (AI-020, AI-026, AI-059–AI-063) and verified by acceptance criteria **AC-042–AC-047**. Section 3 principles and the Section 5 controlled-learning model trace to AC-024/AC-026/AC-027 and the AI transparency/learning requirements; full one-to-one coverage of the Section 3 principles continues under the AcceptanceCriteria coverage pass (AR-084).
 2. The hard prohibitions in Section 4 are treated as **safety-critical**: they may not be disabled by feature flag, configuration, or extension, and any code path that could violate one is a defect regardless of functional benefit.
 3. AI capability changes (new models, model versions, dictionary/terminology packs) are validated against approved benchmark data before deployment, and the model/version/pack that produced any output is recorded with that output. *(Briefing V12/V13 AI governance; to be captured in AIRequirements and 08-Operations.)*
 
 ## 7. Open Items
 
-1. The per-clause mapping to `AcceptanceCriteria.md` (Section 6.1) is not yet complete; several acceptance criteria for the Section 4 prohibitions must be authored when `AcceptanceCriteria.md` is next amended. Until then, this Charter states the guarantees but their tests are pending.
+1. ~~The per-clause mapping to `AcceptanceCriteria.md` is not yet complete.~~ **RESOLVED 2026-07-20** — the six §4 hard prohibitions are now stated as requirements `AIRequirements.md` §6A (AI-059–AI-063, with AI-020/AI-026) and verified by `AcceptanceCriteria.md` AC-042–AC-047. Full one-to-one coverage of the Section 3 principles remains part of the general AcceptanceCriteria coverage pass (AR-084).
 2. AI performance and confidence thresholds referenced indirectly here remain empirically unresolved under `AssumptionsRegister.md` AR-076 and are deliberately not fixed in this Charter.
 
 ## 8. Challenge the Design
@@ -97,6 +97,7 @@ Before this document is approved, the following must be answered:
 | Version | Date | Summary | Author |
 |---|---|---|---|
 | 0.1.0 | 2026-07-20 | Initial Ethical AI Charter: eight Charter principles, six hard prohibitions (enforceable guarantees), controlled-learning model, verification requirements, open items. Consolidates AI behavioral commitments from ProjectConstitution, ADR-001, AIArchitecture, and briefing Core Principles #18/#23. No new capability introduced. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Closed Open Item 1: the six §4 hard prohibitions are now stated as requirements in AIRequirements §6A (AI-059–AI-063, with AI-020/AI-026) and verified by AcceptanceCriteria AC-042–AC-047; §6.1 and §7.1 updated to reference them. Full one-to-one coverage of the Section 3 principles remains under AR-084. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
