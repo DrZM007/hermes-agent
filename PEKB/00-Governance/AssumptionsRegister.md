@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.16.0 |
+| Version | 0.17.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -229,6 +229,13 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `03-Architecture/AIArchitecture.md` resolves AR-073 (session-isolation model), advances AR-060 and AR-008 to formal recommendations awaiting sign-off, defines the architectural mechanism for AR-076 without setting its numbers, and introduces no new assumptions.
 - `03-Architecture/DatabaseArchitecture.md` references AR-056/AR-062/AR-072/AR-081/AR-082 without resolving them, and introduces no new assumptions.
 - `03-Architecture/DesktopArchitecture.md` completes the architecture phase, references AR-007/AR-070/AR-072/AR-076 without resolving them, flags the `WebArchitecture.md` scope question for the Architecture Baseline Review, and introduces no new assumptions.
+- `03-Architecture/ArchitectureBaselineReview.md` classifies AR-076 as the sole hard architecture-blocking assumption, confirms AR-051/AR-052 as architecturally resolved with narrow remaining specifics, and seeds AR-086 (WebArchitecture.md disposition) in Section 7j.
+
+## 7j. Assumptions from Architecture Baseline Review
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-086 | Whether `WebArchitecture.md` is required at all under the adopted hybrid topology, or should be formally marked not-required-for-current-scope pending a future roadmap decision, is unratified. | `ArchitectureBaselineReview.md` §12, §19 | Affects PEKB structural completeness for `03-Architecture/`; low functional impact since DesktopArchitecture.md already covers the only client in current scope. | Low | Open | Principal Software Architect + Product Manager |
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
