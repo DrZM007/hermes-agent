@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.2.0 |
+| Version | 0.3.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -51,8 +51,8 @@ An entry remains in this register until it is formally resolved (converted into 
 
 | ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
 |---|---|---|---|---|---|---|
-| AR-001 | "Core functionality" for the Offline First principle has not been scoped; it is assumed AI transcription itself may need to run offline in v1 unless a hybrid model is explicitly approved. | Foundation Review v0.1, Required Decision #1 | Determines AI/ML architecture, model size/footprint, network policy, and privacy posture. | High | Open | AI/ML Architect + Privacy Officer |
-| AR-002 | No deployment/tenancy model (on-prem per-org vs. hosted multi-tenant) has been confirmed; architecture work assumes this is still undecided. | Foundation Review v0.1, Required Decision #2 | Blocks `SystemArchitecture.md`, `DeploymentArchitecture.md`, `DatabaseArchitecture.md`. | High | Open | Principal Software Architect + DevOps/Deployment Engineer |
+| AR-001 | "Core functionality" for the Offline First principle has not been scoped; it is assumed AI transcription itself may need to run offline in v1 unless a hybrid model is explicitly approved. | Foundation Review v0.1, Required Decision #1 | Determines AI/ML architecture, model size/footprint, network policy, and privacy posture. | High | **Resolved — see ADR-001** | AI/ML Architect + Privacy Officer |
+| AR-002 | No deployment/tenancy model (on-prem per-org vs. hosted multi-tenant) has been confirmed; architecture work assumes this is still undecided. | Foundation Review v0.1, Required Decision #2 | Blocks `SystemArchitecture.md`, `DeploymentArchitecture.md`, `DatabaseArchitecture.md`. | High | **Resolved — see ADR-002** | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-003 | No desktop technology stack has been chosen; it is assumed any stack considered must operate without administrator rights and without Docker. | Foundation Review v0.1, Required Decision #3 | Blocks `DesktopArchitecture.md` and `ReleaseStrategy.md`; risk of costly rework if assumed incorrectly. | High | Open | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-004 | No RBAC/permission model exists for the Draft → Reviewed → Approved → Archived review workflow; it is assumed roles are configurable per organization rather than fixed, pending confirmation. | Foundation Review v0.1, Required Decision #4 | Affects `FunctionalRequirements.md` and `UXRequirements.md`. | Medium | Open | Product Manager + Security Architect |
 | AR-005 | No formal data classification scheme exists for product data (meeting audio, transcripts, comments, exports); assumed to require definition before retention/access-control requirements can be finalized. | Foundation Review v0.1, Recommendation #3 | Blocks `SecurityRequirements.md`, `PrivacyRequirements.md`, `RetentionPolicy.md`. | High | Open | Privacy Officer + Database Architect |
@@ -86,8 +86,8 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-021 | Requirement ID format is undefined. | `Glossary.md` §8.1 | Blocks consistent traceability referencing in `02-Requirements/`. | Medium | Open | Technical Documentation Lead |
 | AR-022 | "Meeting" scope boundaries (duration limits, multi-session handling) undefined. | `Glossary.md` §8.2 | Blocks `FunctionalRequirements.md`. | Low | Open | Product Manager |
 | AR-023 | "Meeting Owner" permissions and configurability undefined. | `Glossary.md` §8.3 | Overlaps AR-004. | Medium | Open | Product Manager + Security Architect |
-| AR-024 | Organization/tenancy isolation model undefined. | `Glossary.md` §8.4 | Overlaps AR-002. | High | Open | Principal Software Architect |
-| AR-025 | Hybrid Processing adoption and governance undefined. | `Glossary.md` §8.5 | Overlaps AR-001. | High | Open | AI/ML Architect + Privacy Officer |
+| AR-024 | Organization/tenancy isolation model undefined. | `Glossary.md` §8.4 | Overlaps AR-002. | High | **Resolved — see ADR-002** | Principal Software Architect |
+| AR-025 | Hybrid Processing adoption and governance undefined. | `Glossary.md` §8.5 | Overlaps AR-001. | High | **Resolved — see ADR-001** | AI/ML Architect + Privacy Officer |
 | AR-026 | Speaker Identification's biometric persistence undefined. | `Glossary.md` §8.6 | Overlaps AR-012. | High | Open | Privacy Officer + AI/ML Architect |
 | AR-027 | Access Control model (RBAC/ABAC/other) undefined. | `Glossary.md` §8.7 | Blocks `SecurityRequirements.md`. | Medium | Open | Security Architect |
 | AR-028 | Data Classification scheme for product data undefined. | `Glossary.md` §8.8 | Overlaps AR-005. | High | Open | Privacy Officer + Database Architect |
@@ -110,6 +110,15 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-040 | Whether Meeting Owner, Transcript Reviewer, and Approver are typically distinct individuals or the same person in multiple roles is unconfirmed. | `Personas.md` §8 | Affects UX flow design and RBAC model (overlaps AR-004, AR-023). | Medium | Open | Product Manager + UX Lead |
 | AR-041 | Whether IT Administrator, Security Function, and Privacy/Compliance Function require dedicated administrative-console personas is deferred pending future scoping of administrative functionality. | `Personas.md` §8 | Affects future `04-Design/` and `02-Requirements/` work for admin-facing capability. | Low | Open | Product Manager + UX Lead |
 
+## 7a. Assumptions Introduced by Architecture Decision Records (ADR-001, ADR-002)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-042 | Specific on-device resource/performance thresholds for the offline AI processing path are not yet defined. | ADR-001 §9 | Blocks `NonFunctionalRequirements.md`. | Medium | Open | AI/ML Architect |
+| AR-043 | The specific approval/audit mechanism for enabling the optional networked AI processing path is not yet defined. | ADR-001 §9 | Blocks `PrivacyRequirements.md`, `SecurityRequirements.md`. | Medium | Open | Privacy Officer + Security Architect |
+| AR-044 | Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined. | ADR-002 §9 | Blocks `03-Architecture/DeploymentArchitecture.md`. | Medium | Open | Principal Software Architect + DevOps/Deployment Engineer |
+| AR-045 | The precise technical definition of the per-organization "isolation boundary" (what constitutes a violation, how it is enforced/tested) is not yet defined. | ADR-002 §9 | Blocks `SecurityRequirements.md` and `DeploymentArchitecture.md`. | High | Open | Security Architect |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -123,6 +132,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `Glossary.md` §8 seeds the terminology-specific entries in Section 6 of this register.
 - Project Echo Foundation Review v0.1 seeds the risk-derived entries in Section 4.
 - `01-Product/` documents (Vision, BusinessCase, Scope, Stakeholders, Personas) seed the entries in Section 7.
+- `Decisions/ADR-001-AIProcessingModel.md` and `Decisions/ADR-002-DeploymentModel.md` resolve AR-001, AR-002, AR-024, AR-025 and seed the new entries in Section 7a.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
