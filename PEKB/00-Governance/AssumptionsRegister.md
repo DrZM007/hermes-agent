@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.11.0 |
+| Version | 0.12.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -187,6 +187,12 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 |---|---|---|---|---|---|---|
 | AR-083 | Whether a "materially new capability" triggering a re-shown walkthrough is determined automatically by the system or requires organizational configuration is undefined. | `UXRequirements.md` §15 (UX-019) | Blocks `04-Design/Walkthroughs.md`. | Low | Open | UX Lead + Product Manager |
 
+## 7h. Assumptions from Acceptance Criteria Authoring (Phase 2.7)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-084 | Full one-to-one acceptance-criteria coverage for every Critical/High requirement across SecurityRequirements.md through UXRequirements.md has not yet been completed; `AcceptanceCriteria.md` provides representative coverage only. | `AcceptanceCriteria.md` §12-§13 | Blocks full traceability closure per AC-P5; must be completed during `03-Architecture/` and `09-Testing/TestPlan.md` authoring. | Medium | Open | QA Lead + Principal Software Architect |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -209,6 +215,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/AIRequirements.md` further informs AR-008 and AR-060 (defines governance shape without deciding the open question), and seeds AR-072–AR-074 in Section 7e.
 - `02-Requirements/NonFunctionalRequirements.md` further informs AR-042, restates quality attributes qualitatively without inventing numeric targets, and seeds AR-075–AR-082 in Section 7f.
 - `02-Requirements/UXRequirements.md` further references AR-039, AR-069, and AR-070 without resolving them, and seeds AR-083 in Section 7g.
+- `02-Requirements/AcceptanceCriteria.md` closes the 02-Requirements phase, references AR-064/AR-076/AR-070/AR-067 without resolving them, and seeds AR-084 in Section 7h.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
