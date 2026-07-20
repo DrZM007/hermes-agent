@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.13.0 |
+| Version | 0.14.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -116,8 +116,8 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 |---|---|---|---|---|---|---|
 | AR-042 | Specific on-device resource/performance thresholds for the offline AI processing path are not yet defined. | ADR-001 §9 | Blocks `NonFunctionalRequirements.md`. | Medium | Open — `NonFunctionalRequirements.md` §4 (NFR-012) restates this as a qualitative requirement without inventing the threshold; see also AR-075/AR-076 | AI/ML Architect |
 | AR-043 | The specific approval/audit mechanism for enabling the optional networked AI processing path is not yet defined. | ADR-001 §9 | Blocks `PrivacyRequirements.md`, `SecurityRequirements.md`. | Medium | Open | Privacy Officer + Security Architect |
-| AR-044 | Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined. | ADR-002 §9 | Blocks `03-Architecture/DeploymentArchitecture.md`. | Medium | Open | Principal Software Architect + DevOps/Deployment Engineer |
-| AR-045 | The precise technical definition of the per-organization "isolation boundary" (what constitutes a violation, how it is enforced/tested) is not yet defined. | ADR-002 §9 | Blocks `SecurityRequirements.md` and `DeploymentArchitecture.md`. | High | Open | Security Architect |
+| AR-044 | Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined. | ADR-002 §9 | Blocks `03-Architecture/DeploymentArchitecture.md`. | Medium | **Resolved — see DeploymentArchitecture.md §4.4 (DA-009): hybrid local-first desktop client + organization-controlled shared component** | Principal Software Architect + DevOps/Deployment Engineer |
+| AR-045 | The precise technical definition of the per-organization "isolation boundary" (what constitutes a violation, how it is enforced/tested) is not yet defined. | ADR-002 §9 | Blocks `SecurityRequirements.md` and `DeploymentArchitecture.md`. | High | **Resolved — see DeploymentArchitecture.md §3.1 (DA-005)** | Security Architect |
 | AR-046 | Who, specifically, within an adopting organization holds default deletion and export authority (e.g., IT Administrator, a named Data Owner role, or configurable per organization) is not yet defined. | ADR-003 §9 | Blocks `FunctionalRequirements.md`; overlaps AR-004/AR-023 (RBAC model). | Medium | **Resolved — see ADR-004** | Product Manager + Security Architect |
 | AR-047 | Whether Meeting Owner, Reviewer, and Approver are typically the same or distinct individuals in real-world usage remains an organizational choice under the ADR-004 role model; not resolved at the level of expected usage patterns. | ADR-004 §9 (partially informs AR-040) | Affects UX flow design assumptions and how prominently the Reviewer/Approver combination exception (ADR-004 §4.3.2) should be surfaced. | Low | Open | Product Manager + UX Lead |
 | AR-048 | The specific technical authorization mechanism capable of expressing scoped, per-meeting role assignment is not yet defined. | ADR-004 §9 | Blocks `03-Architecture/SecurityArchitecture.md`. | Medium | Open | Security Architect |
@@ -165,7 +165,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
 |---|---|---|---|---|---|---|
 | AR-072 | The specific mechanism and granularity for representing AI confidence (per-word, per-segment, or a general quality indicator) is undefined. | `AIRequirements.md` §14.1 (AI-025) | Blocks `03-Architecture/AIArchitecture.md` and reviewer UX design. | Medium | Open | AI/ML Architect + UX Lead |
-| AR-073 | The specific technical mechanism for AI processing data isolation between organizations under the networked opt-in (if shared infrastructure is ever used) is undefined. | `AIRequirements.md` §14.2 (AI-050) | Overlaps AR-045; blocks `AIArchitecture.md`. | High | Open | Security Architect + AI/ML Architect |
+| AR-073 | The specific technical mechanism for AI processing data isolation between organizations under the networked opt-in (if shared infrastructure is ever used) is undefined. | `AIRequirements.md` §14.2 (AI-050) | Overlaps AR-045 (now resolved); blocks `AIArchitecture.md`. | High | Open — the general isolation boundary is now defined (DeploymentArchitecture.md DA-005), but the networked-opt-in-specific mechanism remains for AIArchitecture.md | Security Architect + AI/ML Architect |
 | AR-074 | The specific testing criteria and rollback mechanism for AI Improvement Loop changes are undefined beyond the governance shape (detect → propose → approve → version-control → test → rollback). | `AIRequirements.md` §14.3 (AI-057-AI-058) | Overlaps AR-008; blocks `05-Engineering/TestingStrategy.md`, `ReleaseStrategy.md`. | Medium | Open | AI/ML Architect + QA Lead |
 
 ## 7f. Assumptions from Non-Functional Requirements Authoring (Phase 2.5)
@@ -223,6 +223,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/UXRequirements.md` further references AR-039, AR-069, and AR-070 without resolving them, and seeds AR-083 in Section 7g.
 - `02-Requirements/AcceptanceCriteria.md` closes the 02-Requirements phase, references AR-064/AR-076/AR-070/AR-067 without resolving them, and seeds AR-084 in Section 7h.
 - `03-Architecture/ThreatModel.md` resolves AR-009, references AR-010/AR-045/AR-051/AR-052/AR-060/AR-062/AR-063/AR-073/AR-076 without resolving them, and seeds AR-085 in Section 7i.
+- `03-Architecture/DeploymentArchitecture.md` resolves AR-044 and AR-045 (deployment topology and isolation boundary definition), further annotates AR-073, and introduces no new assumptions.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
