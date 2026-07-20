@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-001 |
 | Document Title | Project Constitution |
 | PEKB Section | 00-Governance |
-| Version | 0.2.0 |
+| Version | 0.3.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -36,7 +36,7 @@ Where any other PEKB document appears to conflict with this Constitution, this C
 
 The Foundational Commitments (Section 3) are binding co-equal obligations. Where two commitments genuinely cannot both be fully satisfied in a specific decision, the following ordering determines which prevails. This ordering governs *trade-offs only*; it never licenses abandoning a lower-ranked commitment, only sequencing which is protected first when they conflict.
 
-> **STATUS: PROPOSED — pending ratification.** This ordering is the reconciled union of the two precedence lists supplied by the product owner (briefing "Version 20" and "Version 21"), which differed: one included *"Correctness before speed"* and omitted *"Transparency before automation"*; the other did the reverse and reordered Human Authority. The sequence below preserves every distinct entry from both and is presented for the product owner's arbitration. It is **not** yet in force and must be confirmed or amended before this Constitution is ratified (see Section 9).
+> **STATUS: IN FORCE.** Ratified by the product owner on 2026-07-20. This ordering is the reconciled union of the two precedence lists supplied in the briefing (versions 20 and 21), which differed: one included *"Correctness before speed"* and omitted *"Transparency before automation"*; the other did the reverse and reordered Human Authority. Both distinct entries were retained and Human Authority fixed at position 4, as confirmed by the product owner.
 
 1. Privacy before convenience.
 2. Security before features.
@@ -137,7 +137,7 @@ This document is in **Draft** status pending initial governance review. See the 
 
 Open items requiring the product owner's decision before ratification:
 
-1. **Precedence Ordering (Section 2A) — PROPOSED, not in force.** The reconciled 11-item ordering must be confirmed or amended. Specifically: (a) is *"Correctness before speed"* retained (from briefing V20)? (b) is *"Transparency before automation"* retained (from briefing V21)? (c) is the relative rank of *Human authority* correct at position 4? Until confirmed, the ordering is advisory only.
+1. ~~**Precedence Ordering (Section 2A).**~~ **RESOLVED 2026-07-20** — the reconciled 11-item ordering was ratified as-is by the product owner: both *"Correctness before speed"* and *"Transparency before automation"* retained; Human Authority fixed at position 4. Section 2A is now in force.
 2. **Companion governance artifacts** referenced by the new commitments are not yet authored and are queued: an **Ethical AI Charter** (consolidating the AI guardrails), a **Definition of Done** and **Definition of Ready**, and **Quality Gates** — each to live in `00-Governance/` or `05-Engineering/` and to be traced back to the commitments above.
 
 ## 10. Revision History
@@ -146,6 +146,7 @@ Open items requiring the product owner's decision before ratification:
 |---|---|---|---|
 | 0.1.0 | 2026 (initial) | Initial Constitution: authority/precedence, ten Foundational Commitments, governance structure, engineering conduct, provenance, amendment process. | Dr Ziyaad Moolla (ZM) |
 | 0.2.0 | 2026-07-20 | Added Commitments 11–17 (Recoverability, Quality Before Features, Mistake Prevention, Data as a Long-Term Asset, Reliability and Supportability, Measurable Trust, Adaptability) derived from briefing Core Principles #12–#25; added engineering-conduct rules 7–8 (no code before proven design; gaps surfaced not invented); added Section 2A Precedence Ordering (PROPOSED, pending arbitration); recorded open items. Commitments 1–10 unchanged. | Dr Ziyaad Moolla (ZM) |
+| 0.3.0 | 2026-07-20 | Ratified Section 2A Precedence Ordering as-is (product-owner ruling): both "Correctness before speed" and "Transparency before automation" retained, Human Authority at position 4. Section 2A status changed PROPOSED → IN FORCE; Open Item 1 resolved. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
