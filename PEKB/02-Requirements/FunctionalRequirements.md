@@ -51,7 +51,13 @@ Recording Received
    Approved
        ↓
    Archived
+       ↓
+ Eligible for Disposal
+       ↓
+   Disposed
 ```
+
+> **Amended by ADR-007.** The records-management tail (Eligible for Disposal, Disposed) was appended by `00-Governance/Decisions/ADR-007-TranscriptRecordLifecycle.md`. That ADR also establishes that **multi-stage approval** is a configurable sub-process of the Reviewed → Approved transition (not new macro states — see note after the table), and that **collaborative editing** is an editing *mode* within Draft Transcript / Review Required (not a new state), bound by the no-auto-merge invariant `DatabaseArchitecture.md` DB-011. **Legal Hold** is an overlay that suspends the Archived → Eligible-for-Disposal transition and blocks Disposed.
 
 | State | Meaning | Entry Condition | Status Visibility | Permitted Actions | Roles Permitted (per ADR-004) |
 |---|---|---|---|---|---|
@@ -61,9 +67,15 @@ Recording Received
 | **Review Required** | The Draft Transcript is queued/flagged for active Reviewer attention. | Automatic, immediately following Draft Transcript, or upon return from a later state (see backward transitions below). | Visible to assigned Reviewer(s) and Meeting Owner. | Edit transcript text, correct names/speakers, add comments, flag uncertainty. | Reviewer |
 | **Reviewed** | A Reviewer has completed correction and submitted the transcript for approval. | Reviewer submits review (Section 7). | Visible to Meeting Owner and Approver. | Approve, or return with requested changes. | Approver |
 | **Approved** | An Approver has confirmed the transcript as the organizational record. | Approver approves a Reviewed transcript. | Visible per organization's configured access (Knowledge Consumer visibility begins here or at Archived, per organization configuration). | Search, read, summarize, export (per governance); re-opening requires Approver action (`SecurityRequirements.md` SR-035). | Approver (re-open), Knowledge Consumer (read) |
-| **Archived** | The approved record has entered long-term retention. | Automatic or organization-configured transition, per `PrivacyRequirements.md` §15 (Retention Requirements). | Visible per organization's configured access. | Read, search; un-archive requires an explicit, audited action. | Knowledge Consumer (read), Organization Administrator (un-archive) |
+| **Archived** | The approved record has entered active long-term retention. | Automatic or organization-configured transition, per `PrivacyRequirements.md` §15 (Retention Requirements). | Visible per organization's configured access. | Read, search; un-archive requires an explicit, audited action. | Knowledge Consumer (read), Organization Administrator (un-archive) |
+| **Eligible for Disposal** | The configured retention period has elapsed; the record is eligible for governed disposal but not yet disposed. | Automatic when the retention period (per `PrivacyRequirements.md` §15 and the two-axis classification, ADR-006) elapses; **suspended while a Legal Hold is in effect** (ADR-007 §4.4). | Visible per organization's configured access, with a disposal-eligibility indicator. | Read, search; authorize disposal (subject to separation of duties); re-extend retention (returns to Archived). | Knowledge Consumer (read), Organization Administrator (retention), disposal authority per `SecurityRequirements.md` |
+| **Disposed** | The record's C1–C3 content has been securely destroyed under a governed disposal action; a disposal certificate has been generated. | An authorized disposal action executed on an Eligible-for-Disposal record. Blocked while a Legal Hold is in effect. | The C4 audit record and disposal certificate remain visible; content no longer exists. | View disposal certificate / audit record only. | Auditor (view), Organization Administrator (view) |
 
-**Backward transitions**: Reviewed → Review Required (Approver requests changes, Section 8) and Approved → Reviewed (re-opening an approved record, per `SecurityRequirements.md` SR-035) are permitted and must be logged as distinct auditable actions, consistent with Section 13.
+**Backward transitions**: Reviewed → Review Required (Approver requests changes, Section 8) and Approved → Reviewed (re-opening an approved record, per `SecurityRequirements.md` SR-035) are permitted and must be logged as distinct auditable actions, consistent with Section 13. **Eligible for Disposal → Archived** is permitted when retention is re-extended or a Legal Hold is applied. There is **no** transition out of **Disposed** (content no longer exists). Secure destruction is governed best-effort per storage medium/OS with a disposal certificate and surviving C4 audit record — never claimed as a cryptographic erasure guarantee (ADR-007 §4.1).
+
+**Multi-stage approval (per ADR-007 §4.2)**: the Reviewed → Approved transition may be configured, via the governance/policy engine (`Scope.md` §2.13), to require an ordered sequence of approval stages (e.g., Department Manager then Final Approver). Stages are **configuration, not new macro states** — the record reaches the single **Approved** state only when all configured stages complete. Mandatory Reviewer/Approver separation of duties (ADR-004) and conflict-of-interest rules hold across every stage; each stage completion or rejection is a distinct auditable action; a rejection at any stage returns the record to **Review Required**.
+
+**Collaborative editing (per ADR-007 §4.3)**: within **Draft Transcript** and **Review Required**, the organization may enable a collaborative editing mode (check-out/check-in, or real-time where infrastructure supports it). This is a working **mode, not a lifecycle state**; every edit remains an append-only revision and conflicting concurrent edits are surfaced for human resolution, never auto-merged (`DatabaseArchitecture.md` DB-011).
 
 ### 3.2 Meeting Capture Lifecycle
 
