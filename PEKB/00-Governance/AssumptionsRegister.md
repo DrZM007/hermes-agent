@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.7.0 |
+| Version | 0.8.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -149,6 +149,17 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-064 | Specific data-subject-request process, timeline, and interface (including for third parties per AR-036) are undefined. | `PrivacyRequirements.md` §22.7 (PR-051) | Overlaps AR-006, AR-036; blocks `DataGovernance.md`. | High | Open | Privacy Officer |
 | AR-065 | Specific configuration-review cadence/process for retention/consent/classification settings is undefined. | `PrivacyRequirements.md` §22.8 (PR-054) | Blocks `08-Operations/AdministratorGuide.md`. | Low | Open | Privacy Officer + Product Manager |
 
+## 7d. Assumptions from Functional Requirements Authoring (Phase 2.3)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-066 | Whether transcription occurs near-real-time during the meeting ("live") or only after capture completes is undecided. | `FunctionalRequirements.md` §20.1 (FR-033) | Blocks `03-Architecture/AIArchitecture.md` sizing/latency requirements. | Medium | Open | AI/ML Architect + Product Manager |
+| AR-067 | The completeness criteria required before a Reviewer may submit a review (full read-through vs. spot-check) are undefined. | `FunctionalRequirements.md` §20.2 (FR-049) | Affects `UXRequirements.md` and review-workflow UI design. | Medium | Open | Product Manager + UX Lead |
+| AR-068 | The specific notification delivery channel (in-app, email, or other) is undefined. | `FunctionalRequirements.md` §20.3 (FR-082) | Overlaps AR-058; blocks `UXRequirements.md`, `03-Architecture/`. | Medium | Open | Product Manager + UX Lead |
+| AR-069 | The specific form of "beginner mode" / simplified guidance (literal mode toggle vs. progressive disclosure) is undecided. | `FunctionalRequirements.md` §20.4 (FR-091) | Blocks `04-Design/UXPrinciples.md`, `HelpSystem.md`. | Low | Open | UX Lead |
+| AR-070 | Specific accessibility conformance target (e.g., a named standard/level such as WCAG) is undefined. | `FunctionalRequirements.md` §20.5 (FR-100) | Blocks `04-Design/Accessibility.md`. | Medium | Open | Accessibility Specialist + UX Lead |
+| AR-071 | Whether search access to C2/C3-classified content is logged for every search attempt or only for returned/opened results is unconfirmed. | `FunctionalRequirements.md` §20.6 (FR-069) | Affects `SecurityRequirements.md`/`PrivacyRequirements.md` audit-scope interpretation. | Low | Open | Security Architect + Privacy Officer |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -167,6 +178,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `Decisions/ADR-004-AccessControlRBACModel.md` resolves AR-004, AR-023, and AR-046, partially informs AR-040, and seeds AR-047–AR-050 in Section 7a.
 - `02-Requirements/SecurityRequirements.md` resolves AR-027, partially informs AR-005/AR-028 (mandates the classification scheme without defining it), and seeds AR-051–AR-057 in Section 7b.
 - `02-Requirements/PrivacyRequirements.md` resolves AR-005 and AR-028 (Data Classification Framework, §6), further informs AR-006, AR-012, AR-026, and AR-036, and seeds AR-058–AR-065 in Section 7c.
+- `02-Requirements/FunctionalRequirements.md` defines the authoritative transcript lifecycle and meeting capture lifecycle state machines (§3), and seeds AR-066–AR-071 in Section 7d.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
