@@ -906,6 +906,23 @@ class MarketsWatchlistTests(unittest.TestCase):
             self.assertTrue(it["title"] and it["url"])
         self.assertEqual(self.api.ai_news({"topic": ["bogus"]})["topic"], "claude")
 
+    def test_commodities_sample_and_normalizer(self):
+        d = self.api.commodities({})
+        self.assertTrue(d["assets"])
+        groups = {a["group"] for a in d["assets"]}
+        self.assertTrue({"Metals", "Energy", "Rates"} <= groups)
+        for a in d["assets"]:
+            self.assertTrue(a["symbol"] and a["unit"])
+            self.assertIsInstance(a["price"], (int, float))
+        import unittest.mock as mock
+        csv = (b"Symbol,Date,Time,Open,High,Low,Close,Volume\n"
+               b"XAUUSD,2026-07-20,20:00:00,2380,2400,2370,2400,0\n")
+        with mock.patch.object(server, "fetch_url", return_value=csv):
+            out = server.live_commodities()
+        gold = next(a for a in out["assets"] if a["id"] == "xauusd")
+        self.assertEqual(gold["price"], 2400)
+        self.assertEqual(gold["group"], "Metals")
+
     def test_pubmed_grounding_normalizer(self):
         import unittest.mock as mock
         esearch = json.dumps({"esearchresult": {"idlist": ["111"]}}).encode()

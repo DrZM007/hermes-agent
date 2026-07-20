@@ -1234,6 +1234,62 @@ def live_stock_history(symbol: str) -> dict:
             "signals": indicators.read_signals(closes)}
 
 
+# Commodities, metals & rates — Stooq symbols → grouped quotes (no key).
+COMMODITIES_TTL = 5 * 60
+COMMODITY_SYMBOLS = {
+    "xauusd": ("Gold", "Metals", "$/oz"),
+    "xagusd": ("Silver", "Metals", "$/oz"),
+    "hg.f": ("Copper", "Metals", "$/lb"),
+    "xptusd": ("Platinum", "Metals", "$/oz"),
+    "cl.f": ("WTI Crude", "Energy", "$/bbl"),
+    "cb.f": ("Brent Crude", "Energy", "$/bbl"),
+    "ng.f": ("Natural Gas", "Energy", "$/MMBtu"),
+    "10usy.b": ("US 10Y Yield", "Rates", "%"),
+    "2usy.b": ("US 2Y Yield", "Rates", "%"),
+}
+_COMMODITY_SAMPLE = {
+    "xauusd": 2380.5, "xagusd": 29.8, "hg.f": 4.42, "xptusd": 995.0,
+    "cl.f": 78.9, "cb.f": 83.2, "ng.f": 2.31, "10usy.b": 4.28, "2usy.b": 4.72,
+}
+
+
+def _commodity_assets(price_of, source):
+    out = []
+    for sym, (name, group, unit) in COMMODITY_SYMBOLS.items():
+        price, change, pct = price_of(sym)
+        if price is None:
+            continue
+        out.append({"symbol": name, "id": sym, "group": group, "unit": unit,
+                    "price": price, "change": change, "changePct": pct})
+    if not out:
+        raise RuntimeError("no commodity rows")
+    return {"source": source, "assets": out}
+
+
+def live_commodities() -> dict:
+    joined = ",".join(COMMODITY_SYMBOLS)
+    raw = fetch_url(f"https://stooq.com/q/l/?s={joined}&f=sd2t2ohlcv&h&e=csv").decode("utf-8", "replace")
+    quotes = {}
+    for r in _csv.DictReader(io.StringIO(raw)):
+        o, c = _num(r.get("Open")), _num(r.get("Close"))
+        sym = (r.get("Symbol") or "").lower()
+        if c is None:
+            continue
+        change = (c - o) if o is not None else None
+        quotes[sym] = (c, change, (change / o * 100) if (o and change is not None) else None)
+    return _commodity_assets(lambda s: quotes.get(s, (None, None, None)), "live")
+
+
+def sample_commodities() -> dict:
+    import random
+    def price_of(sym):
+        base = _COMMODITY_SAMPLE[sym]
+        rng = random.Random(sym)
+        pct = rng.uniform(-1.8, 1.8)
+        return round(base, 2), round(base * pct / 100, 2), round(pct, 2)
+    return _commodity_assets(price_of, "sample")
+
+
 def sample_stocks(symbols: list[str]) -> dict:
     import random
     base = {"^spx": 5600, "^ndq": 19800, "^dji": 41200, "aapl.us": 211.9,
@@ -2375,6 +2431,8 @@ SOURCES: dict[str, dict] = {
     "repos": {"ttl": REPOS_TTL, "live": live_repos, "sample": sample_repos},
     "papers": {"ttl": PAPERS_TTL, "live": live_papers, "sample": sample_papers},
     "ainews": {"ttl": AI_NEWS_TTL, "live": live_ai_news, "sample": sample_ai_news},
+    "commodities": {"ttl": COMMODITIES_TTL,
+                    "live": live_commodities, "sample": sample_commodities},
 }
 
 
@@ -2824,6 +2882,9 @@ class Api:
         if topic not in AI_NEWS_QUERIES:
             topic = "claude"
         return self.fetch_source("ainews", topic)
+
+    def commodities(self, params: dict) -> dict:
+        return self.fetch_source("commodities")
 
     def podcast(self, params: dict) -> dict:
         url = params.get("url", [""])[0].strip()
@@ -3344,6 +3405,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/drug": "drug",
         "/api/repos": "repos",
         "/api/papers": "papers",
+        "/api/commodities": "commodities",
         "/api/ai-news": "ai_news",
         "/api/social": "social",
         "/api/gaming/free": "gaming_free",

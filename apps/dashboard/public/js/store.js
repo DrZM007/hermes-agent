@@ -13,7 +13,7 @@ function defaultPages() {
       w("weather", "m"), w("launcher", "m"), w("tasks", "m"), w("calendar", "m"),
       w("notes", "m"), w("focus", "s"), w("system", "m"),
     ] },
-    { id: uid(), name: "Markets", layout: [w("markets", "l"), w("stocks", "l")] },
+    { id: uid(), name: "Markets", layout: [w("markets", "l"), w("stocks", "l"), w("commodities", "m")] },
     { id: uid(), name: "Feeds", layout: [
       w("news", "l"), w("reading", "m"), w("socials", "m"), w("gaming", "m"),
       w("podcasts", "m"),
