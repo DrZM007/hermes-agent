@@ -83,6 +83,8 @@ Priority levels are as defined in `SecurityRequirements.md` §3 (Critical / High
 
 This section resolves the previously open data classification question tracked as **AR-005** and **AR-028**, and satisfies the requirement in `SecurityRequirements.md` SR-027 that a formal scheme exist before retention and access-control requirements are considered complete.
 
+> **Two-axis model (per ADR-006).** The C1–C4 levels defined below are **Axis 1 (Data Classification — privacy/data-type character)** of Project Echo's two-axis classification model. A second, orthogonal **Axis 2 (Sensitivity Label — business handling sensitivity: Public / Internal / Confidential / Restricted / Highly Restricted)** is established by `00-Governance/Decisions/ADR-006-DataClassificationTwoAxisModel.md` and drives permissions, watermarking, export eligibility, approval, and printing rules through the governance/policy engine. The two axes are independent; every meeting/artifact carries one value on each; where a control is driven by both, the **more restrictive of the two governs**. This section remains the authoritative home for Axis 1 only. Axis 2's per-label handling requirements are authored in `SecurityRequirements.md` (and, for sensitivity-based retention defaults, this document), and are currently **requirements-pending** per ADR-006 §9.
+
 ### 6.1 Classification Levels
 
 | Level | Definition | Examples Within Project Echo | Baseline Handling Expectation |
