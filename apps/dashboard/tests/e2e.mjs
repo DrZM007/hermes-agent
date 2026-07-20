@@ -728,6 +728,20 @@ check("clinical calc computes GCS from labelled selects", true);
 await page.locator(".widget-calc .calc-picker").selectOption("reference");
 await page.waitForSelector(".widget-calc .calc-ref-table tr", { timeout: 5000 });
 check("clinical calc lists SA reference ranges", (await page.locator(".widget-calc .calc-ref-table tr").count()) >= 10);
+// Naegele EDD (date input support)
+await page.locator(".widget-calc .calc-picker").selectOption("naegele");
+await page.locator(".widget-calc .calc-field input[type=date]").fill("2026-01-01");
+await page.waitForFunction(() =>
+  /2026-10/.test(document.querySelector(".widget-calc .calc-val")?.textContent || ""),
+  null, { timeout: 5000 });
+check("clinical calc computes Naegele EDD", /2026-10-08/.test(await page.locator(".widget-calc .calc-val").innerText()));
+// Alvarado appendicitis score (checkbox scoring)
+await page.locator(".widget-calc .calc-picker").selectOption("alvarado");
+await page.waitForSelector(".widget-calc .calc-check", { timeout: 5000 });
+for (const cb of await page.locator(".widget-calc .calc-check input").all()) await cb.check();
+await page.waitForFunction(() =>
+  document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
+check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
 // med education / OSCE
 await gotoWidget("meded");
 check("med ed lists OSCE stations", (await page.locator(".widget-meded .meded-station").count()) >= 10);
