@@ -119,7 +119,7 @@ check("dark theme default", await page.evaluate(() => document.documentElement.d
 // interacting with it. gotoPage clicks the page tab and settles.
 const WIDGET_PAGES = {
   Main: ["glance", "clock", "worldstate", "agent", "weather", "launcher", "tasks", "calendar", "notes", "focus", "system"],
-  Markets: ["markets", "stocks"],
+  Markets: ["markets", "stocks", "commodities"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "space", "alerts", "flights"],
@@ -746,6 +746,11 @@ await gotoWidget("repos");
 await page.waitForSelector(".widget-repos .repo-item", { timeout: 5000 });
 check("repo radar lists repositories", (await page.locator(".widget-repos .repo-item").count()) >= 3);
 check("repo shows a star count", /★/.test(await page.locator(".widget-repos .repo-stars").first().innerText()));
+await gotoWidget("commodities");
+await page.waitForSelector(".widget-commodities .commod-row", { timeout: 5000 });
+check("commodities lists priced rows", (await page.locator(".widget-commodities .commod-row").count()) >= 5);
+check("commodities groups metals & rates",
+  (await page.locator(".widget-commodities .commod-group-label").count()) >= 3);
 await gotoWidget("papers");
 await page.waitForSelector(".widget-papers .paper-item", { timeout: 5000 });
 check("arxiv papers list renders", (await page.locator(".widget-papers .paper-item").count()) >= 2);

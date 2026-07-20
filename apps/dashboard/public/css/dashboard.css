@@ -1194,6 +1194,21 @@ a.aid-card:hover { border-color: var(--accent); background: var(--surface); }
 .repo-lang { font-size: 10px; color: var(--ink-2); }
 .repo-topic { font-size: 9px; letter-spacing: 0.04em; color: var(--muted); border: 1px solid var(--hairline); border-radius: 3px; padding: 0 5px; }
 
+/* ---------- commodities & rates ---------- */
+.commod-wrap { display: flex; flex-direction: column; margin-top: 6px; }
+.commod-group-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 3px; }
+.commod-group-label:first-child { margin-top: 0; }
+.commod-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 4px 2px; border-bottom: 1px solid var(--hairline); }
+.commod-row:last-child { border-bottom: none; }
+.commod-name { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.commod-sym { font-weight: 550; font-size: 13px; }
+.commod-unit { flex: 0 0 auto; }
+.commod-figs { display: flex; align-items: baseline; gap: 8px; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.commod-price { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+.commod-chg { font-size: 12px; min-width: 56px; text-align: right; }
+.commod-chg.up { color: var(--delta-up); }
+.commod-chg.down { color: var(--delta-down); }
+
 /* ---------- arXiv papers ---------- */
 .paper-list { display: flex; flex-direction: column; gap: 4px; max-height: 360px; overflow-y: auto; margin-top: 8px; }
 .paper-item { border-bottom: 1px solid var(--hairline); padding: 6px 2px; }
