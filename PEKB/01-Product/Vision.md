@@ -7,7 +7,7 @@
 | Document ID | PEKB-01-PRD-001 |
 | Document Title | Vision |
 | PEKB Section | 01-Product |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Product |
 | Owner Role | Product Manager |
@@ -27,9 +27,17 @@ Where this document appears to conflict with `ProjectIntent.md` or `ProjectConst
 
 ## 2. What Project Echo Is
 
-**Project Echo** is an **Enterprise Meeting Intelligence Platform** — a system that securely captures, transcribes, reviews, summarizes, and preserves the organizational knowledge generated during meetings.
+**Project Echo** is a **privacy-first, offline-capable, enterprise-grade Meeting Intelligence Platform** — and a **trusted system of record** for organizational meetings. It securely captures, transcribes, supports structured human review of, governs, and preserves the organizational knowledge generated during meetings, providing:
 
-Its first delivered capability is secure meeting transcription. Its long-term direction, as stated in `ProjectIntent.md` §5, is to become a trusted organizational knowledge platform.
+- secure meeting capture and transcription;
+- structured human review and approval of every record before it becomes authoritative;
+- enterprise governance (policy-driven workflows, retention, audit, and records management);
+- knowledge management over approved organizational outputs; and
+- long-term, defensible record-keeping.
+
+Secure meeting transcription is the platform's **foundational capability and first delivered increment**, but it is not the whole of the product: Project Echo's identity is the trustworthy meeting *record* and the governed intelligence built on it, not transcription alone.
+
+> **Redefinition note (v0.2.0).** Earlier revisions framed Project Echo primarily as transcription software with a platform as directional, non-binding future direction. Following the product-owner briefing, the platform / system-of-record identity above is now the **committed product definition**. This widens the product's identity; it does **not** contradict any Foundational Commitment in `ProjectConstitution.md`. The elevation of *identity* to committed status does not, by itself, commit any *specific* advanced module — module-level scope is governed by `Scope.md`, and specifically deferred capabilities remain deferred (see Section 7). The prior framing is preserved in this document's Revision History.
 
 ## 3. Mission
 
@@ -63,9 +71,18 @@ At a vision level — not yet as measurable acceptance criteria, which belong in
 
 Specific, measurable success metrics are not yet defined — see Section 8 (Open Items).
 
-## 7. Long-Term Direction (Non-Binding)
+## 7. Committed Identity and Deferred Capabilities
 
-Consistent with `ProjectIntent.md` §5, the evolution from a transcription tool toward a broader organizational knowledge platform is acknowledged here as directional vision, not committed scope. Concrete future capabilities belong to `11-Roadmap/FutureVision.md` and `11-Roadmap/FeatureRoadmap.md` and carry no requirements-level authority until formally promoted into `02-Requirements/`.
+As of v0.2.0, Project Echo's **identity** as a Meeting Intelligence Platform and system of record (Section 2) is committed, not merely directional. The concrete in-scope modules that realize that identity — including the policy/workflow engine, review intelligence engine, organization knowledge base, SOP library, recoverability subsystem, and governance/evidence/compliance capabilities — are enumerated authoritatively in `Scope.md`.
+
+A distinct set of capabilities remains **explicitly deferred** and carries no requirements-level authority until formally promoted into `02-Requirements/`:
+
+- Mobile and web clients (tracked as `AssumptionsRegister.md` AR-086);
+- Enterprise Knowledge Graph;
+- On-premises large-language-model summarization;
+- Voice biometrics.
+
+These deferred capabilities belong to `11-Roadmap/FutureVision.md` and `11-Roadmap/FeatureRoadmap.md`. Promoting a committed *identity* does not promote any *specific deferred capability*; the two are governed separately.
 
 ## 8. Open Items
 
@@ -82,6 +99,23 @@ These are tracked in `00-Governance/AssumptionsRegister.md`.
 - `BusinessCase.md` translates this vision into the business justification for investment.
 - `Scope.md` translates this vision into concrete in-scope/out-of-scope boundaries.
 - `Personas.md` and `Stakeholders.md` identify who this vision is realized for.
+
+## 10. Challenge the Design
+
+Before this document is approved:
+
+1. Does the committed platform identity (Section 2) claim any capability that is not actually in `Scope.md`?
+2. Has elevating the identity to "committed" accidentally committed a *specific* deferred module (Section 7)?
+3. Does the redefinition contradict any Foundational Commitment, or does it only widen identity?
+4. Are the mission (§3) and vision statement (§5) still accurate under the new definition, or do they now need amendment too?
+5. What have we intentionally kept deferred, and is each deferral recorded with its tracking reference?
+
+## 11. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial Vision: platform framing with transcription as first capability; platform evolution treated as directional/non-binding (former §7). | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Redefinition per product-owner briefing: Section 2 now defines Project Echo as a committed privacy-first, offline-capable, enterprise-grade Meeting Intelligence Platform and trusted system of record (transcription = foundational first increment, not the whole product); former §7 "Long-Term Direction (Non-Binding)" replaced by §7 "Committed Identity and Deferred Capabilities," enumerating explicit deferrals (mobile/web AR-086, Knowledge Graph, on-prem LLM summarization, voice biometrics). Mission (§3) and vision statement (§5) unchanged. Added Challenge-the-Design and Revision History sections. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

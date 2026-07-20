@@ -7,7 +7,7 @@
 | Document ID | PEKB-01-PRD-003 |
 | Document Title | Scope |
 | PEKB Section | 01-Product |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Product |
 | Owner Role | Product Manager |
@@ -42,6 +42,16 @@ The following capability areas are in scope for Project Echo's defined product d
 11. **Controlled export** — deliberate, auditable mechanisms for meeting data to leave Project Echo's managed environment, where explicitly configured and approved.
 12. **User guidance and accessibility support** — tooltips, contextual hints, walkthroughs, user guides, and accessible design, per `00-Governance/ProjectConstitution.md` §3.7.
 
+The following capability areas were added in v0.2.0, following the product-owner briefing, as part of Project Echo's committed identity as a Meeting Intelligence Platform and system of record (`Vision.md` §2). Each is named here as authoritative in-scope; its **detailed requirements are pending** authoring in `02-Requirements/` and each remains subordinate to `ProjectConstitution.md` and the ratified ADRs:
+
+13. **Enterprise governance engine** — an organization-configurable policy library, policy-enforcement engine, and workflow/rule engine governing approvals, conditions, escalations, retention triggers, and mandatory review/checklist requirements. Configuration-driven, never per-organization custom code (`DesignPrinciples.md` §3.10). *[detailed requirements pending]*
+14. **Review intelligence engine** — reviewer-assist tooling (per-category confidence, evidence panel, intelligent highlighting, review queue, heat map, difference viewer) that **suggests and surfaces, but never changes**, the official record, per the Ethical AI Charter. *[detailed requirements pending]*
+15. **Organization knowledge base** — a permission-scoped, in-organization searchable repository built **only from approved meeting-derived outputs** (decisions, action items, risks, approved summaries, topics) — not raw transcripts. Distinct from the general-purpose knowledge management excluded in Section 3.6 (see reconciliation note there). *[detailed requirements pending]*
+16. **SOP / reference document library** — storage and side-by-side access to **approved reference documents that directly support the review workflow** (SOPs, checklists, naming conventions, export templates). Scoped to review-supporting reference material, **not** general file storage or a wiki (see Section 3.6). *[detailed requirements pending]*
+17. **Recoverability subsystem** — versioned backups, guided restore, workspace recovery after interruption, and disaster recovery, per `ProjectConstitution.md` Commitment 11. *[detailed requirements pending]*
+18. **Governance, evidence & compliance capabilities** — records-management lifecycle (including retention states through governed secure disposal), digital evidence packages, chain of custody, compliance mapping, legal hold, and evidence/compliance reporting. *[detailed requirements pending]*
+19. **Redaction and secure external sharing** — governed creation of redacted copies (leaving the original immutable) and encrypted, audited sharing packages, as controlled-export mechanisms extending Section 2.11 and bound by the isolation-boundary discipline of ADR-002. *[detailed requirements pending]*
+
 ## 3. Explicitly Out of Scope (Initial Product Scope)
 
 Consistent with `00-Governance/ProjectIntent.md` §3, the following are explicitly excluded from Project Echo's current defined scope:
@@ -51,16 +61,20 @@ Consistent with `00-Governance/ProjectIntent.md` §3, the following are explicit
 3. **Autonomous AI action-taking.** Project Echo does not send communications, make commitments, or alter organizational records on its own authority; all AI output requires human review per the Human Authority commitment.
 4. **Continuous unsupervised AI learning from organizational data.** Any AI improvement follows the governed AI Improvement Loop (`00-Governance/ProjectConstitution.md` §5.4); Project Echo does not learn from meeting content without human-approved, version-controlled updates.
 5. **Public or consumer-facing deployment.** Project Echo's initial scope targets organizational/enterprise deployment only.
-6. **General-purpose document management or knowledge base functionality unrelated to meetings.** Project Echo preserves meeting-derived knowledge; it is not a general file-storage or wiki platform.
+6. **General-purpose document management or knowledge base functionality unrelated to meetings.** Project Echo preserves meeting-derived knowledge; it is not a general file-storage or wiki platform. *Reconciliation note (v0.2.0):* the in-scope Organization Knowledge Base (Section 2.15) and SOP/reference library (Section 2.16) do **not** breach this exclusion — the former operates only over *approved meeting-derived outputs*, and the latter is scoped to *approved reference documents that support the review workflow*. Neither provides general-purpose file storage, arbitrary document management, or wiki functionality unrelated to meetings; any drift toward that is a scope violation.
 7. **Mandatory dependency on unrestricted infrastructure.** Project Echo's in-scope capabilities must not require administrator rights, mandatory container runtimes, or mandatory constant internet connectivity as a precondition, per `00-Governance/ProjectIntent.md` §3.5.
 
 ## 4. Deferred / Future Consideration
 
 The following are acknowledged as directionally relevant to the long-term vision (`Vision.md` §7) but are **not** part of current product scope, and require an explicit future scope decision (with governance review) before being added:
 
-1. Broader "trusted organizational knowledge platform" capabilities beyond meetings (e.g., non-meeting document knowledge capture).
-2. Any expansion beyond the exclusions in Section 3.
-3. Integration with third-party video-conferencing or calendar platforms (ingestion of externally-hosted meetings), as distinct from Project Echo hosting meetings itself (which remains excluded per Section 3.1).
+1. **Mobile and web clients.** The adopted topology is local-first desktop + organization-controlled shared component (ADR-002 / DA-009). A web or mobile client is deferred and tracked as `00-Governance/AssumptionsRegister.md` **AR-086**; recurring "and web" framing across the briefing does not, by itself, commit a web client.
+2. **Enterprise Knowledge Graph.** Relationship modelling across projects/meetings/decisions/documents, over approved content only — a long-term vision capability, not initial scope.
+3. **On-premises large-language-model summarization.** Any on-prem LLM capability must remain within ADR-001's offline-default and AI-ARCH-011 isolation; deferred pending a dedicated decision.
+4. **Voice biometrics.** Persistent voice-based speaker recognition — POPIA special-category processing; deferred and gated behind a dedicated governance/ethics review if ever pursued (distinct from the in-scope per-meeting speaker identification in Section 2.3).
+5. Broader "organizational knowledge platform" capabilities beyond meetings (e.g., non-meeting document knowledge capture).
+6. Any expansion beyond the exclusions in Section 3.
+7. Integration with third-party video-conferencing or calendar platforms (ingestion of externally-hosted meetings), as distinct from Project Echo hosting meetings itself (which remains excluded per Section 3.1).
 
 Movement of any item from Deferred to In Scope requires a documented scope change per the change control process in `00-Governance/RevisionPolicy.md` §5, not an implicit inclusion during requirements or architecture work.
 
@@ -90,7 +104,24 @@ These are tracked in `00-Governance/AssumptionsRegister.md`.
 
 - `Vision.md` and `BusinessCase.md` provide the justification this Scope document bounds.
 - `00-Governance/ProjectIntent.md` is the governance authority this Scope elaborates; any conflict is resolved in favor of `ProjectIntent.md`.
-- `02-Requirements/FunctionalRequirements.md` (pending) must derive its requirements from the In Scope list (Section 2) only; requirements referencing Section 3 (Out of Scope) items should be rejected or escalated as a scope question.
+- `02-Requirements/FunctionalRequirements.md` must derive its requirements from the In Scope list (Section 2) only; requirements referencing Section 3 (Out of Scope) items should be rejected or escalated as a scope question. Capability areas 13–19 are in scope but their requirements are pending; requirements work for them is authorized, requirements work for Section 3/4 items is not.
+
+## 9. Challenge the Design
+
+Before this document is approved:
+
+1. Does any newly-added capability (Sections 2.13–2.19) actually appear in the product-owner briefing, or has any been inferred/invented?
+2. Do the Knowledge Base (2.15) and SOP library (2.16) stay clearly on the meeting/approved-content side of the Section 3.6 exclusion, or is the boundary still blurry?
+3. Does any in-scope addition weaken an out-of-scope exclusion (e.g., autonomous action, general document management, meeting hosting)?
+4. Is every deferred capability (Section 4) recorded with a tracking reference, and none accidentally promoted?
+5. What have we added to scope that we cannot yet write acceptance criteria for, and is that flagged as "requirements pending" rather than presented as complete?
+
+## 10. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial Scope: 12 in-scope capability areas, 7 out-of-scope exclusions, deferred items, boundary rationale. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Added in-scope capability areas 13–19 (enterprise governance engine, review intelligence engine, organization knowledge base, SOP/reference library, recoverability subsystem, governance/evidence/compliance, redaction & secure sharing), each marked "detailed requirements pending"; added a reconciliation note to §3.6 distinguishing the Knowledge Base/SOP library from excluded general-purpose document management; expanded §4 deferred items with explicit tracking (mobile/web AR-086, Enterprise Knowledge Graph, on-prem LLM summarization, voice biometrics). Added Challenge-the-Design and Revision History. No out-of-scope exclusion weakened. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
