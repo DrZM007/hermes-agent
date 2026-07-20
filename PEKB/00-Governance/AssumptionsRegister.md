@@ -224,6 +224,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/AcceptanceCriteria.md` closes the 02-Requirements phase, references AR-064/AR-076/AR-070/AR-067 without resolving them, and seeds AR-084 in Section 7h.
 - `03-Architecture/ThreatModel.md` resolves AR-009, references AR-010/AR-045/AR-051/AR-052/AR-060/AR-062/AR-063/AR-073/AR-076 without resolving them, and seeds AR-085 in Section 7i.
 - `03-Architecture/DeploymentArchitecture.md` resolves AR-044 and AR-045 (deployment topology and isolation boundary definition), further annotates AR-073, and introduces no new assumptions.
+- `03-Architecture/SystemArchitecture.md` adopts the AR-044/AR-045 resolutions from `DeploymentArchitecture.md`, references AR-010/AR-051/AR-052/AR-073/AR-081 without resolving them, and introduces no new assumptions.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
