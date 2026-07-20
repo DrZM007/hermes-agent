@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.8.0 |
+| Version | 0.9.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -58,7 +58,7 @@ An entry remains in this register until it is formally resolved (converted into 
 | AR-005 | No formal data classification scheme exists for product data (meeting audio, transcripts, comments, exports); assumed to require definition before retention/access-control requirements can be finalized. | Foundation Review v0.1, Recommendation #3 | Blocks `SecurityRequirements.md`, `PrivacyRequirements.md`, `RetentionPolicy.md`. | High | **Resolved — see PrivacyRequirements.md §6 (Data Classification Framework: C1-C4)** | Privacy Officer + Database Architect |
 | AR-006 | No POPIA-specific consent or data-subject-rights mechanism (access/correction/deletion requests from meeting participants) has been defined; assumed to be required given POPIA-alignment goal. | Foundation Review v0.1, Required Decision #6 | Blocks `PrivacyRequirements.md`, `POPIAFramework.md`. | High | Open — `PrivacyRequirements.md` §16 defines the requirement (organization must be able to locate/act on subject data) and §10 defines consent-opt-in gating for C3 data; specific process/interface still deferred (see AR-058, AR-062) | Privacy Officer |
 | AR-007 | No update/patch delivery mechanism has been defined for environments where users cannot install software themselves; assumed IT-managed distribution (e.g., enterprise software deployment tooling) is likely but unconfirmed. | Foundation Review v0.1, Required Decision #7 | Blocks `DeploymentArchitecture.md`, `DeploymentGuide.md`. | Medium | Open | DevOps/Deployment Engineer |
-| AR-008 | No named approval authority has been defined for the AI Improvement Loop (who approves detected-correction-driven model/behavior updates); assumed to require a specific named role, not an ad hoc process. | Foundation Review v0.1, Required Decision #8 | Blocks `AIRequirements.md`, `AIArchitecture.md`. | Medium | Open | Product Manager + AI/ML Architect |
+| AR-008 | No named approval authority has been defined for the AI Improvement Loop (who approves detected-correction-driven model/behavior updates); assumed to require a specific named role, not an ad hoc process. | Foundation Review v0.1, Required Decision #8 | Blocks `AIRequirements.md`, `AIArchitecture.md`. | Medium | Open — `AIRequirements.md` §7, §12 define the governance shape (detect/propose/approve/version-control/test/rollback) without naming the accountable role; see also AR-074 | Product Manager + AI/ML Architect |
 | AR-009 | No threat model exists yet; all security controls proposed in future documents will be provisional until `ThreatModel.md` is authored. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityControls.md`. | High | Open | Security Architect |
 | AR-010 | No encryption-at-rest / key management strategy has been defined for recordings and transcripts on managed laptops, including lost/stolen-device handling. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityRequirements.md`. | High | Open | Security Architect |
 | AR-011 | No persona definitions exist; assumed a range of technical skill levels must be designed for per stated UX principles, without specific personas to design against yet. | Foundation Review v0.1, UX Risks | Blocks `Personas.md`, `UXRequirements.md`, `04-Design/` documents. | Medium | Open | Product Manager + UX Lead |
@@ -142,7 +142,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 |---|---|---|---|---|---|---|
 | AR-058 | Specific participant-notification delivery/confirmation mechanism is undefined. | `PrivacyRequirements.md` §22.1 (PR-024) | Blocks `UXRequirements.md`, future `04-Design/` work. | Medium | Open | Product Manager + UX Lead |
 | AR-059 | Specific consent-capture mechanism, granularity (per-meeting/per-participant/org-wide), and withdrawal handling are undefined. | `PrivacyRequirements.md` §22.2 (PR-027) | Overlaps AR-006; blocks `FunctionalRequirements.md`. | High | Open | Privacy Officer + Product Manager |
-| AR-060 | Whether persistent cross-meeting speaker recognition is offered at all in the initial release remains undecided. | `PrivacyRequirements.md` §22.3 (PR-033) | Overlaps AR-012, AR-026, AR-035; blocks `AIRequirements.md`. | Medium | Open | Product Manager + AI/ML Architect |
+| AR-060 | Whether persistent cross-meeting speaker recognition is offered at all in the initial release remains undecided. | `PrivacyRequirements.md` §22.3 (PR-033) | Overlaps AR-012, AR-026, AR-035; blocks `AIRequirements.md`. | Medium | Open — `AIRequirements.md` §9 (AI-040-AI-045) defines the governance that would apply if offered, without deciding whether it ships | Product Manager + AI/ML Architect |
 | AR-061 | Specific de-identification/aggregation methods are undefined. | `PrivacyRequirements.md` §22.4 (PR-039) | Blocks `AIArchitecture.md`, `DatabaseArchitecture.md`. | Low | Open | AI/ML Architect + Database Architect |
 | AR-062 | Specific retention period values (minimums, maximums, defaults) per classification level are undefined. | `PrivacyRequirements.md` §22.5 (PR-042) | Blocks `07-Privacy-Compliance/RetentionPolicy.md`. | High | Open | Privacy Officer |
 | AR-063 | Specific technical deletion propagation mechanism (primary storage and backups) is undefined. | `PrivacyRequirements.md` §22.6 (PR-046) | Overlaps AR-056; blocks `DatabaseArchitecture.md`, `DisasterRecovery.md`. | Medium | Open | Database Architect + DevOps/Deployment Engineer |
@@ -159,6 +159,14 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-069 | The specific form of "beginner mode" / simplified guidance (literal mode toggle vs. progressive disclosure) is undecided. | `FunctionalRequirements.md` §20.4 (FR-091) | Blocks `04-Design/UXPrinciples.md`, `HelpSystem.md`. | Low | Open | UX Lead |
 | AR-070 | Specific accessibility conformance target (e.g., a named standard/level such as WCAG) is undefined. | `FunctionalRequirements.md` §20.5 (FR-100) | Blocks `04-Design/Accessibility.md`. | Medium | Open | Accessibility Specialist + UX Lead |
 | AR-071 | Whether search access to C2/C3-classified content is logged for every search attempt or only for returned/opened results is unconfirmed. | `FunctionalRequirements.md` §20.6 (FR-069) | Affects `SecurityRequirements.md`/`PrivacyRequirements.md` audit-scope interpretation. | Low | Open | Security Architect + Privacy Officer |
+
+## 7e. Assumptions from AI Requirements Authoring (Phase 2.4)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-072 | The specific mechanism and granularity for representing AI confidence (per-word, per-segment, or a general quality indicator) is undefined. | `AIRequirements.md` §14.1 (AI-025) | Blocks `03-Architecture/AIArchitecture.md` and reviewer UX design. | Medium | Open | AI/ML Architect + UX Lead |
+| AR-073 | The specific technical mechanism for AI processing data isolation between organizations under the networked opt-in (if shared infrastructure is ever used) is undefined. | `AIRequirements.md` §14.2 (AI-050) | Overlaps AR-045; blocks `AIArchitecture.md`. | High | Open | Security Architect + AI/ML Architect |
+| AR-074 | The specific testing criteria and rollback mechanism for AI Improvement Loop changes are undefined beyond the governance shape (detect → propose → approve → version-control → test → rollback). | `AIRequirements.md` §14.3 (AI-057-AI-058) | Overlaps AR-008; blocks `05-Engineering/TestingStrategy.md`, `ReleaseStrategy.md`. | Medium | Open | AI/ML Architect + QA Lead |
 
 ## 8. Register Maintenance
 
@@ -179,6 +187,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/SecurityRequirements.md` resolves AR-027, partially informs AR-005/AR-028 (mandates the classification scheme without defining it), and seeds AR-051–AR-057 in Section 7b.
 - `02-Requirements/PrivacyRequirements.md` resolves AR-005 and AR-028 (Data Classification Framework, §6), further informs AR-006, AR-012, AR-026, and AR-036, and seeds AR-058–AR-065 in Section 7c.
 - `02-Requirements/FunctionalRequirements.md` defines the authoritative transcript lifecycle and meeting capture lifecycle state machines (§3), and seeds AR-066–AR-071 in Section 7d.
+- `02-Requirements/AIRequirements.md` further informs AR-008 and AR-060 (defines governance shape without deciding the open question), and seeds AR-072–AR-074 in Section 7e.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
