@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -92,18 +92,37 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-027 | Access Control model (RBAC/ABAC/other) undefined. | `Glossary.md` §8.7 | Blocks `SecurityRequirements.md`. | Medium | Open | Security Architect |
 | AR-028 | Data Classification scheme for product data undefined. | `Glossary.md` §8.8 | Overlaps AR-005. | High | Open | Privacy Officer + Database Architect |
 
-## 7. Register Maintenance
+## 7. Assumptions from Product Definition Authoring (Phase 1)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-029 | Vision-level success metrics are stated only directionally (e.g., "reduced knowledge loss"); no quantitative targets exist yet. | `Vision.md` §8 | Blocks measurable acceptance criteria in `02-Requirements/AcceptanceCriteria.md`. | Medium | Open | Product Manager |
+| AR-030 | Relative priority between the "trust" attributes (predictability, restraint, accountability) if they conflict during a design trade-off is undefined. | `Vision.md` §8 | Could affect architecture/UX trade-off decisions where these attributes compete. | Low | Open | Principal Software Architect + Product Manager |
+| AR-031 | No market sizing, competitive analysis, or financial projections exist; `BusinessCase.md` is qualitative only. | `BusinessCase.md` §8 | Limits ability to justify investment quantitatively; may be required before funding/resourcing decisions. | Low | Open | Product Manager |
+| AR-032 | Whether a dedicated financial/investment planning artifact is needed beyond the current PEKB structure is unresolved; none has been added. | `BusinessCase.md` §8 | Would require a structural PEKB proposal per governance rules if needed. | Low | Open | Product Manager + Principal Software Architect |
+| AR-033 | Whether third-party meeting-platform ingestion will ever be added to scope, and under what governance conditions, is unresolved. | `Scope.md` §4, §7 | Affects future scope decisions and integration architecture. | Low | Open | Product Manager |
+| AR-034 | Capability-level boundaries within "meeting insights and search assistance" are named at scope level only, not yet specified. | `Scope.md` §7 | Blocks precise requirements definition for this capability area. | Medium | Open | Product Manager + AI/ML Architect |
+| AR-035 | Whether speaker identification must be configurable/optional per organization, pending AR-012/AR-026 resolution, is unconfirmed. | `Scope.md` §7 | Affects `FunctionalRequirements.md` and `AIRequirements.md`. | Medium | Open | Privacy Officer + Product Manager |
+| AR-036 | Whether Third Parties Referenced in Meeting Content require distinct product-level privacy protections beyond participant-focused mechanisms is unaddressed. | `Stakeholders.md` §7 | Affects `PrivacyRequirements.md` scope. | Medium | Open | Privacy Officer |
+| AR-037 | Whether "Organizational Leadership / Sponsor" needs distinct reporting/oversight features beyond existing audit/export capability is unconfirmed. | `Stakeholders.md` §7 | Low-impact scope question; may affect `FunctionalRequirements.md`. | Low | Open | Product Manager |
+| AR-038 | Whether an external stakeholder category (regulators, external auditors) needs formal representation is unresolved. | `Stakeholders.md` §7 | Could affect audit/export/compliance requirements. | Low | Open | Privacy Officer |
+| AR-039 | Personas (`Personas.md`) are illustrative constructs derived from stated principles, not from confirmed user research; all persona detail requires future validation. | `Personas.md` §1, §8 | Design decisions based on unvalidated personas carry a risk of misdirected UX investment. | Medium | Open | Product Manager + UX Lead |
+| AR-040 | Whether Meeting Owner, Transcript Reviewer, and Approver are typically distinct individuals or the same person in multiple roles is unconfirmed. | `Personas.md` §8 | Affects UX flow design and RBAC model (overlaps AR-004, AR-023). | Medium | Open | Product Manager + UX Lead |
+| AR-041 | Whether IT Administrator, Security Function, and Privacy/Compliance Function require dedicated administrative-console personas is deferred pending future scoping of administrative functionality. | `Personas.md` §8 | Affects future `04-Design/` and `02-Requirements/` work for admin-facing capability. | Low | Open | Product Manager + UX Lead |
+
+## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
 2. An entry's Resolution Status moves to **In Progress** once work has begun on the specific document/decision that resolves it, and to **Resolved** only once that document reaches Approved status per `RevisionPolicy.md`.
 3. Duplicate assumptions surfaced from different sources (e.g., AR-001 and AR-025) are cross-referenced rather than merged, so each source document's origin is preserved.
 4. This register does not itself carry decision-making authority — it tracks open questions and routes them to the correct owner; the owner's resolving document is the authoritative source once approved.
 
-## 8. Relationship to Other PEKB Documents
+## 9. Relationship to Other PEKB Documents
 
 - `EngineeringPrinciples.md` §4 mandates this register's existence and use.
 - `Glossary.md` §8 seeds the terminology-specific entries in Section 6 of this register.
 - Project Echo Foundation Review v0.1 seeds the risk-derived entries in Section 4.
+- `01-Product/` documents (Vision, BusinessCase, Scope, Stakeholders, Personas) seed the entries in Section 7.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
