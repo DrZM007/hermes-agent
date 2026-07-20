@@ -227,6 +227,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `03-Architecture/SystemArchitecture.md` adopts the AR-044/AR-045 resolutions from `DeploymentArchitecture.md`, references AR-010/AR-051/AR-052/AR-073/AR-081 without resolving them, and introduces no new assumptions.
 - `03-Architecture/SecurityArchitecture.md` resolves AR-051 and AR-052, substantially advances (without fully resolving) AR-010 and AR-048, references AR-054/AR-057/AR-073 without resolving them, and introduces no new assumptions.
 - `03-Architecture/AIArchitecture.md` resolves AR-073 (session-isolation model), advances AR-060 and AR-008 to formal recommendations awaiting sign-off, defines the architectural mechanism for AR-076 without setting its numbers, and introduces no new assumptions.
+- `03-Architecture/DatabaseArchitecture.md` references AR-056/AR-062/AR-072/AR-081/AR-082 without resolving them, and introduces no new assumptions.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
