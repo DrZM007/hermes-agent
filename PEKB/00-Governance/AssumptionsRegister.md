@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.3.0 |
+| Version | 0.4.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -56,7 +56,7 @@ An entry remains in this register until it is formally resolved (converted into 
 | AR-003 | No desktop technology stack has been chosen; it is assumed any stack considered must operate without administrator rights and without Docker. | Foundation Review v0.1, Required Decision #3 | Blocks `DesktopArchitecture.md` and `ReleaseStrategy.md`; risk of costly rework if assumed incorrectly. | High | Open | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-004 | No RBAC/permission model exists for the Draft → Reviewed → Approved → Archived review workflow; it is assumed roles are configurable per organization rather than fixed, pending confirmation. | Foundation Review v0.1, Required Decision #4 | Affects `FunctionalRequirements.md` and `UXRequirements.md`. | Medium | Open | Product Manager + Security Architect |
 | AR-005 | No formal data classification scheme exists for product data (meeting audio, transcripts, comments, exports); assumed to require definition before retention/access-control requirements can be finalized. | Foundation Review v0.1, Recommendation #3 | Blocks `SecurityRequirements.md`, `PrivacyRequirements.md`, `RetentionPolicy.md`. | High | Open | Privacy Officer + Database Architect |
-| AR-006 | No POPIA-specific consent or data-subject-rights mechanism (access/correction/deletion requests from meeting participants) has been defined; assumed to be required given POPIA-alignment goal. | Foundation Review v0.1, Required Decision #6 | Blocks `PrivacyRequirements.md`, `POPIAFramework.md`. | High | Open | Privacy Officer |
+| AR-006 | No POPIA-specific consent or data-subject-rights mechanism (access/correction/deletion requests from meeting participants) has been defined; assumed to be required given POPIA-alignment goal. | Foundation Review v0.1, Required Decision #6 | Blocks `PrivacyRequirements.md`, `POPIAFramework.md`. | High | Open — partially informed by ADR-003 §4.10 (ownership/responsibility framing established; specific mechanism still undefined) | Privacy Officer |
 | AR-007 | No update/patch delivery mechanism has been defined for environments where users cannot install software themselves; assumed IT-managed distribution (e.g., enterprise software deployment tooling) is likely but unconfirmed. | Foundation Review v0.1, Required Decision #7 | Blocks `DeploymentArchitecture.md`, `DeploymentGuide.md`. | Medium | Open | DevOps/Deployment Engineer |
 | AR-008 | No named approval authority has been defined for the AI Improvement Loop (who approves detected-correction-driven model/behavior updates); assumed to require a specific named role, not an ad hoc process. | Foundation Review v0.1, Required Decision #8 | Blocks `AIRequirements.md`, `AIArchitecture.md`. | Medium | Open | Product Manager + AI/ML Architect |
 | AR-009 | No threat model exists yet; all security controls proposed in future documents will be provisional until `ThreatModel.md` is authored. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityControls.md`. | High | Open | Security Architect |
@@ -103,7 +103,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-033 | Whether third-party meeting-platform ingestion will ever be added to scope, and under what governance conditions, is unresolved. | `Scope.md` §4, §7 | Affects future scope decisions and integration architecture. | Low | Open | Product Manager |
 | AR-034 | Capability-level boundaries within "meeting insights and search assistance" are named at scope level only, not yet specified. | `Scope.md` §7 | Blocks precise requirements definition for this capability area. | Medium | Open | Product Manager + AI/ML Architect |
 | AR-035 | Whether speaker identification must be configurable/optional per organization, pending AR-012/AR-026 resolution, is unconfirmed. | `Scope.md` §7 | Affects `FunctionalRequirements.md` and `AIRequirements.md`. | Medium | Open | Privacy Officer + Product Manager |
-| AR-036 | Whether Third Parties Referenced in Meeting Content require distinct product-level privacy protections beyond participant-focused mechanisms is unaddressed. | `Stakeholders.md` §7 | Affects `PrivacyRequirements.md` scope. | Medium | Open | Privacy Officer |
+| AR-036 | Whether Third Parties Referenced in Meeting Content require distinct product-level privacy protections beyond participant-focused mechanisms is unaddressed. | `Stakeholders.md` §7 | Affects `PrivacyRequirements.md` scope. | Medium | Open — partially informed by ADR-003 §4.10 (data-subject rights preserved independent of ownership); specific protections still undefined | Privacy Officer |
 | AR-037 | Whether "Organizational Leadership / Sponsor" needs distinct reporting/oversight features beyond existing audit/export capability is unconfirmed. | `Stakeholders.md` §7 | Low-impact scope question; may affect `FunctionalRequirements.md`. | Low | Open | Product Manager |
 | AR-038 | Whether an external stakeholder category (regulators, external auditors) needs formal representation is unresolved. | `Stakeholders.md` §7 | Could affect audit/export/compliance requirements. | Low | Open | Privacy Officer |
 | AR-039 | Personas (`Personas.md`) are illustrative constructs derived from stated principles, not from confirmed user research; all persona detail requires future validation. | `Personas.md` §1, §8 | Design decisions based on unvalidated personas carry a risk of misdirected UX investment. | Medium | Open | Product Manager + UX Lead |
@@ -118,6 +118,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-043 | The specific approval/audit mechanism for enabling the optional networked AI processing path is not yet defined. | ADR-001 §9 | Blocks `PrivacyRequirements.md`, `SecurityRequirements.md`. | Medium | Open | Privacy Officer + Security Architect |
 | AR-044 | Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined. | ADR-002 §9 | Blocks `03-Architecture/DeploymentArchitecture.md`. | Medium | Open | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-045 | The precise technical definition of the per-organization "isolation boundary" (what constitutes a violation, how it is enforced/tested) is not yet defined. | ADR-002 §9 | Blocks `SecurityRequirements.md` and `DeploymentArchitecture.md`. | High | Open | Security Architect |
+| AR-046 | Who, specifically, within an adopting organization holds default deletion and export authority (e.g., IT Administrator, a named Data Owner role, or configurable per organization) is not yet defined. | ADR-003 §9 | Blocks `FunctionalRequirements.md`; overlaps AR-004/AR-023 (RBAC model). | Medium | Open | Product Manager + Security Architect |
 
 ## 8. Register Maintenance
 
@@ -133,6 +134,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - Project Echo Foundation Review v0.1 seeds the risk-derived entries in Section 4.
 - `01-Product/` documents (Vision, BusinessCase, Scope, Stakeholders, Personas) seed the entries in Section 7.
 - `Decisions/ADR-001-AIProcessingModel.md` and `Decisions/ADR-002-DeploymentModel.md` resolve AR-001, AR-002, AR-024, AR-025 and seed the new entries in Section 7a.
+- `Decisions/ADR-003-DataOwnershipGovernance.md` partially informs AR-006 and AR-036 and seeds AR-046 in Section 7a.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
