@@ -356,6 +356,13 @@ class SampleFallbackTests(unittest.TestCase):
         data = self.api.news({"topic": ["gaming"], "limit": ["10"]})
         self.assertTrue(data["items"])
 
+    def test_regional_and_ai_source_packs(self):
+        topics = self.api.feeds.topics()
+        for pack in ("southafrica", "africa", "ai", "finance"):
+            self.assertIn(pack, topics)
+            data = self.api.news({"topic": [pack], "limit": ["10"]})
+            self.assertTrue(data["items"])
+
     def test_gaming_free_and_deals_sample(self):
         f = self.api.gaming_free({})
         self.assertTrue(f["current"])
