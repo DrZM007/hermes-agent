@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.5.0 |
+| Version | 0.6.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -55,7 +55,7 @@ An entry remains in this register until it is formally resolved (converted into 
 | AR-002 | No deployment/tenancy model (on-prem per-org vs. hosted multi-tenant) has been confirmed; architecture work assumes this is still undecided. | Foundation Review v0.1, Required Decision #2 | Blocks `SystemArchitecture.md`, `DeploymentArchitecture.md`, `DatabaseArchitecture.md`. | High | **Resolved — see ADR-002** | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-003 | No desktop technology stack has been chosen; it is assumed any stack considered must operate without administrator rights and without Docker. | Foundation Review v0.1, Required Decision #3 | Blocks `DesktopArchitecture.md` and `ReleaseStrategy.md`; risk of costly rework if assumed incorrectly. | High | Open | Principal Software Architect + DevOps/Deployment Engineer |
 | AR-004 | No RBAC/permission model exists for the Draft → Reviewed → Approved → Archived review workflow; it is assumed roles are configurable per organization rather than fixed, pending confirmation. | Foundation Review v0.1, Required Decision #4 | Affects `FunctionalRequirements.md` and `UXRequirements.md`. | Medium | **Resolved — see ADR-004** | Product Manager + Security Architect |
-| AR-005 | No formal data classification scheme exists for product data (meeting audio, transcripts, comments, exports); assumed to require definition before retention/access-control requirements can be finalized. | Foundation Review v0.1, Recommendation #3 | Blocks `SecurityRequirements.md`, `PrivacyRequirements.md`, `RetentionPolicy.md`. | High | Open | Privacy Officer + Database Architect |
+| AR-005 | No formal data classification scheme exists for product data (meeting audio, transcripts, comments, exports); assumed to require definition before retention/access-control requirements can be finalized. | Foundation Review v0.1, Recommendation #3 | Blocks `SecurityRequirements.md`, `PrivacyRequirements.md`, `RetentionPolicy.md`. | High | Open — `SecurityRequirements.md` SR-027 mandates the scheme exist before retention/access-control work is complete, but does not define it | Privacy Officer + Database Architect |
 | AR-006 | No POPIA-specific consent or data-subject-rights mechanism (access/correction/deletion requests from meeting participants) has been defined; assumed to be required given POPIA-alignment goal. | Foundation Review v0.1, Required Decision #6 | Blocks `PrivacyRequirements.md`, `POPIAFramework.md`. | High | Open — partially informed by ADR-003 §4.10 (ownership/responsibility framing established; specific mechanism still undefined) | Privacy Officer |
 | AR-007 | No update/patch delivery mechanism has been defined for environments where users cannot install software themselves; assumed IT-managed distribution (e.g., enterprise software deployment tooling) is likely but unconfirmed. | Foundation Review v0.1, Required Decision #7 | Blocks `DeploymentArchitecture.md`, `DeploymentGuide.md`. | Medium | Open | DevOps/Deployment Engineer |
 | AR-008 | No named approval authority has been defined for the AI Improvement Loop (who approves detected-correction-driven model/behavior updates); assumed to require a specific named role, not an ad hoc process. | Foundation Review v0.1, Required Decision #8 | Blocks `AIRequirements.md`, `AIArchitecture.md`. | Medium | Open | Product Manager + AI/ML Architect |
@@ -89,8 +89,8 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-024 | Organization/tenancy isolation model undefined. | `Glossary.md` §8.4 | Overlaps AR-002. | High | **Resolved — see ADR-002** | Principal Software Architect |
 | AR-025 | Hybrid Processing adoption and governance undefined. | `Glossary.md` §8.5 | Overlaps AR-001. | High | **Resolved — see ADR-001** | AI/ML Architect + Privacy Officer |
 | AR-026 | Speaker Identification's biometric persistence undefined. | `Glossary.md` §8.6 | Overlaps AR-012. | High | Open | Privacy Officer + AI/ML Architect |
-| AR-027 | Access Control model (RBAC/ABAC/other) undefined. | `Glossary.md` §8.7 | Blocks `SecurityRequirements.md`. | Medium | Open | Security Architect |
-| AR-028 | Data Classification scheme for product data undefined. | `Glossary.md` §8.8 | Overlaps AR-005. | High | Open | Privacy Officer + Database Architect |
+| AR-027 | Access Control model (RBAC/ABAC/other) undefined. | `Glossary.md` §8.7 | Blocks `SecurityRequirements.md`. | Medium | **Resolved — see ADR-004** | Security Architect |
+| AR-028 | Data Classification scheme for product data undefined. | `Glossary.md` §8.8 | Overlaps AR-005. | High | Open — see AR-005 note | Privacy Officer + Database Architect |
 
 ## 7. Assumptions from Product Definition Authoring (Phase 1)
 
@@ -124,6 +124,18 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-049 | The "expedited but audited" support-access workflow allowing a System Administrator occasional, logged content access is not yet defined. | ADR-004 §9 | Blocks `FunctionalRequirements.md`. | Medium | Open | Security Architect + Product Manager |
 | AR-050 | How very small organizations satisfy Auditor independence (a distinct individual who is not also an administrator) is not yet defined. | ADR-004 §9 | Blocks `08-Operations/AdministratorGuide.md`. | Low | Open | Product Manager |
 
+## 7b. Assumptions from Security Requirements Authoring (Phase 2.1)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-051 | Specific authentication mechanism/protocol is undefined. | `SecurityRequirements.md` §24.1 (SR-012, SR-013) | Blocks `03-Architecture/SecurityArchitecture.md`. | Medium | Open | Security Architect |
+| AR-052 | Specific encryption algorithms, key management architecture, and lost-device key recovery procedure are undefined; SR-023–SR-025 scope the requirement without resolving it. | `SecurityRequirements.md` §24.2 | Overlaps AR-010; blocks `SecurityArchitecture.md`. | High | Open | Security Architect |
+| AR-053 | Specific access-monitoring mechanism and alert thresholds are undefined. | `SecurityRequirements.md` §24.3 (SR-047) | Blocks `SecurityArchitecture.md`, `06-Security/SecurityControls.md`. | Medium | Open | Security Architect |
+| AR-054 | Specific vulnerability management process and tooling are undefined. | `SecurityRequirements.md` §24.4 (SR-056) | Blocks `05-Engineering/Operations.md`, `SecurityControls.md`. | Medium | Open | Security Architect + DevOps/Deployment Engineer |
+| AR-055 | Specific incident response procedure and escalation paths are undefined. | `SecurityRequirements.md` §24.5 (SR-059) | Blocks `06-Security/IncidentResponse.md`. | High | Open | Security Architect |
+| AR-056 | Specific backup/disaster-recovery procedures are undefined. | `SecurityRequirements.md` §24.6 (SR-062) | Blocks `08-Operations/DisasterRecovery.md`. | Medium | Open | DevOps/Deployment Engineer |
+| AR-057 | Specific secure development tooling and code-review gating mechanics are undefined. | `SecurityRequirements.md` §24.7 (SR-065) | Blocks `05-Engineering/CodingStandards.md`, `TestingStrategy.md`. | Medium | Open | Security Architect + QA Lead |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -140,6 +152,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `Decisions/ADR-001-AIProcessingModel.md` and `Decisions/ADR-002-DeploymentModel.md` resolve AR-001, AR-002, AR-024, AR-025 and seed the new entries in Section 7a.
 - `Decisions/ADR-003-DataOwnershipGovernance.md` partially informs AR-006 and AR-036 and seeds AR-046 in Section 7a.
 - `Decisions/ADR-004-AccessControlRBACModel.md` resolves AR-004, AR-023, and AR-046, partially informs AR-040, and seeds AR-047–AR-050 in Section 7a.
+- `02-Requirements/SecurityRequirements.md` resolves AR-027, partially informs AR-005/AR-028 (mandates the classification scheme without defining it), and seeds AR-051–AR-057 in Section 7b.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
