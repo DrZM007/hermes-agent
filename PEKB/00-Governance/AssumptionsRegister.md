@@ -230,6 +230,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `03-Architecture/DatabaseArchitecture.md` references AR-056/AR-062/AR-072/AR-081/AR-082 without resolving them, and introduces no new assumptions.
 - `03-Architecture/DesktopArchitecture.md` completes the architecture phase, references AR-007/AR-070/AR-072/AR-076 without resolving them, flags the `WebArchitecture.md` scope question for the Architecture Baseline Review, and introduces no new assumptions.
 - `03-Architecture/ArchitectureBaselineReview.md` classifies AR-076 as the sole hard architecture-blocking assumption, confirms AR-051/AR-052 as architecturally resolved with narrow remaining specifics, and seeds AR-086 (WebArchitecture.md disposition) in Section 7j.
+- `00-Governance/ArchitectureDecisionIndex.md` is a new, non-authoritative navigation index of resolved decisions (complementing Glossary.md's terminology index and this Register's open-question index); it introduces no new assumptions.
 
 ## 7j. Assumptions from Architecture Baseline Review
 
