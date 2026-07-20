@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.12.0 |
+| Version | 0.13.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -59,7 +59,7 @@ An entry remains in this register until it is formally resolved (converted into 
 | AR-006 | No POPIA-specific consent or data-subject-rights mechanism (access/correction/deletion requests from meeting participants) has been defined; assumed to be required given POPIA-alignment goal. | Foundation Review v0.1, Required Decision #6 | Blocks `PrivacyRequirements.md`, `POPIAFramework.md`. | High | Open — `PrivacyRequirements.md` §16 defines the requirement (organization must be able to locate/act on subject data) and §10 defines consent-opt-in gating for C3 data; specific process/interface still deferred (see AR-058, AR-062) | Privacy Officer |
 | AR-007 | No update/patch delivery mechanism has been defined for environments where users cannot install software themselves; assumed IT-managed distribution (e.g., enterprise software deployment tooling) is likely but unconfirmed. | Foundation Review v0.1, Required Decision #7 | Blocks `DeploymentArchitecture.md`, `DeploymentGuide.md`. | Medium | Open | DevOps/Deployment Engineer |
 | AR-008 | No named approval authority has been defined for the AI Improvement Loop (who approves detected-correction-driven model/behavior updates); assumed to require a specific named role, not an ad hoc process. | Foundation Review v0.1, Required Decision #8 | Blocks `AIRequirements.md`, `AIArchitecture.md`. | Medium | Open — `AIRequirements.md` §7, §12 define the governance shape (detect/propose/approve/version-control/test/rollback) without naming the accountable role; see also AR-074 | Product Manager + AI/ML Architect |
-| AR-009 | No threat model exists yet; all security controls proposed in future documents will be provisional until `ThreatModel.md` is authored. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityControls.md`. | High | Open | Security Architect |
+| AR-009 | No threat model exists yet; all security controls proposed in future documents will be provisional until `ThreatModel.md` is authored. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityControls.md`. | High | **Resolved — see 03-Architecture/ThreatModel.md** | Security Architect |
 | AR-010 | No encryption-at-rest / key management strategy has been defined for recordings and transcripts on managed laptops, including lost/stolen-device handling. | Foundation Review v0.1, Security Risks | Blocks `SecurityArchitecture.md`, `SecurityRequirements.md`. | High | Open | Security Architect |
 | AR-011 | No persona definitions exist; assumed a range of technical skill levels must be designed for per stated UX principles, without specific personas to design against yet. | Foundation Review v0.1, UX Risks | Blocks `Personas.md`, `UXRequirements.md`, `04-Design/` documents. | Medium | Open | Product Manager + UX Lead |
 | AR-012 | Speaker identification is assumed to potentially involve persistent voice/biometric-adjacent data, which raises privacy sensitivity beyond ordinary transcript text; not yet addressed at requirements level. | Foundation Review v0.1, Privacy Risks | Blocks `AIRequirements.md`, `PrivacyRequirements.md`. | High | Open — see AR-026 note (`PrivacyRequirements.md` §12) | Privacy Officer + AI/ML Architect |
@@ -193,6 +193,12 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 |---|---|---|---|---|---|---|
 | AR-084 | Full one-to-one acceptance-criteria coverage for every Critical/High requirement across SecurityRequirements.md through UXRequirements.md has not yet been completed; `AcceptanceCriteria.md` provides representative coverage only. | `AcceptanceCriteria.md` §12-§13 | Blocks full traceability closure per AC-P5; must be completed during `03-Architecture/` and `09-Testing/TestPlan.md` authoring. | Medium | Open | QA Lead + Principal Software Architect |
 
+## 7i. Assumptions from Threat Model Authoring (Phase 3.1)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-085 | `ThreatModel.md` was placed at `03-Architecture/ThreatModel.md` per explicit instruction, deviating from the original PEKB tree's `06-Security/ThreatModel.md` location; whether a separate `06-Security/ThreatModel.md` is still expected (and should reference this one) or the original tree entry should be considered superseded is unconfirmed. | `03-Architecture/ThreatModel.md` §0 | Affects PEKB structural consistency; low functional impact. | Low | Open | Principal Software Architect + Technical Documentation Lead |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -216,6 +222,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/NonFunctionalRequirements.md` further informs AR-042, restates quality attributes qualitatively without inventing numeric targets, and seeds AR-075–AR-082 in Section 7f.
 - `02-Requirements/UXRequirements.md` further references AR-039, AR-069, and AR-070 without resolving them, and seeds AR-083 in Section 7g.
 - `02-Requirements/AcceptanceCriteria.md` closes the 02-Requirements phase, references AR-064/AR-076/AR-070/AR-067 without resolving them, and seeds AR-084 in Section 7h.
+- `03-Architecture/ThreatModel.md` resolves AR-009, references AR-010/AR-045/AR-051/AR-052/AR-060/AR-062/AR-063/AR-073/AR-076 without resolving them, and seeds AR-085 in Section 7i.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
