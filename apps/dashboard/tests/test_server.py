@@ -745,6 +745,15 @@ class MarketsWatchlistTests(unittest.TestCase):
             for side in ("home", "away"):
                 self.assertIn("abbr", g[side])
 
+    def test_scores_rugby_cricket_leagues(self):
+        for league in ("urc", "rugbyc", "cricket"):
+            d = self.api.scores({"league": [league]})
+            self.assertEqual(d["league"], league)
+            self.assertTrue(d["games"])
+        boks = self.api.scores({"league": ["rugbyc"]})["games"]
+        self.assertTrue(any(g["home"]["abbr"] == "RSA" or g["away"]["abbr"] == "RSA"
+                            for g in boks))
+
     def test_scores_unknown_league_rejected(self):
         with self.assertRaises(server.ApiError):
             self.api.scores({"league": ["quidditch"]})

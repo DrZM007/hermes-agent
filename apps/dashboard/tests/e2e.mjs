@@ -612,6 +612,19 @@ await page.waitForFunction(() =>
   null, { timeout: 5000 });
 await page.waitForSelector(".widget-scores .score-game");
 check("scores league switch works", (await page.locator(".widget-scores .score-game").count()) >= 1);
+// rugby league (SA franchises)
+await page.locator(".widget-scores .tab", { hasText: "URC" }).click();
+await page.waitForFunction(() =>
+  document.querySelector('.widget-scores .tab[aria-selected="true"]')?.textContent === "URC",
+  null, { timeout: 5000 });
+await page.waitForSelector(".widget-scores .score-game");
+check("rugby URC board renders", (await page.locator(".widget-scores .score-game").count()) >= 1);
+// back to NBA for the standings detail check (rugby standings vary)
+await page.locator(".widget-scores .tab", { hasText: "NBA" }).click();
+await page.waitForFunction(() =>
+  document.querySelector('.widget-scores .tab[aria-selected="true"]')?.textContent === "NBA",
+  null, { timeout: 5000 });
+await page.waitForSelector(".widget-scores .score-game");
 // standings detail window
 await page.locator(".widget-scores .widget-expand").click();
 await page.waitForSelector(".detail-pop .stand-row", { timeout: 8000 });
