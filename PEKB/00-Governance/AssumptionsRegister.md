@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-009 |
 | Document Title | Assumptions Register |
 | PEKB Section | 00-Governance |
-| Version | 0.10.0 |
+| Version | 0.11.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
@@ -181,6 +181,12 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 | AR-081 | Specific scalability targets (max users per organization, max transcript volume, max archive size before degradation) are undefined. | `NonFunctionalRequirements.md` §17.7 (NFR-042) | Blocks `DatabaseArchitecture.md`, `SystemArchitecture.md`. | Medium | Open | Principal Software Architect + Database Architect |
 | AR-082 | Specific storage growth-rate expectations and deletion-to-reclamation timeframes are undefined. | `NonFunctionalRequirements.md` §17.8 (NFR-046) | Overlaps AR-062, AR-063; blocks `RetentionPolicy.md`, `DatabaseArchitecture.md`. | Medium | Open | Database Architect + Privacy Officer |
 
+## 7g. Assumptions from UX Requirements Authoring (Phase 2.6)
+
+| ID | Assumption | Source | Impact | Risk Level | Resolution Status | Owner for Resolution |
+|---|---|---|---|---|---|---|
+| AR-083 | Whether a "materially new capability" triggering a re-shown walkthrough is determined automatically by the system or requires organizational configuration is undefined. | `UXRequirements.md` §15 (UX-019) | Blocks `04-Design/Walkthroughs.md`. | Low | Open | UX Lead + Product Manager |
+
 ## 8. Register Maintenance
 
 1. Every new PEKB document authored must be checked for assumptions before being finalized; any found must be added here immediately, not deferred.
@@ -202,6 +208,7 @@ The following are formally tracked here as required by `Glossary.md` §8; see th
 - `02-Requirements/FunctionalRequirements.md` defines the authoritative transcript lifecycle and meeting capture lifecycle state machines (§3), and seeds AR-066–AR-071 in Section 7d.
 - `02-Requirements/AIRequirements.md` further informs AR-008 and AR-060 (defines governance shape without deciding the open question), and seeds AR-072–AR-074 in Section 7e.
 - `02-Requirements/NonFunctionalRequirements.md` further informs AR-042, restates quality attributes qualitatively without inventing numeric targets, and seeds AR-075–AR-082 in Section 7f.
+- `02-Requirements/UXRequirements.md` further references AR-039, AR-069, and AR-070 without resolving them, and seeds AR-083 in Section 7g.
 - Resolution of any entry here should result in an update to the relevant PEKB document and a status change in this register — never a resolution recorded only in this register without a corresponding document update.
 
 ---
