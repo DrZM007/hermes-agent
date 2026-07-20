@@ -663,6 +663,141 @@ const CALCULATORS = [
         note: `${sev} (≥10 warrants action).${q9 ? " Item 9 positive — assess suicide risk." : ""}` };
     },
   },
+  {
+    id: "naegele", name: "EDD (Naegele's rule)", blurb: "Estimated due date + gestational age from LMP.",
+    inputs: [{ key: "lmp", label: "First day of last menstrual period", type: "date" }],
+    compute(v) {
+      if (!v.lmp) return null;
+      const lmp = new Date(v.lmp + "T00:00:00");
+      if (Number.isNaN(lmp.getTime())) return null;
+      const edd = new Date(lmp.getTime() + 280 * 86400000);
+      const days = Math.floor((Date.now() - lmp.getTime()) / 86400000);
+      const wk = Math.floor(days / 7), d = ((days % 7) + 7) % 7;
+      const ga = days >= 0 && days <= 300 ? ` · GA today ≈ ${wk}⁺${d} weeks` : "";
+      const iso = edd.toISOString().slice(0, 10);
+      return { value: iso, unit: "EDD", tone: "info",
+        note: `LMP + 280 days (40 weeks)${ga}. Confirm by early ultrasound where dating is uncertain.` };
+    },
+  },
+  {
+    id: "alvarado", name: "Alvarado score (appendicitis)", blurb: "MANTRELS — likelihood of acute appendicitis.",
+    inputs: [
+      { key: "mig", label: "Migratory RIF pain", type: "check" },
+      { key: "anor", label: "Anorexia", type: "check" },
+      { key: "naus", label: "Nausea / vomiting", type: "check" },
+      { key: "tend", label: "RIF tenderness (2)", type: "check" },
+      { key: "reb", label: "Rebound tenderness", type: "check" },
+      { key: "temp", label: "Fever ≥37.3 °C", type: "check" },
+      { key: "leuk", label: "Leucocytosis >10 (2)", type: "check" },
+      { key: "shift", label: "Neutrophil left shift", type: "check" },
+    ],
+    compute(v) {
+      const s = (v.mig ? 1 : 0) + (v.anor ? 1 : 0) + (v.naus ? 1 : 0) + (v.tend ? 2 : 0)
+        + (v.reb ? 1 : 0) + (v.temp ? 1 : 0) + (v.leuk ? 2 : 0) + (v.shift ? 1 : 0);
+      const band = s >= 7 ? "appendicitis likely — surgical review" : s >= 5 ? "compatible — observe / image"
+        : "unlikely — consider discharge with safety-net";
+      const tone = s >= 7 ? "bad" : s >= 5 ? "warn" : "good";
+      return { value: s, unit: "/10", tone, note: band + "." };
+    },
+  },
+  {
+    id: "gbs", name: "Glasgow-Blatchford (upper GI bleed)", blurb: "Pre-endoscopy risk; 0 may allow outpatient care.",
+    inputs: [
+      { key: "urea", label: "Urea", unit: "mmol/L", type: "number" },
+      { key: "hb", label: "Haemoglobin", unit: "g/dL", type: "number" },
+      { key: "sex", label: "Sex", type: "select", options: ["male", "female"] },
+      { key: "sbp", label: "Systolic BP", unit: "mmHg", type: "number" },
+      { key: "hr", label: "Pulse ≥100", type: "check" },
+      { key: "melaena", label: "Melaena", type: "check" },
+      { key: "syncope", label: "Syncope", type: "check" },
+      { key: "liver", label: "Hepatic disease", type: "check" },
+      { key: "cardiac", label: "Cardiac failure", type: "check" },
+    ],
+    compute(v) {
+      const urea = num(v.urea), hb = num(v.hb), sbp = num(v.sbp);
+      if (urea == null || hb == null || sbp == null || !v.sex) return null;
+      let s = 0;
+      s += urea >= 25 ? 6 : urea >= 10 ? 4 : urea >= 8 ? 3 : urea >= 6.5 ? 2 : 0;
+      const female = v.sex === "female";
+      if (female) s += hb < 10 ? 6 : hb < 12 ? 1 : 0;
+      else s += hb < 10 ? 6 : hb < 12 ? 3 : hb < 13 ? 1 : 0;
+      s += sbp < 90 ? 3 : sbp < 100 ? 2 : sbp < 110 ? 1 : 0;
+      s += (v.hr ? 1 : 0) + (v.melaena ? 1 : 0) + (v.syncope ? 2 : 0)
+        + (v.liver ? 2 : 0) + (v.cardiac ? 2 : 0);
+      const tone = s === 0 ? "good" : s <= 5 ? "warn" : "bad";
+      return { value: s, unit: "pts", tone,
+        note: s === 0 ? "Very low risk — consider outpatient management." : "Score >0 — admit / endoscopy per pathway." };
+    },
+  },
+  {
+    id: "ciwa", name: "CIWA-Ar (alcohol withdrawal)", blurb: "10 items · guides symptom-triggered benzodiazepines.",
+    inputs: [
+      ...["Nausea/vomiting", "Tremor", "Paroxysmal sweats", "Anxiety",
+        "Agitation", "Tactile disturbances", "Auditory disturbances",
+        "Visual disturbances", "Headache"].map((label, i) => ({
+        key: `c${i}`, label, type: "select",
+        options: [0, 1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: String(n) })) })),
+      { key: "orient", label: "Orientation / clouding of sensorium", type: "select",
+        options: [0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) })) },
+    ],
+    compute(v) {
+      const parts = [...Array(9).keys()].map((i) => num(v[`c${i}`]));
+      const ori = num(v.orient);
+      if (parts.some((p) => p == null) || ori == null) return null;
+      const s = parts.reduce((a, b) => a + b, 0) + ori;
+      const band = s >= 20 ? "severe — high seizure/DT risk" : s >= 8 ? "moderate — medicate"
+        : "minimal — monitor";
+      const tone = s >= 20 ? "bad" : s >= 8 ? "warn" : "good";
+      return { value: s, unit: "/67", tone, note: `${band}. ≥8–10 usually triggers benzodiazepine dosing.` };
+    },
+  },
+  {
+    id: "ome", name: "Opioid → oral morphine equivalent", blurb: "Approximate daily oral morphine milligram equivalent (OME).",
+    inputs: [
+      { key: "drug", label: "Opioid", type: "select", options: [
+        { value: "morphine", label: "Morphine (oral)" },
+        { value: "morphine_iv", label: "Morphine (IV/SC)" },
+        { value: "codeine", label: "Codeine (oral)" },
+        { value: "tramadol", label: "Tramadol (oral)" },
+        { value: "oxycodone", label: "Oxycodone (oral)" },
+        { value: "hydromorphone", label: "Hydromorphone (oral)" },
+        { value: "fentanyl_patch", label: "Fentanyl patch (µg/hr)" }] },
+      { key: "dose", label: "Total daily dose", unit: "mg/day (or µg/hr patch)", type: "number" },
+    ],
+    compute(v) {
+      const dose = num(v.dose);
+      if (dose == null || !v.drug) return null;
+      const F = { morphine: 1, morphine_iv: 3, codeine: 0.15, tramadol: 0.1,
+        oxycodone: 1.5, hydromorphone: 5, fentanyl_patch: 2.4 };
+      const ome = round(dose * F[v.drug], 0);
+      const tone = ome >= 90 ? "bad" : ome >= 50 ? "warn" : "good";
+      return { value: ome, unit: "mg OME/day", tone,
+        note: "Approximate — reduce 25–50% for incomplete cross-tolerance when rotating. ≥90 mg/day: heightened risk." };
+    },
+  },
+  {
+    id: "wells_dvt", name: "Wells score (DVT)", blurb: "Pre-test probability of deep vein thrombosis.",
+    inputs: [
+      { key: "cancer", label: "Active cancer", type: "check" },
+      { key: "paresis", label: "Paralysis/paresis or recent immobilisation of leg", type: "check" },
+      { key: "bedrid", label: "Bedridden ≥3d or major surgery <12wk", type: "check" },
+      { key: "tender", label: "Localised tenderness along deep veins", type: "check" },
+      { key: "swollen", label: "Entire leg swollen", type: "check" },
+      { key: "calf", label: "Calf swelling >3 cm vs other leg", type: "check" },
+      { key: "pitting", label: "Pitting oedema (symptomatic leg)", type: "check" },
+      { key: "collat", label: "Collateral superficial veins (non-varicose)", type: "check" },
+      { key: "prior", label: "Previously documented DVT", type: "check" },
+      { key: "alt", label: "Alternative diagnosis as likely (−2)", type: "check" },
+    ],
+    compute(v) {
+      const keys = ["cancer", "paresis", "bedrid", "tender", "swollen", "calf",
+        "pitting", "collat", "prior"];
+      const s = keys.reduce((a, k) => a + (v[k] ? 1 : 0), 0) - (v.alt ? 2 : 0);
+      const band = s >= 2 ? "DVT likely — proceed to ultrasound" : "DVT unlikely — D-dimer to exclude";
+      const tone = s >= 2 ? "bad" : "good";
+      return { value: s, unit: "pts", tone, note: band + "." };
+    },
+  },
 ];
 
 // SA/NHLS-style adult reference ranges (SI units). Verify against your lab.
@@ -749,6 +884,14 @@ export default {
               const label = typeof o === "object" ? o.label : o;
               return h("option", { value: val, selected: String(values[inp.key]) === val }, label);
             })]));
+        }
+        if (inp.type === "date") {
+          return h("label.calc-field", {},
+            h("span.calc-label", {}, inp.label),
+            h("input.input", {
+              type: "date", value: values[inp.key] ?? "",
+              oninput: (ev) => { values[inp.key] = ev.target.value; persist(); paint(); },
+            }));
         }
         return h("label.calc-field", {},
           h("span.calc-label", {}, inp.label, inp.unit ? h("span.muted", {}, ` (${inp.unit})`) : null),
