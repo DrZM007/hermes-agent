@@ -919,6 +919,9 @@ SPORT_LEAGUES = {
     "mls": ("soccer", "usa.1"),
     "ncaaf": ("football", "college-football"),
     "wnba": ("basketball", "wnba"),
+    "urc": ("rugby", "270557"),        # United Rugby Championship (SA franchises)
+    "rugbyc": ("rugby", "242041"),     # The Rugby Championship (Springboks)
+    "cricket": ("cricket", "8048"),    # International cricket fixtures
 }
 
 
@@ -1027,6 +1030,13 @@ def sample_scores(league: str) -> dict:
                 ("GSW", "Warriors", "51", "DEN", "Nuggets", "48", "in", "Q3 · 5:40")],
         "epl": [("ARS", "Arsenal", "2", "MCI", "Man City", "1", "in", "72'"),
                 ("LIV", "Liverpool", "0", "CHE", "Chelsea", "0", "pre", "Sat 12:30")],
+        "urc": [("BUL", "Bulls", "27", "STO", "Stormers", "24", "post", "FT"),
+                ("SHA", "Sharks", "0", "LEI", "Leinster", "0", "pre", "Sat 17:00"),
+                ("LIO", "Lions", "15", "MUN", "Munster", "18", "in", "58'")],
+        "rugbyc": [("RSA", "South Africa", "35", "NZL", "New Zealand", "20", "post", "FT"),
+                   ("AUS", "Australia", "0", "ARG", "Argentina", "0", "pre", "Sat 15:00")],
+        "cricket": [("RSA", "South Africa", "287/6", "IND", "India", "—", "in", "Day 2 · Innings 1"),
+                    ("SA20", "Sunrisers EC", "0", "MICT", "MI Cape Town", "0", "pre", "18:00")],
     }
     rows = demo.get(league, demo["nba"])
     games = []

@@ -9,6 +9,7 @@ import { viewerLink } from "../viewer.js";
 const LEAGUES = [
   ["nba", "NBA"], ["nfl", "NFL"], ["mlb", "MLB"], ["nhl", "NHL"],
   ["epl", "EPL"], ["mls", "MLS"],
+  ["urc", "URC"], ["rugbyc", "Rugby C'ship"], ["cricket", "Cricket"],
 ];
 
 const followedTeams = (store) => store.state.sports?.teams || [];
