@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Domain layer — pure C#, no external dependencies (Clean Architecture, EngineeringPrinciples).
+    Realizes PEKB/04-Design/DataModel-Core.md and the ratified invariants
+    (append-only revisions DB-008-011, two-axis classification ADR-006, lifecycle ADR-007).
+  -->
+</Project>
