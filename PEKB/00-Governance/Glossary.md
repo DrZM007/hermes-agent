@@ -72,6 +72,7 @@ This table is the single authoritative source for requirement-ID prefixes used w
 | UX | UX Requirements | UXRequirements.md |
 | AC | Acceptance Criteria | AcceptanceCriteria.md |
 | GE | Governance & Policy Engine Requirements | GovernanceEngineRequirements.md |
+| RI | Review Intelligence Engine Requirements | ReviewIntelligenceEngineRequirements.md |
 
 *Note:* Architecture documents use their own decision/element identifiers (e.g., SA, DA, SEC, AI-ARCH, DB, DT, TM) defined within `03-Architecture/`; those are element IDs, not requirement IDs, and are outside this table's scope.
 
