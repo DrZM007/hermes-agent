@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     Infrastructure layer — implements the Application ports. Depends on Application (+ Domain).
-    This slice is cross-platform (no DB engine or OS-specific crypto yet); the encrypted SQLite
-    persistence (ADR-010) and DPAPI-NG key protector (ADR-013) arrive with a Windows CI job.
+    Local persistence uses SQLite (ADR-010); encryption-at-rest via SQLCipher keyed by the
+    ADR-013 hierarchy, and the DPAPI-NG local key protector, arrive with the Windows CI job.
   -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ProjectEcho.Application\ProjectEcho.Application.csproj" />
   </ItemGroup>
