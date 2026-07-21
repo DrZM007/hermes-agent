@@ -7,7 +7,7 @@
 | Document ID | PEKB-02-REQ-001 |
 | Document Title | Security Requirements |
 | PEKB Section | 02-Requirements |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Requirements |
 | Owner Role | Security Architect |
@@ -281,9 +281,61 @@ Each requirement is stated with a **Priority** (Critical / High / Medium / Low, 
 **SR-065** — Specific secure coding standards, static/dynamic analysis tooling, and code review gating mechanics are not yet defined and are deferred to `05-Engineering/CodingStandards.md` and `05-Engineering/TestingStrategy.md`.
 *Priority:* N/A (deferral notice).
 
+## 22A. Sensitivity-Label Handling (Axis 2 — realizing ADR-006)
+
+This section defines the handling controls driven by the **Axis-2 Sensitivity Labels** established in `00-Governance/Decisions/ADR-006-DataClassificationTwoAxisModel.md` (Public, Internal, Confidential, Restricted, Highly Restricted). It is the "Axis-2 handling matrix" that ADR-006 §6 and `GovernanceEngineRequirements.md` GE-008 mark as pending. Axis 1 (C1–C4) remains governed by `PrivacyRequirements.md` §6.
+
+**SR-066** — Every meeting and derived artifact shall carry exactly one Axis-2 Sensitivity Label as explicit, inspectable state, assigned by the Meeting Owner (optionally defaulted by meeting template) and constrained by organization policy; the label shall never be inferred from Axis-1 classification or vice versa.
+*Priority:* High. *Traceability:* ADR-006 §4.2–§4.3; DesignPrinciples.md §3.12.
+
+**SR-067** — Each Sensitivity Label shall drive a defined handling profile covering, at minimum: who may view/edit/export/print, whether watermarking is applied, whether external sharing is permitted, and what approval is required to release. Higher labels shall impose progressively more restrictive handling; the specific per-label control values are configured through the Governance & Policy Engine (`GovernanceEngineRequirements.md`) within the bounds of this section.
+*Priority:* High. *Traceability:* ADR-006 §4.1; briefing V12/V16; GE-008.
+
+**SR-068** — Where a single control is driven by both a record's Axis-1 classification and its Axis-2 label, the system shall apply the **more restrictive** of the two requirements; an Axis-2 label shall never relax a control required by the Axis-1 classification, and Axis-1 shall never relax a control required by the Axis-2 label.
+*Priority:* Critical. *Traceability:* ADR-006 §4.4.
+
+**SR-069** — A change to a record's Sensitivity Label shall be an authorized, audited action, and shall never lower the effective handling below what the record's Axis-1 classification independently requires.
+*Priority:* High. *Traceability:* ADR-006 §4.4; SR-041–SR-043 (audit).
+
+## 22B. Custom-Role Validation (realizing ADR-008)
+
+This section defines the enforcement of the constrained custom-role capability established in `00-Governance/Decisions/ADR-008-ConstrainedCustomRoles.md`, referenced by `GovernanceEngineRequirements.md` GE-010.
+
+**SR-070** — A custom role's permission set shall be admitted only if it is a subset of the union of the baseline-role permissions it composes; the system shall reject any custom role that would grant a capability no baseline role holds.
+*Priority:* Critical. *Traceability:* ADR-008 §4.2.
+
+**SR-071** — The system shall validate every custom-role definition at definition time against the mandatory separations of duties (ADR-004 §4.3) and the two-axis classification limits (ADR-006), and shall reject — fail-restrictively, with a plain-language explanation of the failed constraint — any definition that would violate them or that would grant content access to an infrastructure-only or audit-only composition.
+*Priority:* Critical. *Traceability:* ADR-008 §4.3–§4.4; ADR-004 §4.3, §4.5; DesignPrinciples.md §3.9.
+
+**SR-072** — Custom-role definition, modification, assignment, and deletion shall be Organization Administrator authorities, isolated per deployment, and each shall be a logged, attributable action; the custom-role validator is safety-critical and shall not be disabled by configuration, feature flag, or extension.
+*Priority:* Critical. *Traceability:* ADR-008 §4.5; ADR-004 §4.2, §4.4; EthicalAICharter.md §6.2 (safety-critical discipline).
+
+## 22C. Elevated and Emergency Access (extending ADR-004)
+
+This section defines the elevated-access mechanisms referenced by `EvidenceComplianceRequirements.md` EV-010 and the briefing (V16): break-glass emergency access, approval delegation, and time-bound exceptions. All extend, and none weakens, the ADR-004 model.
+
+**SR-073** — The system shall support a controlled **break-glass emergency access** mechanism requiring: explicit justification, a multi-step confirmation, enhanced audit logging, automatic notification to designated administrators, temporary duration, and automatic expiration. Emergency access shall never become standing access.
+*Priority:* Critical. *Traceability:* ADR-004 §4.5; briefing V16.
+
+**SR-074** — The system shall support **approval/authority delegation** (e.g., during leave) that is explicitly time-bounded, automatically expires, and is fully audited, and that cannot delegate an authority the delegator does not hold or that would breach a mandatory separation of duties.
+*Priority:* High. *Traceability:* ADR-004 §4.2–§4.3; briefing V16.
+
+**SR-075** — The system shall support time-bound **access exceptions** (e.g., a temporary export permission) that automatically expire and are logged; no exception mechanism shall produce a permanent privilege escalation, and every exception shall be visibly distinct from standing authority while active.
+*Priority:* High. *Traceability:* ADR-004 §4.3; briefing V16; DesignPrinciples.md §3.9.
+
+## 22D. Records Disposal Authority (realizing ADR-007)
+
+This section defines the authorization around governed disposal introduced by `00-Governance/Decisions/ADR-007-TranscriptRecordLifecycle.md`, referenced by `EvidenceComplianceRequirements.md` EV-002 and the lifecycle's Disposed state.
+
+**SR-076** — Executing the Disposed transition on a record shall require explicit authorization subject to separation of duties (the authorizer of a disposal shall be distinguishable from, and where policy requires separate from, the role that requested it); every disposal shall record who authorized it, what was disposed, when, why, the governing retention policy, and an audit reference.
+*Priority:* Critical. *Traceability:* ADR-007 §4.1; PrivacyRequirements.md PR-044; SR-041–SR-043.
+
+**SR-077** — Disposal shall be blocked while a Legal Hold is in effect (per ADR-007 §4.4), shall produce a disposal certificate, and shall retain the C4 audit record and certificate after the C1–C3 content is destroyed; secure destruction shall be documented as governed best-effort per storage medium/OS, never claimed as cryptographic erasure.
+*Priority:* Critical. *Traceability:* ADR-007 §4.1, §4.4; PrivacyRequirements.md PR-044; EvidenceComplianceRequirements.md EV-002.
+
 ## 23. Traceability Summary
 
-Every requirement in this document traces to at least one of: `00-Governance/ProjectConstitution.md`, `00-Governance/ProjectPhilosophy.md`, ADR-001, ADR-002, ADR-003, or ADR-004, per the inline Traceability references above. No requirement in this document introduces an obligation without a governance or ADR basis; where no such basis existed for a plausible security concern, it has been recorded as an assumption in Section 24 rather than asserted as a requirement.
+Every requirement in this document traces to at least one of: `00-Governance/ProjectConstitution.md`, `00-Governance/ProjectPhilosophy.md`, ADR-001, ADR-002, ADR-003, ADR-004, and (for the v0.2.0 additions in §22A–§22D) ADR-005, ADR-006, ADR-007, and ADR-008, per the inline Traceability references above. No requirement in this document introduces an obligation without a governance or ADR basis; where no such basis existed for a plausible security concern, it has been recorded as an assumption in Section 24 rather than asserted as a requirement.
 
 ## 24. Open Items and New Assumptions
 
@@ -305,6 +357,14 @@ These are consolidated into `AssumptionsRegister.md` as AR-051–AR-057 (see com
 - `02-Requirements/PrivacyRequirements.md` (pending) must be authored jointly with, or immediately following, this document, since SR-027 (data classification) is a shared prerequisite.
 - `03-Architecture/SecurityArchitecture.md` (pending) must implement the mechanisms this document requires without contradicting ADR-001–ADR-004.
 - `06-Security/ThreatModel.md`, `06-Security/SecurityControls.md`, and `06-Security/IncidentResponse.md` (pending) elaborate Sections 5, 16, 19, and 20 respectively.
+- The v0.2.0 additions (§22A–§22D) provide the security enforcement the new-module requirement documents depend on: `GovernanceEngineRequirements.md` (GE-008/GE-010), `EvidenceComplianceRequirements.md` (EV-002/EV-010), `RedactionSecureSharingRequirements.md`, and the ADR-006/007/008 amendments.
+
+## 26. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial Security Requirements SR-001–SR-065 across authentication, authorization, role security, encryption, data protection, recording/transcript/AI security, audit, monitoring, export, update, vulnerability, incident response, backup, and secure development. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Added §22A Sensitivity-Label Handling (SR-066–SR-069, the Axis-2 handling matrix realizing ADR-006 with the more-restrictive-governs rule); §22B Custom-Role Validation (SR-070–SR-072, realizing ADR-008); §22C Elevated and Emergency Access (SR-073–SR-075: break-glass, delegation, time-bound exceptions extending ADR-004); §22D Records Disposal Authority (SR-076–SR-077, realizing ADR-007 with separation of duties, Legal Hold blocking, disposal certificate, and honest best-effort framing). Updated traceability to include ADR-005–ADR-008. These fill the security dependencies referenced by the new-module requirement documents. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
