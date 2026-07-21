@@ -8,8 +8,8 @@
 | Decision ID | ADR-012 |
 | Document Title | Synchronization Approach |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
 | Approval Required From | Product Owner (Dr Ziyaad Moolla), Security Architect, Database Architect, DevOps/Deployment Engineer |
@@ -22,7 +22,7 @@
 
 ## 1. Context
 
-The adopted topology (**DA-009**) is local-first desktop + organization-controlled shared component, and the briefing (Versions 14, 15) requires offline-first operation with synchronization to the internal server when connectivity returns, and clear visibility into what changed. The ratified data model requires that conflicts are **surfaced for human resolution, never auto-merged** (`DatabaseArchitecture.md` **DB-011**). This ADR decides the synchronization *approach*. It is **Proposed**, pending the Product Owner's ratification.
+The adopted topology (**DA-009**) is local-first desktop + organization-controlled shared component, and the briefing (Versions 14, 15) requires offline-first operation with synchronization to the internal server when connectivity returns, and clear visibility into what changed. The ratified data model requires that conflicts are **surfaced for human resolution, never auto-merged** (`DatabaseArchitecture.md` **DB-011**). This ADR decides the synchronization *approach*. **Ratified by the Product Owner on 2026-07-20** (the synchronization invariants are ratified; the concrete protocol is designed in `03-Architecture/` within them).
 
 ## 2. Problem
 
@@ -44,9 +44,9 @@ Fix the non-negotiable rules (offline-first, in-organization only, no auto-merge
 - **Pros:** Less bespoke code.
 - **Cons:** Most such frameworks assume cloud/multi-tenant models or auto-merge semantics that conflict with ADR-002 isolation and DB-011; introduces an external dependency contrary to ADR-005/DesignPrinciples §3.13. Rejected.
 
-## 4. Decision (Proposed)
+## 4. Decision
 
-**Proposed: Option A.** The following synchronization invariants are ratified now; the concrete protocol is designed in `03-Architecture/`.
+**Option A.** The following synchronization invariants are ratified now; the concrete protocol is designed in `03-Architecture/`.
 
 1. **Offline-first.** The desktop client remains fully usable for core capture/review/approval while disconnected; synchronization occurs when connectivity to the organization shared component returns (ADR-005 §4.3, RecoverabilityRequirements RC-017).
 2. **In-organization only.** Synchronization occurs solely between a desktop client and its own organization's shared component, never across the isolation boundary (ADR-002); no third-party or cross-organization sync service is used.
@@ -100,6 +100,7 @@ Everything that matters for correctness, privacy, and trust in synchronization i
 | Version | Date | Summary | Author |
 |---|---|---|---|
 | 0.1.0 | 2026-07-20 | Initial ADR-012 (Proposed): ratify the synchronization invariants — offline-first, in-organization only (ADR-002), no auto-merge (DB-011), authenticated/encrypted transport, fully audited and transparent — and defer the concrete change-log/conflict-detection/resumability protocol to 03-Architecture. Rejects third-party sync frameworks as incompatible with the isolation and no-auto-merge invariants. Transport security gated on AR-052. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Ratified by the Product Owner. Status Proposed → Accepted: the synchronization invariants are ratified; the concrete protocol is designed in 03-Architecture within them. Transport security remains gated on AR-052. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

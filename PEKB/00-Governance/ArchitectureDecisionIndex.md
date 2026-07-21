@@ -59,10 +59,10 @@ This document was not in the original PEKB structure and is added here on the Pr
 | 19 | Append-Only Revision Architecture | Every transcript edit creates an immutable revision; approval creates a lock marker; conflicts are surfaced for human resolution, never auto-merged. | DatabaseArchitecture.md §5 (DB-008–DB-011), §12 (DB-032) |
 | 20 | Desktop Runtime Model | Two-part runtime (interactive + background), entirely within the standard-user session, no administrator elevation ever required. | DesktopArchitecture.md §3 (DT-005–DT-007) |
 | 21 | Threat Model Placement | The Threat Model is hosted in `03-Architecture/` (not the originally-planned `06-Security/`) since it functions as an architecture input document. | ThreatModel.md §0; see AR-085 |
-| 22 | Desktop Application Stack *(Proposed)* | Native .NET (C#) with WinUI 3 / WPF fallback for the Windows desktop client — lightest fit for the ADR-005 managed, CPU-only, no-admin environment; Windows-only under AR-086. | ADR-009-DesktopApplicationStack.md |
-| 23 | Database Engine Strategy *(Proposed)* | Encrypted embedded SQLite (local, server-less) + PostgreSQL default for the organization shared component, SQL Server supported. | ADR-010-DatabaseEngineStrategy.md |
-| 24 | Offline Transcription Engine Strategy *(Proposed)* | Commit to a transcription abstraction layer now (vendor-independence); defer the default engine until benchmarked on CPU-only hardware (AR-076). whisper.cpp-family / faster-whisper are candidates. | ADR-011-OfflineTranscriptionEngineStrategy.md |
-| 25 | Synchronization Approach *(Proposed)* | Ratify sync invariants (offline-first, in-organization only, no auto-merge, authenticated, audited); defer the concrete protocol to 03-Architecture. | ADR-012-SynchronizationApproach.md |
+| 22 | Desktop Application Stack | Native .NET (C#) with WinUI 3 / WPF fallback for the Windows desktop client — lightest fit for the ADR-005 managed, CPU-only, no-admin environment; Windows-only under AR-086. | ADR-009-DesktopApplicationStack.md |
+| 23 | Database Engine Strategy | Encrypted embedded SQLite (local, server-less) + PostgreSQL default for the organization shared component, SQL Server supported. | ADR-010-DatabaseEngineStrategy.md |
+| 24 | Offline Transcription Engine Strategy | Transcription abstraction layer committed (vendor-independence); the concrete default engine is deferred until benchmarked on CPU-only hardware (AR-076). whisper.cpp-family / faster-whisper are candidates. | ADR-011-OfflineTranscriptionEngineStrategy.md |
+| 25 | Synchronization Approach | Sync invariants ratified (offline-first, in-organization only, no auto-merge, authenticated, audited); the concrete protocol is deferred to 03-Architecture. | ADR-012-SynchronizationApproach.md |
 
 ## 4. Relationship to Other PEKB Documents
 

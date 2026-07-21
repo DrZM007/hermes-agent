@@ -8,8 +8,8 @@
 | Decision ID | ADR-009 |
 | Document Title | Desktop Application Stack |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
 | Approval Required From | Product Owner (Dr Ziyaad Moolla), DevOps/Deployment Engineer, Security Architect, UX Lead |
@@ -24,7 +24,7 @@
 
 `AssumptionsRegister.md` **AR-003** records that no desktop technology stack has been chosen, and **ADR-005** ratified the binding constraints any stack must satisfy: runs in a standard-user session with no administrator rights, no container/Docker/WSL dependency, offline-capable, strong on CPU-only managed laptops, and deployable via MSI/portable/silent/GPO/Intune/SCCM. Web and mobile clients are deferred (**AR-086**), so the initial client is a Windows desktop application.
 
-This ADR proposes the desktop stack. It is **Proposed** — a recommendation for the Product Owner's ratification — not yet in force.
+This ADR selects the desktop stack. **Ratified by the Product Owner on 2026-07-20.**
 
 ## 2. Problem
 
@@ -44,9 +44,9 @@ Select a desktop application stack that best satisfies ADR-005 for a Windows-man
 - **Pros:** Web-tech UI with a much smaller footprint than Electron; strong security posture; frontend reusable for a future web client.
 - **Cons:** Younger/smaller ecosystem; requires Rust expertise for the core, raising the long-term maintenance bar; less mature enterprise-deployment track record.
 
-## 4. Decision (Proposed)
+## 4. Decision
 
-**Proposed: Option A — .NET (C#) with a native Windows UI (WinUI 3, with WPF as a fallback where WinUI coverage is insufficient).**
+**Option A — .NET (C#) with a native Windows UI (WinUI 3, with WPF as a fallback where WinUI coverage is insufficient).**
 
 1. The desktop client is a native Windows .NET application, running entirely in a standard-user session (ADR-005 §4.1).
 2. No browser runtime is shipped; the UI is native, minimizing footprint on CPU-only devices.
@@ -97,6 +97,7 @@ Among the three, native .NET best satisfies the binding ADR-005 constraints for 
 | Version | Date | Summary | Author |
 |---|---|---|---|
 | 0.1.0 | 2026-07-20 | Initial ADR-009 (Proposed): recommend native .NET (C#) with WinUI 3 / WPF fallback for the Windows desktop client, as the lightest, best-integrated fit for the ADR-005 managed, CPU-only, no-admin environment. Windows-only accepted under AR-086 (web/mobile deferred). Proposes resolving the desktop-stack portion of AR-003 pending ratification; transcription engine handled separately in ADR-011. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Ratified by the Product Owner. Status Proposed → Accepted; desktop-stack portion of AR-003 now resolved to native .NET/WinUI. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

@@ -8,8 +8,8 @@
 | Decision ID | ADR-011 |
 | Document Title | Offline Transcription Engine Strategy |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | AI/ML Architect |
 | Approval Required From | Product Owner (Dr Ziyaad Moolla), Principal Software Architect, Security Architect, DevOps/Deployment Engineer |
@@ -24,7 +24,7 @@
 
 **ADR-001** requires every AI capability to have a default offline path, and the product-owner briefing (Versions 9, 12, 15) repeatedly required that Project Echo not be tied to a single speech model or vendor — an abstraction layer so transcription, speaker identification, and meeting intelligence can be replaced or upgraded independently. The offline transcription engine must run well on CPU-only managed laptops under **ADR-005**. Critically, the offline AI performance envelope on that hardware is still **empirically unresolved (AR-076)**.
 
-This ADR decides the transcription-engine *strategy*. It is **Proposed**, pending the Product Owner's ratification.
+This ADR decides the transcription-engine *strategy*. **Ratified by the Product Owner on 2026-07-20** (the abstraction-layer commitment and the deferral of the concrete default engine are ratified; the default engine itself is selected later, post-benchmark).
 
 ## 2. Problem
 
@@ -46,9 +46,9 @@ Ratify a pluggable STT interface immediately; defer the concrete default engine 
 - **Pros:** Strong accuracy/throughput; GPU-capable where available; named in the briefing.
 - **Cons:** Requires a bundled Python runtime — heavier to package and maintain in a locked-down estate; larger footprint on constrained devices; still unmeasured against AR-076.
 
-## 4. Decision (Proposed)
+## 4. Decision
 
-**Proposed: Option A.**
+**Option A.**
 
 1. Project Echo adopts a **transcription abstraction layer** (a stable internal interface for speech-to-text, speaker labeling, and downstream AI modules) as the binding architectural commitment, realizing the vendor-independence required by ADR-001 and the briefing.
 2. Every engine behind the abstraction must run **offline by default** (ADR-001) and be packageable under **ADR-005** (no admin, no container dependency; a bundled runtime is acceptable only if it satisfies these).
@@ -101,6 +101,7 @@ The durable decision is *vendor-independence*, and that can and should be commit
 | Version | Date | Summary | Author |
 |---|---|---|---|
 | 0.1.0 | 2026-07-20 | Initial ADR-011 (Proposed): commit now to a transcription abstraction layer (vendor-independence per ADR-001/briefing), require every engine to be offline-by-default and ADR-005-packageable, and defer the concrete default engine until benchmarked on CPU-only hardware as part of resolving AR-076. whisper.cpp-family and faster-whisper are candidates, neither committed. Avoids inventing an unmeasured engine/threshold decision. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Ratified by the Product Owner. Status Proposed → Accepted: the abstraction-layer commitment and the deferral of the default engine are ratified. The concrete default engine remains to be selected post-benchmark (AR-076) via a follow-up ADR/amendment. | Dr Ziyaad Moolla (ZM) |
 
 ---
 

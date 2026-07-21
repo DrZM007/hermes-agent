@@ -8,8 +8,8 @@
 | Decision ID | ADR-010 |
 | Document Title | Database Engine Strategy |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Database Architect |
 | Approval Required From | Product Owner (Dr Ziyaad Moolla), Principal Software Architect, Security Architect, DevOps/Deployment Engineer |
@@ -22,7 +22,7 @@
 
 ## 1. Context
 
-`03-Architecture/DatabaseArchitecture.md` defines a lifecycle-state-driven storage model across two placements — the local device and the organization-controlled shared component — but deliberately did not select a database engine. **ADR-005** requires that the desktop client operate with no server process and no administrator rights, while **ADR-002** permits the organization shared component to be IT-administered. This ADR proposes the engine(s) for each placement. It is **Proposed**, pending the Product Owner's ratification.
+`03-Architecture/DatabaseArchitecture.md` defines a lifecycle-state-driven storage model across two placements — the local device and the organization-controlled shared component — but deliberately did not select a database engine. **ADR-005** requires that the desktop client operate with no server process and no administrator rights, while **ADR-002** permits the organization shared component to be IT-administered. This ADR selects the engine(s) for each placement. **Ratified by the Product Owner on 2026-07-20.**
 
 ## 2. Problem
 
@@ -42,9 +42,9 @@ Select database engine(s) that (a) let the desktop store operate embedded, encry
 - **Pros:** One engine end-to-end; simplest mental model.
 - **Cons:** A local PostgreSQL requires a running server process and service management — in direct tension with the desktop Zero-IT-Friction constraint (ADR-005 §4). Rejected as the local engine for that reason.
 
-## 4. Decision (Proposed)
+## 4. Decision
 
-**Proposed: Option A.**
+**Option A.**
 
 1. **Local desktop placement:** an embedded, server-less, encrypted-at-rest SQLite database, running in the standard-user session with no admin rights (ADR-005).
 2. **Organization shared component placement:** PostgreSQL as the default engine, with **SQL Server supported as a first-class alternative** for organizations that standardize on it (Option B becomes a supported configuration, not a separate decision).
@@ -95,6 +95,7 @@ The two placements have genuinely different constraints, so the right answer is 
 | Version | Date | Summary | Author |
 |---|---|---|---|
 | 0.1.0 | 2026-07-20 | Initial ADR-010 (Proposed): recommend encrypted embedded SQLite for the server-less/no-admin desktop placement and PostgreSQL (default) with SQL Server supported for the organization shared component. Rejects single-engine PostgreSQL-everywhere because a local server process breaches ADR-005. Engine choice only; key management remains AR-052. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Ratified by the Product Owner. Status Proposed → Accepted; database dimension of AR-003 resolved (SQLite local + PostgreSQL shared, SQL Server supported). Key management remains AR-052. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
