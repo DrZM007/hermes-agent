@@ -10,9 +10,10 @@
 
 ## 🚦 Status at a glance
 - **Decision layer:** complete — 13 ADRs, all **Accepted** (foundational 001–004 ratified; technology 009–013 ratified).
+- **All 12 PEKB sections populated** — every section now has at least its foundational document.
 - **Buildable now:** Phase 1 (Foundation) — see [[MASTER_PROMPT]] §7 and [[DataModel-Core]].
 - **Still open (empirical, resolve by doing):** default transcription engine (**AR-076**) and cryptographic algorithm selection — see [[AssumptionsRegister]].
-- **Not yet authored:** most of `04-Design`, and the `06-Security` / `07-Privacy-Compliance` / `08-Operations` / `09-Testing` / `10-Documentation` / `11-Roadmap` sections (filled in phase-by-phase).
+- **Remaining breadth (fills in phase-by-phase):** more `04-Design` screens, extended module schemas, and full acceptance-criteria coverage (AR-084).
 
 ---
 
@@ -66,6 +67,24 @@
 
 ## 05 · Engineering
 - [[BranchingStrategy]] · [[TechnicalDebtRegister]] · [[ThirdPartyComponentRegister]]
+
+## 06 · Security
+- [[SecurityControlsAndIncidentResponse]] — control catalog (by reference) + incident-response process
+
+## 07 · Privacy-Compliance
+- [[POPIAComplianceMapping]] — POPIA's eight conditions mapped to Echo controls
+
+## 08 · Operations
+- [[OperationsGuide]] — deployment, monitoring, maintenance, backup ops + runbook catalog
+
+## 09 · Testing
+- [[TestStrategy]] — test levels, gate-to-test mapping, golden dataset, benchmark suite, compatibility certification
+
+## 10 · Documentation
+- [[DocumentationPlan]] — documentation-as-deliverable, Learning Centre, doc certification
+
+## 11 · Roadmap
+- [[ReleaseStrategy]] — phased delivery, release channels, deprecation, deferred-capability roadmap
 
 ## 🔨 Build
 - [[MASTER_PROMPT]] — the orchestrator: how a coding agent executes the PEKB
