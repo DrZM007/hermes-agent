@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application layer — use cases orchestrating the domain. Depends only on Domain. -->
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectEcho.Domain\ProjectEcho.Domain.csproj" />
+  </ItemGroup>
+</Project>
