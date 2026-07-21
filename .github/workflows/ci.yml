@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore ProjectEcho.sln
+
+      - name: Build (Release, warnings as errors)
+        run: dotnet build ProjectEcho.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ProjectEcho.sln --configuration Release --no-build --verbosity normal
