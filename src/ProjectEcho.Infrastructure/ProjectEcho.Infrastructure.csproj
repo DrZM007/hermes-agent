@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Infrastructure layer — implements the Application ports. Depends on Application (+ Domain).
+    This slice is cross-platform (no DB engine or OS-specific crypto yet); the encrypted SQLite
+    persistence (ADR-010) and DPAPI-NG key protector (ADR-013) arrive with a Windows CI job.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectEcho.Application\ProjectEcho.Application.csproj" />
+  </ItemGroup>
+</Project>
