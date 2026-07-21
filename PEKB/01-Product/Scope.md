@@ -7,7 +7,7 @@
 | Document ID | PEKB-01-PRD-003 |
 | Document Title | Scope |
 | PEKB Section | 01-Product |
-| Version | 0.2.0 |
+| Version | 0.3.0 |
 | Status | Draft |
 | Classification | Internal — Product |
 | Owner Role | Product Manager |
@@ -44,13 +44,13 @@ The following capability areas are in scope for Project Echo's defined product d
 
 The following capability areas were added in v0.2.0, following the product-owner briefing, as part of Project Echo's committed identity as a Meeting Intelligence Platform and system of record (`Vision.md` §2). Each is named here as authoritative in-scope; its **detailed requirements are pending** authoring in `02-Requirements/` and each remains subordinate to `ProjectConstitution.md` and the ratified ADRs:
 
-13. **Enterprise governance engine** — an organization-configurable policy library, policy-enforcement engine, and workflow/rule engine governing approvals, conditions, escalations, retention triggers, and mandatory review/checklist requirements. Configuration-driven, never per-organization custom code (`DesignPrinciples.md` §3.10). *[detailed requirements pending]*
-14. **Review intelligence engine** — reviewer-assist tooling (per-category confidence, evidence panel, intelligent highlighting, review queue, heat map, difference viewer) that **suggests and surfaces, but never changes**, the official record, per the Ethical AI Charter. *[detailed requirements pending]*
-15. **Organization knowledge base** — a permission-scoped, in-organization searchable repository built **only from approved meeting-derived outputs** (decisions, action items, risks, approved summaries, topics) — not raw transcripts. Distinct from the general-purpose knowledge management excluded in Section 3.6 (see reconciliation note there). *[detailed requirements pending]*
-16. **SOP / reference document library** — storage and side-by-side access to **approved reference documents that directly support the review workflow** (SOPs, checklists, naming conventions, export templates). Scoped to review-supporting reference material, **not** general file storage or a wiki (see Section 3.6). *[detailed requirements pending]*
-17. **Recoverability subsystem** — versioned backups, guided restore, workspace recovery after interruption, and disaster recovery, per `ProjectConstitution.md` Commitment 11. *[detailed requirements pending]*
-18. **Governance, evidence & compliance capabilities** — records-management lifecycle (including retention states through governed secure disposal), digital evidence packages, chain of custody, compliance mapping, legal hold, and evidence/compliance reporting. *[detailed requirements pending]*
-19. **Redaction and secure external sharing** — governed creation of redacted copies (leaving the original immutable) and encrypted, audited sharing packages, as controlled-export mechanisms extending Section 2.11 and bound by the isolation-boundary discipline of ADR-002. *[detailed requirements pending]*
+13. **Enterprise governance engine** — an organization-configurable policy library, policy-enforcement engine, and workflow/rule engine governing approvals, conditions, escalations, retention triggers, and mandatory review/checklist requirements. Configuration-driven, never per-organization custom code (`DesignPrinciples.md` §3.10). *Requirements: `02-Requirements/GovernanceEngineRequirements.md` (GE-###).*
+14. **Review intelligence engine** — reviewer-assist tooling (per-category confidence, evidence panel, intelligent highlighting, review queue, heat map, difference viewer) that **suggests and surfaces, but never changes**, the official record, per the Ethical AI Charter. *Requirements: `02-Requirements/ReviewIntelligenceEngineRequirements.md` (RI-###).*
+15. **Organization knowledge base** — a permission-scoped, in-organization searchable repository built **only from approved meeting-derived outputs** (decisions, action items, risks, approved summaries, topics) — not raw transcripts. Distinct from the general-purpose knowledge management excluded in Section 3.6 (see reconciliation note there). *Requirements: `02-Requirements/KnowledgeBaseRequirements.md` (KB-###).*
+16. **SOP / reference document library** — storage and side-by-side access to **approved reference documents that directly support the review workflow** (SOPs, checklists, naming conventions, export templates). Scoped to review-supporting reference material, **not** general file storage or a wiki (see Section 3.6). *Requirements: `02-Requirements/SOPLibraryRequirements.md` (SL-###).*
+17. **Recoverability subsystem** — versioned backups, guided restore, workspace recovery after interruption, and disaster recovery, per `ProjectConstitution.md` Commitment 11. *Requirements: `02-Requirements/RecoverabilityRequirements.md` (RC-###).*
+18. **Governance, evidence & compliance capabilities** — records-management lifecycle (including retention states through governed secure disposal), digital evidence packages, chain of custody, compliance mapping, legal hold, and evidence/compliance reporting. *Requirements: `02-Requirements/EvidenceComplianceRequirements.md` (EV-###).*
+19. **Redaction and secure external sharing** — governed creation of redacted copies (leaving the original immutable) and encrypted, audited sharing packages, as controlled-export mechanisms extending Section 2.11 and bound by the isolation-boundary discipline of ADR-002. *Requirements: `02-Requirements/RedactionSecureSharingRequirements.md` (RS-###).*
 
 ## 3. Explicitly Out of Scope (Initial Product Scope)
 
@@ -122,6 +122,7 @@ Before this document is approved:
 |---|---|---|---|
 | 0.1.0 | 2026 (initial) | Initial Scope: 12 in-scope capability areas, 7 out-of-scope exclusions, deferred items, boundary rationale. | Dr Ziyaad Moolla (ZM) |
 | 0.2.0 | 2026-07-20 | Added in-scope capability areas 13–19 (enterprise governance engine, review intelligence engine, organization knowledge base, SOP/reference library, recoverability subsystem, governance/evidence/compliance, redaction & secure sharing), each marked "detailed requirements pending"; added a reconciliation note to §3.6 distinguishing the Knowledge Base/SOP library from excluded general-purpose document management; expanded §4 deferred items with explicit tracking (mobile/web AR-086, Enterprise Knowledge Graph, on-prem LLM summarization, voice biometrics). Added Challenge-the-Design and Revision History. No out-of-scope exclusion weakened. | Dr Ziyaad Moolla (ZM) |
+| 0.3.0 | 2026-07-20 | Replaced the "detailed requirements pending" markers on capability areas 13–19 with references to their now-authored requirement documents (GovernanceEngineRequirements GE-###, ReviewIntelligenceEngineRequirements RI-###, KnowledgeBaseRequirements KB-###, SOPLibraryRequirements SL-###, RecoverabilityRequirements RC-###, EvidenceComplianceRequirements EV-###, RedactionSecureSharingRequirements RS-###). | Dr Ziyaad Moolla (ZM) |
 
 ---
 
