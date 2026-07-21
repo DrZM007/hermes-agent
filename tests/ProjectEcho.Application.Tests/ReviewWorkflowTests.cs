@@ -22,7 +22,7 @@ public class ReviewWorkflowTests
 
     private sealed class FakeAccess : IAccessControl
     {
-        public bool Submit, Approve, Reopen, Read = true;
+        public bool Submit = false, Approve = false, Reopen = false, Read = true;
         public bool CanSubmitReview(UserId u, TranscriptId t) => Submit;
         public bool CanApprove(UserId u, TranscriptId t) => Approve;
         public bool CanReopen(UserId u, TranscriptId t) => Reopen;
