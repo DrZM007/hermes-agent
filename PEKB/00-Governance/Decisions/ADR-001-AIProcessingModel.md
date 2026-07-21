@@ -8,8 +8,8 @@
 | Decision ID | ADR-001 |
 | Document Title | AI Processing Model |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | AI/ML Architect |
 | Approval Required From | Principal Software Architect, Privacy Officer, Security Architect, Product Manager |
@@ -108,6 +108,12 @@ The following new open items are introduced by this decision and must be added t
 
 - Specific on-device resource/performance thresholds for the offline path are not yet defined (deferred to `NonFunctionalRequirements.md`).
 - The specific approval/audit mechanism for enabling the networked processing opt-in is not yet defined (deferred to `PrivacyRequirements.md`/`SecurityRequirements.md`).
+
+---
+
+## Ratification
+
+**Ratified by the Product Owner on 2026-07-20.** Status changed Proposed → Accepted (v0.2.0). This decision is authoritative for all downstream work; amendments follow `RevisionPolicy.md`.
 
 ---
 

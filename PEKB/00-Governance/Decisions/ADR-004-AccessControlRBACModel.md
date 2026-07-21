@@ -8,8 +8,8 @@
 | Decision ID | ADR-004 |
 | Document Title | Access Control (RBAC) Model |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Security Architect |
 | Approval Required From | Principal Software Architect, Privacy Officer, Product Manager |
@@ -158,6 +158,12 @@ The following new open items are introduced by this decision and must be added t
 - The specific technical authorization mechanism capable of expressing scoped, per-meeting role assignment is not yet defined (deferred to `SecurityArchitecture.md`).
 - The "expedited but audited" support-access workflow for System Administrators needing occasional content access is not yet defined (deferred to `FunctionalRequirements.md`).
 - Whether/how very small organizations satisfy Auditor independence (Section 4.3.3) is not yet defined (deferred to `AdministratorGuide.md`).
+
+---
+
+## Ratification
+
+**Ratified by the Product Owner on 2026-07-20.** Status changed Proposed → Accepted (v0.2.0). This decision is authoritative for all downstream work; amendments follow `RevisionPolicy.md`.
 
 ---
 

@@ -8,8 +8,8 @@
 | Decision ID | ADR-002 |
 | Document Title | Deployment Model |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Principal Software Architect |
 | Approval Required From | Security Architect, Privacy Officer, DevOps/Deployment Engineer, Product Manager |
@@ -107,6 +107,12 @@ The following new open items are introduced by this decision and must be added t
 
 - Specific deployment topology (on-premises single-server vs. dedicated cloud instance per organization vs. other) is not yet defined; deferred to `03-Architecture/DeploymentArchitecture.md`.
 - The precise technical definition of the "isolation boundary" (what constitutes a boundary violation, how it is enforced and tested) is not yet defined; deferred to `SecurityRequirements.md` and `DeploymentArchitecture.md`.
+
+---
+
+## Ratification
+
+**Ratified by the Product Owner on 2026-07-20.** Status changed Proposed → Accepted (v0.2.0). This decision is authoritative for all downstream work; amendments follow `RevisionPolicy.md`.
 
 ---
 

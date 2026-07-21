@@ -63,6 +63,7 @@ This document was not in the original PEKB structure and is added here on the Pr
 | 23 | Database Engine Strategy | Encrypted embedded SQLite (local, server-less) + PostgreSQL default for the organization shared component, SQL Server supported. | ADR-010-DatabaseEngineStrategy.md |
 | 24 | Offline Transcription Engine Strategy | Transcription abstraction layer committed (vendor-independence); the concrete default engine is deferred until benchmarked on CPU-only hardware (AR-076). whisper.cpp-family / faster-whisper are candidates. | ADR-011-OfflineTranscriptionEngineStrategy.md |
 | 25 | Synchronization Approach | Sync invariants ratified (offline-first, in-organization only, no auto-merge, authenticated, audited); the concrete protocol is deferred to 03-Architecture. | ADR-012-SynchronizationApproach.md |
+| 26 | Key Management | OS-native DPAPI-NG local key protection; organization-controlled software key store for the KEK (enterprise KMS/HSM/AD optional); mandatory organization-controlled, separation-of-duties-gated, audited key escrow; policy-based envelope rotation. Resolves AR-052 mechanism. | ADR-013-KeyManagement.md |
 
 ## 4. Relationship to Other PEKB Documents
 

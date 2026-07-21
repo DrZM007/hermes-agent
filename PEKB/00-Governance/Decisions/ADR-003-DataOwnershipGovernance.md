@@ -8,8 +8,8 @@
 | Decision ID | ADR-003 |
 | Document Title | Data Ownership Governance |
 | PEKB Section | 00-Governance/Decisions |
-| Version | 0.1.0 |
-| Status | Proposed |
+| Version | 0.2.0 |
+| Status | Accepted |
 | Classification | Internal — Governance |
 | Owner Role | Privacy Officer |
 | Approval Required From | Principal Software Architect, Security Architect, Product Manager |
@@ -118,6 +118,12 @@ The following entries in `00-Governance/AssumptionsRegister.md` are affected by 
 The following new open item is introduced by this decision and must be added to `AssumptionsRegister.md`:
 
 - Who, specifically, within an adopting organization holds default deletion and export authority (e.g., IT Administrator, a named Data Owner role, or configurable per organization) is not yet defined; deferred to `FunctionalRequirements.md`, overlapping the still-open RBAC decision (AR-004/AR-023).
+
+---
+
+## Ratification
+
+**Ratified by the Product Owner on 2026-07-20.** Status changed Proposed → Accepted (v0.2.0). This decision is authoritative for all downstream work; amendments follow `RevisionPolicy.md`.
 
 ---
 
