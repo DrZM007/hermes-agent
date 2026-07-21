@@ -7,7 +7,7 @@
 | Document ID | PEKB-00-GOV-007 |
 | Document Title | Glossary |
 | PEKB Section | 00-Governance |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Classification | Internal — Governance |
 | Owner Role | Technical Documentation Lead |
@@ -36,7 +36,7 @@ Where a term is used in this PEKB but not yet defined here, that is a documentat
 | Status (Document) | The lifecycle state of a PEKB document: Draft, In Review, Approved, or Deprecated, as defined in `RevisionPolicy.md` §2. |
 | Approved (Document) | A document status indicating all required approvers have signed off; only Approved documents may be cited as a basis for implementation, per `RevisionPolicy.md` §2.1. |
 | ADR (Architecture Decision Record) | A structured record of a significant decision, capturing context, problem, options considered, recommendation, trade-offs, risks, and consequences, per `EngineeringPrinciples.md` §8. |
-| Requirement ID | A unique identifier assigned to an individual requirement within `02-Requirements/`, used for traceability per `EngineeringPrinciples.md` §3. The specific format is not yet defined — see Open Items (Section 8). |
+| Requirement ID | A unique identifier assigned to an individual requirement within `02-Requirements/`, used for traceability per `EngineeringPrinciples.md` §3. The format is `<PREFIX>-<###>`; authoritative prefixes are listed in Section 3A. |
 | Traceability Chain | The mandatory linkage: Business Goal → Requirement → Architecture → Implementation → Test → Documentation → Release, defined in `EngineeringPrinciples.md` §3. |
 
 ## 3. Authoritative Section Code Table
@@ -57,6 +57,23 @@ Per `DocumentStandards.md` §3, this table is the single authoritative source fo
 | 09 | Testing | TST |
 | 10 | Documentation | DOC |
 | 11 | Roadmap | RDM |
+
+## 3A. Authoritative Requirement ID Prefix Table
+
+This table is the single authoritative source for requirement-ID prefixes used within `02-Requirements/`. A new prefix is introduced only with a new requirements document and recorded here.
+
+| Prefix | Domain / Document | Introduced In |
+|---|---|---|
+| SR | Security Requirements | SecurityRequirements.md |
+| PR | Privacy Requirements | PrivacyRequirements.md |
+| FR | Functional Requirements | FunctionalRequirements.md |
+| AI | AI Requirements | AIRequirements.md |
+| NFR | Non-Functional Requirements | NonFunctionalRequirements.md |
+| UX | UX Requirements | UXRequirements.md |
+| AC | Acceptance Criteria | AcceptanceCriteria.md |
+| GE | Governance & Policy Engine Requirements | GovernanceEngineRequirements.md |
+
+*Note:* Architecture documents use their own decision/element identifiers (e.g., SA, DA, SEC, AI-ARCH, DB, DT, TM) defined within `03-Architecture/`; those are element IDs, not requirement IDs, and are outside this table's scope.
 
 ## 4. Product and Domain Terminology
 
@@ -109,16 +126,16 @@ Per `DocumentStandards.md` §3, this table is the single authoritative source fo
 
 ## 8. Open Items — Terms Requiring Future Definition
 
-The following terms are referenced across the PEKB but do not yet have an approved, precise definition. They are listed here so future authors know to formalize them rather than assume a meaning:
+The following terms are referenced across the PEKB. Items marked **RESOLVED** now have an approved definition via a ratified decision; remaining items are still to be formalized rather than assumed:
 
-1. Requirement ID format.
-2. Meeting (precise scope boundaries).
-3. Meeting Owner (permissions, whether fixed or configurable role).
-4. Organization/tenancy isolation model.
-5. Hybrid Processing (whether adopted, and under what governance).
-6. Speaker Identification (persistent biometric recognition vs. per-meeting-only labeling).
-7. Access Control model (RBAC vs. ABAC vs. other).
-8. Data Classification scheme for product data (distinct from PEKB document classification).
+1. ~~Requirement ID format.~~ **RESOLVED** — defined in Section 3A (`<PREFIX>-<###>`, authoritative prefix table).
+2. Meeting (precise scope boundaries). *(Still open.)*
+3. ~~Meeting Owner (permissions, whether fixed or configurable role).~~ **RESOLVED** — defined by ADR-004 §4.1 (baseline role) and extended by ADR-008 (constrained custom roles).
+4. ~~Organization/tenancy isolation model.~~ **RESOLVED** — defined by ADR-002 (per-organization isolated deployment).
+5. ~~Hybrid Processing (whether adopted, and under what governance).~~ **RESOLVED** — defined by ADR-001 (offline-first hybrid AI; networked path is a governed opt-in).
+6. ~~Speaker Identification (persistent biometric recognition vs. per-meeting-only labeling).~~ **RESOLVED** — distinguished by AI-040 / PR-031 / PR-032 (per-meeting labeling default C2; persistent recognition optional C3); whether persistent recognition ships initially remains AR-060.
+7. ~~Access Control model (RBAC vs. ABAC vs. other).~~ **RESOLVED** — RBAC with fixed baseline roles + constrained custom roles, per ADR-004 and ADR-008.
+8. ~~Data Classification scheme for product data.~~ **RESOLVED** — two-axis model per ADR-006 (Axis 1 C1–C4 in PrivacyRequirements §6; Axis 2 sensitivity labels).
 
 These correspond to Required Decisions identified in Project Echo Foundation Review v0.1 and are tracked formally in `AssumptionsRegister.md`.
 
@@ -127,6 +144,13 @@ These correspond to Required Decisions identified in Project Echo Foundation Rev
 - `DocumentStandards.md` requires consistent terminology usage and defers definitions to this document.
 - All PEKB documents referencing a term defined here should do so consistently; discovery of inconsistent usage elsewhere is a defect to be corrected in the other document, not in this Glossary.
 - `AssumptionsRegister.md` tracks resolution of the Open Items listed in Section 8.
+
+## 9. Revision History
+
+| Version | Date | Summary | Author |
+|---|---|---|---|
+| 0.1.0 | 2026 (initial) | Initial Glossary: PEKB terminology, authoritative section-code table, product/domain terms, open items. | Dr Ziyaad Moolla (ZM) |
+| 0.2.0 | 2026-07-20 | Added Section 3A (authoritative requirement-ID prefix table, including the new GE prefix); defined the Requirement ID format; marked Section 8 open items 1, 3, 4, 5, 6, 7, 8 RESOLVED with references to the ratified decisions that closed them (ADR-001/002/004/006/008, AI-040, PR-031/032). Added Revision History. | Dr Ziyaad Moolla (ZM) |
 
 ---
 
