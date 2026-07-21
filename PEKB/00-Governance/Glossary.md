@@ -77,6 +77,7 @@ This table is the single authoritative source for requirement-ID prefixes used w
 | KB | Organization Knowledge Base Requirements | KnowledgeBaseRequirements.md |
 | SL | SOP / Reference Document Library Requirements | SOPLibraryRequirements.md |
 | EV | Governance, Evidence & Compliance Requirements | EvidenceComplianceRequirements.md |
+| RS | Redaction & Secure Sharing Requirements | RedactionSecureSharingRequirements.md |
 
 *Note:* Architecture documents use their own decision/element identifiers (e.g., SA, DA, SEC, AI-ARCH, DB, DT, TM) defined within `03-Architecture/`; those are element IDs, not requirement IDs, and are outside this table's scope.
 
