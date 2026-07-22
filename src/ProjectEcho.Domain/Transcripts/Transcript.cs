@@ -39,6 +39,32 @@ public sealed class Transcript
         State = LifecycleState.DraftTranscript;
     }
 
+    /// <summary>
+    /// Reconstruct a transcript from persisted, already-valid state (persistence layer only).
+    /// This bypasses the forward-only invariant checks that guard live edits (e.g. append-after
+    /// -approved), because the stored state was itself produced through those checks. Not for
+    /// use by application/domain logic — only by repositories rehydrating from storage.
+    /// </summary>
+    public static Transcript Rehydrate(
+        TranscriptId id,
+        MeetingId meetingId,
+        DataClassification classification,
+        string? aiEngineVersion,
+        string? aiModelRef,
+        LifecycleState state,
+        IEnumerable<TranscriptRevision> revisions,
+        RevisionId? currentRevisionId)
+    {
+        var t = new Transcript(id, meetingId, classification, aiEngineVersion, aiModelRef)
+        {
+            State = state,
+            CurrentRevisionId = currentRevisionId,
+        };
+        foreach (var r in revisions)
+            t._revisions.Add(r);
+        return t;
+    }
+
     /// <summary>Append a new immutable revision. The only way transcript content ever changes.</summary>
     public void AppendRevision(TranscriptRevision revision)
     {
