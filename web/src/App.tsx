@@ -45,6 +45,7 @@ import {
   Settings,
   Shield,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
   Star,
   Terminal,
@@ -91,6 +92,7 @@ import ChannelsPage from "@/pages/ChannelsPage";
 import WebhooksPage from "@/pages/WebhooksPage";
 import SystemPage from "@/pages/SystemPage";
 import ChatPage from "@/pages/ChatPage";
+import PantryPage from "@/pages/PantryPage";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useI18n } from "@/i18n";
@@ -150,6 +152,7 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/config": ConfigPage,
   "/env": EnvPage,
   "/docs": DocsPage,
+  "/pantry": PantryPage,
 };
 
 // Route placeholder for /chat.  The persistent ChatPage host (rendered
@@ -167,6 +170,7 @@ const BUILTIN_NAV_REST: NavItem[] = [
     label: "Sessions",
     icon: MessageSquare,
   },
+  { path: "/pantry", label: "Pantry", icon: ShoppingCart },
   { path: "/files", label: "Files", icon: FolderOpen },
   {
     path: "/analytics",
@@ -212,6 +216,7 @@ const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
   Package,
   Settings,
   Puzzle,
+  ShoppingCart,
   Sparkles,
   Terminal,
   Globe,
