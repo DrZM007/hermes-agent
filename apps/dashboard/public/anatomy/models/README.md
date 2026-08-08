@@ -18,17 +18,21 @@ make one from **Z-Anatomy** (CC-BY-SA).
    Latin structures organised into collections (Skeleton, Muscles, Viscera…).
 4. **Keep what you need.** For a mobile-friendly file, delete collections you
    don't want (nerves, lymphatics, fine vessels). Major systems are plenty.
-5. **Group into our structures (important for highlighting).** For each of our
-   structures, select its object(s) and **Join** them (`Ctrl+J`), then rename
-   the joined object (double-click in the Outliner) to the matching **id**:
+5. **Naming — usually nothing to do.** The loader resolves Latin and
+   laterality-suffixed names automatically, so a stock Z-Anatomy export maps on
+   its own: `Hepar`→liver, `Pulmo.l`→lungs, `Ren.r.001`→kidneys, `Cor`→heart,
+   `Encephalon`→brain, `Columna vertebralis`→spine, `Femur.L`→leg bones, and so
+   on (see `js/anatomy-names.js` for the alias table).
 
+   Only if something doesn't map: select its object(s), **Join** (`Ctrl+J`) and
+   rename (double-click in the Outliner) to one of our ids —
    `skin, musculature, skull, spine, ribcage, pelvis, arm_bones, leg_bones,`
    `brain, heart, lungs, liver, stomach, intestines, kidneys, bladder, spleen,`
-   `pancreas, trachea, thyroid, gallbladder, diaphragm`
+   `pancreas, trachea, thyroid, gallbladder, diaphragm`.
 
-   > Meshes you don't rename still render — they just land in the **Organs**
-   > layer and aren't individually click-highlightable. So rename the handful
-   > you care about and leave the rest; it still looks great.
+   > Unmapped meshes still render — they just land in the **Organs** layer and
+   > aren't individually click-highlightable. After loading, the widget reports
+   > how many parts mapped, so you can see the result at a glance.
 6. **Decimate for the web.** Select the heavy meshes → Modifier ▸ **Decimate**
    (Collapse ~0.3–0.5) → Apply. Aim for a few MB total so phones stay smooth.
 7. **Export.** `File ▸ Export ▸ glTF 2.0 (.glb)`. In the export panel:

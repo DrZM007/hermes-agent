@@ -834,12 +834,55 @@ function bindShortcuts() {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 }
 
+// ---------------------------------------------------------------------------
+// First-run tips and a "what's new" strip. RELEASE.version identifies the
+// build; when it changes, RELEASE.highlights are shown once and dismissed.
+// ---------------------------------------------------------------------------
+const RELEASE = {
+  version: "1.6",
+  highlights: [
+    "Anatomy Explorer on Health — 3D body, layers, and disease highlighting",
+    "Per-tab news, motorsport, commodities and 7 more clinical calculators",
+    "Mobile layout fixes: no overlapping widgets, all tabs reachable",
+  ],
+};
+
+function renderNotice() {
+  const slot = document.getElementById("notice");
+  if (!slot) return;
+  clear(slot);
+  const seen = store.state.seenVersion;
+  const dismissCard = (patch) => { store.update((s) => Object.assign(s, patch), "notice"); renderNotice(); };
+
+  if (!store.state.onboarded) {
+    slot.append(h("div.notice.notice-welcome", {},
+      h("div.notice-body", {},
+        h("b", {}, "Welcome to HERMES//HUB. "),
+        h("span", {}, "Switch pages with the tabs above · press "),
+        h("kbd", {}, "⌘K"), h("span", {}, " / "), h("kbd", {}, "Ctrl+K"),
+        h("span", {}, " for commands · use "), h("b", {}, "Edit layout"),
+        h("span", {}, " to add or rearrange widgets.")),
+      h("button.icon-btn.notice-x", { type: "button", "aria-label": "Dismiss welcome",
+        onclick: () => dismissCard({ onboarded: true, seenVersion: RELEASE.version }) }, "✕")));
+    return;
+  }
+  if (seen !== RELEASE.version) {
+    slot.append(h("div.notice.notice-new", {},
+      h("div.notice-body", {},
+        h("b", {}, `What's new in ${RELEASE.version}: `),
+        h("span", {}, RELEASE.highlights.join(" · "))),
+      h("button.icon-btn.notice-x", { type: "button", "aria-label": "Dismiss update note",
+        onclick: () => dismissCard({ seenVersion: RELEASE.version }) }, "✕")));
+  }
+}
+
 function boot() {
   applyDeepLink();   // ?page= wins over persisted/synced activePage on load
   applyTheme();
   applyAccent();
   renderTopbar();
   renderPageTabs();
+  renderNotice();
   renderGrid();
   renderFooter();
 }
