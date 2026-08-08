@@ -1023,6 +1023,21 @@ class MarketsWatchlistTests(unittest.TestCase):
             for sid in c["structures"]:
                 self.assertIn(sid, ids, f"{c['slug']} references unknown structure {sid}")
 
+    def test_anatomy_alias_table(self):
+        base = Path(__file__).resolve().parent.parent / "public" / "anatomy"
+        structures = json.loads((base / "structures.json").read_text())["structures"]
+        owner = {}
+        for s in structures:
+            self.assertTrue(s.get("aliases"), f"{s['id']} has no aliases")
+            for a in s["aliases"]:
+                self.assertEqual(a, a.lower(), f"alias {a!r} must be lowercase")
+                self.assertNotIn(a, owner,
+                                 f"alias {a!r} claimed by {owner.get(a)} and {s['id']}")
+                owner[a] = s["id"]
+        # ids and names must not collide with another structure's alias
+        for s in structures:
+            self.assertIn(owner.get(s["id"], s["id"]), (s["id"],))
+
     def test_changelog_sample_and_normalizer(self):
         d = self.api.changelog({})
         self.assertTrue(d["releases"])

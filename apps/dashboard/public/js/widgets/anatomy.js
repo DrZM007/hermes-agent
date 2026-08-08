@@ -496,10 +496,15 @@ async function build3D(viewport, data, S, onSelect) {
       // hide the procedural body, index the GLB meshes by structure + layer
       for (const g of Object.values(groups)) g.visible = false;
       meshes.length = 0;
+      // Resolve Latin / laterality-suffixed atlas names (Z-Anatomy et al.)
+      const { buildResolver } = await import("../anatomy-names.js");
+      const resolve = buildResolver(data.structures);
+      let mapped = 0;
       hd.traverse((o) => {
         if (!o.isMesh) return;
-        const id = (o.name || "").toLowerCase();
-        const st = data.byId[id];
+        const id = resolve(o.name);
+        const st = id ? data.byId[id] : null;
+        if (st) mapped++;
         o.userData.structure = st ? id : (o.name || "structure");
         o.userData.layer = st ? st.layer : "organ";
         o.userData.baseEmissive = o.material?.emissive?.getHex?.() ?? 0x000000;
@@ -508,7 +513,7 @@ async function build3D(viewport, data, S, onSelect) {
       pivot.add(hd);
       hdActive = true;
       for (const l of data.layers) setLayer(l.id, !!S.layers[l.id]);
-      report?.(`High-detail model loaded (${meshes.length} parts).`);
+      report?.(`High-detail model loaded — ${meshes.length} parts, ${mapped} mapped to structures.`);
       return true;
     } catch (err) {
       report?.(`Couldn't load model: ${err.message}`);

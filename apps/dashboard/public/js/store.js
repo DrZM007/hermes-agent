@@ -4,12 +4,6 @@ import { uid } from "./utils.js";
 
 const KEY = "hermesHub.v1";
 
-// Bump whenever a new default PAGE is added, so existing states backfill it
-// once. (This is about pages, not widgets — deleted pages stay deleted only
-// until the next bump; that's an acceptable trade for never stranding users
-// on a stale single-"Main" layout.)
-const PAGES_SEED = 4;
-
 const w = (type, size) => ({ id: uid(), type, size });
 
 function defaultPages() {
@@ -51,7 +45,8 @@ function defaultState() {
     editMode: false,
     pages,
     activePage: pages[0].id,
-    pagesSeed: PAGES_SEED, // fresh states already have every default page
+    layoutRev: LAYOUT_REV, // fresh states already carry every default page/widget
+    onboarded: false,      // new users get the welcome card once
 
     launcher: {
       links: [
@@ -138,6 +133,13 @@ function load() {
 
 /** In-place upgrades for state shapes from older builds. */
 function migrate(parsed) {
+  // Pin the layout revision from the STORED state before load() merges in the
+  // defaults (which carry the current rev) — otherwise every old state would
+  // look up-to-date and miss the revisions it never received.
+  parsed.layoutRev = derivedLayoutRev(parsed);
+  // Existing users are already onboarded — pin it before the defaults merge so
+  // they get the "what's new" strip rather than a first-run welcome card.
+  if (parsed.onboarded === undefined) parsed.onboarded = true;
   if (parsed.weather && !Array.isArray(parsed.weather.locations)) {
     parsed.weather = {
       locations: parsed.weather.location ? [parsed.weather.location] : [],
@@ -160,40 +162,65 @@ function migrate(parsed) {
   }
 }
 
-/** One-time backfill: add any default pages an older state never had. Guarded
- * by pagesSeed so pages a user deliberately deletes later are NOT re-added.
- * Fixes early single-"Main" states that predate the multi-page defaults. */
-function backfillDefaultPages(state) {
-  if (state.pagesSeed >= PAGES_SEED) return;
-  const have = new Set((state.pages || []).map((p) => (p.name || "").toLowerCase()));
-  for (const dp of defaultPages()) {
-    if (!have.has(dp.name.toLowerCase())) state.pages.push(dp);
-  }
-  state.pagesSeed = PAGES_SEED;
+// ---------------------------------------------------------------------------
+// Layout reconciler
+//
+// One version-keyed list replaces the old ad-hoc backfills. Each revision
+// declares ONLY what it introduced, so upgrading a user replays just the
+// revisions they missed — pages/widgets they deliberately deleted afterwards
+// are never resurrected. To ship a new default page or widget: append a
+// revision and bump LAYOUT_REV. Nothing else.
+//
+// Pages/widgets are matched by name/type, which makes replay idempotent even
+// if the revision derived below is imprecise. Note: a *renamed* default page
+// no longer matches, so a later revision may add a fresh copy under the
+// original name — the same behaviour as the backfills this replaces.
+// ---------------------------------------------------------------------------
+const LAYOUT_REVISIONS = [
+  { rev: 1, pages: ["Markets", "Feeds", "Sports", "Intel", "Health"] },
+  { rev: 2, pages: ["AI Lab"] },
+  { rev: 3, widgets: { markets: [["marketsnews", "m"]], sports: [["sportsnews", "m"]],
+    intel: [["worldnews", "m"]], health: [["healthnews", "m"]] } },
+  { rev: 4, widgets: { health: [["anatomy", "xl"]] } },
+];
+const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
+
+/** Map the legacy pagesSeed/newsSeed flags onto a layoutRev, so states written
+ *  by older builds resume at the right point instead of replaying everything. */
+function derivedLayoutRev(state) {
+  if (Number.isInteger(state.layoutRev)) return state.layoutRev;
+  const news = state.newsSeed || 0;
+  const pages = state.pagesSeed || 0;
+  if (news >= 2) return 4;
+  if (news >= 1) return 3;
+  if (pages >= 4) return 2;
+  if (pages >= 2) return 1;
+  return 0;
 }
 
-// Targeted one-time backfill: push each tab's topic-news widget into the
-// matching existing page (by name) if it isn't already there. Guarded by
-// widgetSeed so it runs once per bump and respects later manual removals.
-const WIDGET_SEED = 2;
-const PAGE_WIDGETS = {
-  markets: [["marketsnews", "m"]],
-  sports: [["sportsnews", "m"]],
-  intel: [["worldnews", "m"]],
-  health: [["healthnews", "m"], ["anatomy", "xl"]],
-};
-function backfillTabNews(state) {
-  if ((state.newsSeed || 0) >= WIDGET_SEED) return;
-  for (const page of state.pages || []) {
-    const wants = PAGE_WIDGETS[(page.name || "").toLowerCase()];
-    if (!wants || !Array.isArray(page.layout)) continue;
-    for (const [type, size] of wants) {
-      if (!page.layout.some((wd) => wd.type === type)) {
-        page.layout.push({ id: uid(), type, size });
+function reconcileLayout(state) {
+  const from = derivedLayoutRev(state);
+  if (from >= LAYOUT_REV) { state.layoutRev = LAYOUT_REV; return; }
+  const defaults = defaultPages();
+  for (const revision of LAYOUT_REVISIONS) {
+    if (revision.rev <= from) continue;
+    for (const name of revision.pages || []) {
+      const have = new Set(state.pages.map((p) => (p.name || "").toLowerCase()));
+      if (have.has(name.toLowerCase())) continue;
+      const dp = defaults.find((p) => p.name.toLowerCase() === name.toLowerCase());
+      if (dp) state.pages.push(dp);
+    }
+    for (const [pageName, widgets] of Object.entries(revision.widgets || {})) {
+      const page = state.pages.find((p) => (p.name || "").toLowerCase() === pageName);
+      if (!page || !Array.isArray(page.layout)) continue;
+      for (const [type, size] of widgets) {
+        if (!page.layout.some((wd) => wd.type === type)) {
+          page.layout.push({ id: uid(), type, size });
+        }
       }
     }
   }
-  state.newsSeed = WIDGET_SEED;
+  state.layoutRev = LAYOUT_REV;
 }
 
 /** Ensure pages is a non-empty array and activePage points at a real page. */
@@ -201,8 +228,7 @@ function normalizePages(state) {
   if (!Array.isArray(state.pages) || !state.pages.length) {
     state.pages = defaultPages();
   }
-  backfillDefaultPages(state);
-  backfillTabNews(state);
+  reconcileLayout(state);
   for (const p of state.pages) {
     if (!p.id) p.id = uid();
     if (!Array.isArray(p.layout)) p.layout = [];

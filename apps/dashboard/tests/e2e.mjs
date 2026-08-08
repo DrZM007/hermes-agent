@@ -135,6 +135,14 @@ const gotoWidget = async (type) => { await gotoPage(pageOf(type)); await page.wa
 
 // ---- widgets render (per page) ---------------------------------------------
 check("page tabs render", (await page.locator(".pagetab").count()) >= 3);
+// first-run welcome card appears, dismisses, and stays dismissed
+check("first run shows a welcome card", (await page.locator(".notice-welcome").count()) === 1);
+await page.locator(".notice-welcome .notice-x").click();
+await page.waitForSelector(".notice-welcome", { state: "detached", timeout: 5000 });
+check("welcome card dismisses", (await page.locator(".notice").count()) === 0);
+await page.reload({ waitUntil: "networkidle" });
+await page.waitForSelector(".pagetab", { timeout: 10000 });
+check("welcome card stays dismissed after reload", (await page.locator(".notice-welcome").count()) === 0);
 for (const [pageName, types] of Object.entries(WIDGET_PAGES)) {
   await gotoPage(pageName);
   for (const type of types) {
@@ -789,6 +797,17 @@ check("anatomy info panel names the selection",
   /heart/i.test(await page.locator(".widget-anatomy .an-info-name").innerText()));
 // Phase 2 — view presets, search-to-structure, expanded conditions
 check("anatomy has view presets", (await page.locator(".widget-anatomy .an-view").count()) >= 5);
+// Latin/laterality name resolution for imported atlases (Z-Anatomy et al.)
+const nameResolution = await page.evaluate(async () => {
+  const { buildResolver } = await import("/js/anatomy-names.js");
+  const data = await fetch("/anatomy/structures.json").then((r) => r.json());
+  const resolve = buildResolver(data.structures);
+  return [["Hepar", "liver"], ["Pulmo.l", "lungs"], ["Ren.r.001", "kidneys"],
+    ["Cor", "heart"], ["Encephalon", "brain"], ["Vesica biliaris", "gallbladder"],
+    ["Columna vertebralis", "spine"], ["Femur.L", "leg_bones"]]
+    .every(([name, id]) => resolve(name) === id);
+});
+check("anatomy resolves Latin atlas mesh names", nameResolution === true);
 await page.fill(".widget-anatomy .an-search", "gallbladder");
 await page.locator(".widget-anatomy .an-search").press("Enter");
 await page.waitForTimeout(200);
