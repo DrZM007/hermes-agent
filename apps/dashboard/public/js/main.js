@@ -55,6 +55,8 @@ import changelog from "./widgets/changelog.js";
 import tracker from "./widgets/tracker.js";
 import { marketsnews, sportsnews, worldnews, healthnews } from "./widgets/topicnews.js";
 import anatomy from "./widgets/anatomy.js";
+import { searchIndex as calcIndex } from "./widgets/calc.js";
+import { searchIndex as mededIndex } from "./widgets/meded.js";
 import worldstate from "./widgets/worldstate.js";
 import reading from "./widgets/reading.js";
 import focus from "./widgets/focus.js";
@@ -683,7 +685,52 @@ function paletteDataMatches(q) {
       });
     }
   }
-  return matches.slice(0, 8);
+  // Prompt library
+  for (const snip of state.snippets?.items || []) {
+    const hay = `${snip.title || ""} ${snip.body || ""} ${(snip.tags || []).join(" ")}`;
+    if (hay.toLowerCase().includes(q)) {
+      matches.push({
+        label: snip.title || "(untitled prompt)", hint: "prompt",
+        run: () => {
+          navigator.clipboard?.writeText(snip.body || "").catch(() => {});
+          toast("Prompt copied");
+          flashWidget("snippets");
+        },
+      });
+    }
+  }
+  // Learning tracker
+  for (const item of state.tracker?.items || []) {
+    if ((item.title || "").toLowerCase().includes(q)) {
+      matches.push({
+        label: item.title, hint: `learning · ${item.status || "todo"}`,
+        run: () => flashWidget("tracker"),
+      });
+    }
+  }
+  // Clinical calculators — jump straight to the named calculator
+  for (const entry of calcIndex()) {
+    if (entry.label.toLowerCase().includes(q)) {
+      matches.push({
+        label: entry.label, hint: entry.hint,
+        run: () => { entry.apply(store); flashWidget("calc"); },
+      });
+    }
+  }
+  // OSCE stations
+  for (const entry of mededIndex()) {
+    if (entry.label.toLowerCase().includes(q)) {
+      matches.push({ label: entry.label, hint: entry.hint, run: () => flashWidget("meded") });
+    }
+  }
+  // Rank: prefix matches first so an exact-ish query wins, then cap. A flat
+  // slice would starve whichever source happens to be appended last.
+  matches.sort((a, b) => {
+    const ap = a.label.toLowerCase().startsWith(q) ? 0 : 1;
+    const bp = b.label.toLowerCase().startsWith(q) ? 0 : 1;
+    return ap - bp || a.label.length - b.label.length;
+  });
+  return matches.slice(0, 10);
 }
 
 // Run typed text as an agent command by driving the Agent widget's own form,

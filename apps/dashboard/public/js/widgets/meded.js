@@ -74,6 +74,14 @@ const STUDY = [
 
 const DOMAINS = ["all", ...new Set(STATIONS.map((s) => s[0]))];
 
+/** Search index for the command palette: every OSCE station by title. */
+export function searchIndex() {
+  // STATIONS entries are [category, title, focus] tuples.
+  return STATIONS.map(([category, title]) => ({
+    label: title, hint: `OSCE · ${category}`, type: "meded",
+  }));
+}
+
 export default {
   type: "meded",
   title: "Med Ed & OSCE",
