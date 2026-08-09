@@ -7,8 +7,14 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir anthropic
 
-COPY server.py assistant.py automations.py ics.py sample_data.json ./
+# All server modules — server.py imports assistant/automations/ics/indicators/
+# evolve/telemetry, and assistant imports router. Copy the whole set so adding
+# a module can't silently break the image at import time.
+COPY *.py sample_data.json ./
 COPY public ./public
+
+# Fail the build (not the deploy) if anything is missing at import time.
+RUN python -c "import server"
 
 # Persist notes/tasks/sync state, feeds, calendars, automations and memory.
 VOLUME /data

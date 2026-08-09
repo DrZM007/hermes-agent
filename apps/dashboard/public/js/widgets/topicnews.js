@@ -12,11 +12,20 @@ function makeTopicNews(type, title, icon, topic) {
       const draw = async () => {
         clear(body).append(h("div.widget-loading", {}, "LOADING HEADLINES…"));
         let data;
+        let fellBack = false;
         try {
           data = await ctx.api.news(topic, 12);
         } catch (err) {
-          clear(body).append(h("div.widget-error", {}, `News unavailable: ${err.message}`));
-          return;
+          // The topic set is user-editable (Sources dialog rewrites feeds.json
+          // wholesale), so a topic this widget wants may not exist on an older
+          // install. Fall back to the aggregate rather than dead-ending.
+          try {
+            data = await ctx.api.news("top", 12);
+            fellBack = true;
+          } catch {
+            clear(body).append(h("div.widget-error", {}, `News unavailable: ${err.message}`));
+            return;
+          }
         }
         ctx.setBadge(data.source === "sample" ? "sample" : null);
         const list = h("div.news-list");
@@ -30,7 +39,10 @@ function makeTopicNews(type, title, icon, topic) {
                 data.source === "live" ? h("span.muted", {}, " · ", hostOf(item.url)) : null)),
             { url: item.url, title: item.title, source: item.source, mode: "reader" }));
         }
-        clear(body).append(list);
+        clear(body).append(
+          fellBack ? h("div.muted.small.tn-fallback", {},
+            `No “${topic}” feed configured — showing top stories. Add one in ⚙ → News sources.`) : null,
+          list);
       };
       ctx.onRefresh(draw);
       draw();

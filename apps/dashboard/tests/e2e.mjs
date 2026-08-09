@@ -808,6 +808,41 @@ const nameResolution = await page.evaluate(async () => {
     .every(([name, id]) => resolve(name) === id);
 });
 check("anatomy resolves Latin atlas mesh names", nameResolution === true);
+// Regression: the 3D engine must be disposed on unmount, or repeatedly visiting
+// Health exhausts the browser's ~16 WebGL contexts and the viewport blanks.
+// Headless Chromium doesn't enforce that cap, so assert the MECHANISM instead:
+// dispose() calls forceContextLoss(), which fires an observable
+// "webglcontextlost" on the retired canvas. No teardown ⇒ zero such events.
+await page.evaluate(() => {
+  window.__ctxs = [];
+  const orig = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+    const ctx = orig.call(this, type, ...rest);
+    if (ctx && /webgl/.test(type)) window.__ctxs.push(ctx);
+    return ctx;
+  };
+});
+await page.selectOption(".widget-anatomy .an-quality", "3d");
+await page.waitForSelector(".widget-anatomy canvas", { timeout: 8000 });
+for (let i = 0; i < 6; i++) {
+  await gotoPage("Main");
+  await gotoPage("Health");
+  await page.waitForSelector(".widget-anatomy canvas", { timeout: 8000 });
+}
+// Every context except the live one must have been explicitly released.
+const ctxStats = await page.evaluate(() => ({
+  total: window.__ctxs.length,
+  lost: window.__ctxs.filter((c) => c.isContextLost()).length,
+}));
+check(`anatomy releases retired WebGL contexts (${ctxStats.lost}/${ctxStats.total} lost)`,
+  ctxStats.total >= 2 && ctxStats.lost >= ctxStats.total - 1);
+const stillRenders = await page.evaluate(() => {
+  const c = document.querySelector(".widget-anatomy canvas");
+  return !!(c && c.width > 0 && c.height > 0);
+});
+check("anatomy still renders after repeated remounts", stillRenders === true);
+await page.selectOption(".widget-anatomy .an-quality", "2d");
+await page.waitForSelector(".widget-anatomy .an2", { timeout: 8000 });
 await page.fill(".widget-anatomy .an-search", "gallbladder");
 await page.locator(".widget-anatomy .an-search").press("Enter");
 await page.waitForTimeout(200);

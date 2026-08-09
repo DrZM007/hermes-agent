@@ -6,7 +6,7 @@
 //                 (news, weather, worldstate…) still renders with no signal
 // POST /api/*   → network only (agent, sync writes never come from cache)
 
-const VERSION = "hub-v60";
+const VERSION = "hub-v61";
 const SHELL = [
   "/",
   "/css/dashboard.css",
@@ -62,18 +62,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static shell: NETWORK-FIRST so an online load always gets the latest HTML/JS
-  // (installed PWAs can't hard-refresh — stale-while-revalidate could otherwise
-  // strand a user on an old build). Falls back to cache only when offline.
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(VERSION).then((cache) => cache.put(request, copy));
-        }
-        return response;
-      })
-      .catch(() => caches.match(request)),
-  );
+  // Static shell: NETWORK-FIRST so an online load always gets the latest build
+  // (installed PWAs can't hard-refresh), but never HANG on the network — if it
+  // hasn't answered within SHELL_TIMEOUT_MS and we hold a cached copy, serve
+  // that. Lie-fi (captive portals, stalled cellular, a cold-starting host)
+  // neither resolves nor rejects, which would otherwise show a blank page.
+  const SHELL_TIMEOUT_MS = 2000;
+  event.respondWith((async () => {
+    const network = fetch(request).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(VERSION).then((cache) => cache.put(request, copy));
+      }
+      return response;
+    });
+    const cached = await caches.match(request);
+    if (!cached) return network.catch(() => caches.match(request));
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), SHELL_TIMEOUT_MS));
+    try {
+      return (await Promise.race([network, timeout])) || cached;
+    } catch {
+      return cached;
+    }
+  })());
 });

@@ -27,14 +27,24 @@ async function loadData() {
   return DATA;
 }
 
+// WebGL support probe. Cached and explicitly released: creating a context per
+// draw() leaked one throwaway context per mount, on top of the renderer's.
+let webglSupport = null;
+function hasWebGL() {
+  if (webglSupport !== null) return webglSupport;
+  try {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl2") || c.getContext("webgl");
+    webglSupport = !!gl;
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch { webglSupport = false; }
+  return webglSupport;
+}
+
 // Detect the best renderer for this device (or honour a manual override).
 function detectTier(quality) {
   if (quality === "2d") return "2d";
-  let webgl = false;
-  try {
-    const c = document.createElement("canvas");
-    webgl = !!(c.getContext("webgl2") || c.getContext("webgl"));
-  } catch { webgl = false; }
+  const webgl = hasWebGL();
   if (quality === "3d") return webgl ? "3d" : "2d";
   // auto
   if (!webgl) return "2d";
@@ -202,9 +212,9 @@ export default {
       const hdNote = h("div.muted.small", {});
       hdBtn.addEventListener("click", async () => {
         hdBtn.disabled = true; hdNote.textContent = "Checking for high-detail model…";
-        const ok = await engine?.loadHighDetail?.((msg) => { hdNote.textContent = msg; });
+        const ok = await engine?.loadHighDetail?.((msg) => { hdNote.textContent = msg; }, ctx.api);
         hdBtn.disabled = false;
-        if (!ok) hdBtn.textContent = "Load high-detail model";
+        hdBtn.textContent = ok ? "Reload high-detail model" : "Load high-detail model";
       });
 
       const viewport = h("div.an-viewport", { class: `an-viewport tier-${tier}` });
@@ -238,7 +248,10 @@ export default {
       };
       ctx._applyCondition = applyCondition;
 
-      // build the active renderer
+      // build the active renderer — dispose the previous one first, or each
+      // re-draw would leak a WebGL context (browsers cap these at ~16).
+      engine?.dispose?.();
+      engine = null;
       if (tier === "3d") {
         try { engine = await build3D(viewport, data, S, showStructure); }
         catch (err) { engine = build2D(viewport, data, S, showStructure); }
@@ -250,9 +263,9 @@ export default {
       if (S.selected) showStructure(S.selected);
     };
 
-    // external highlight bus (condition or explicit structures)
-    if (highlightHandler) window.removeEventListener("hub:anatomy-highlight", highlightHandler);
-    highlightHandler = (ev) => {
+    // External highlight bus (condition or explicit structures). Per-instance,
+    // so two Anatomy widgets don't unhook each other; removed on unmount.
+    const highlightHandler = (ev) => {
       const d = ev.detail || {};
       loadData().then((data) => {
         let ids = d.structures;
@@ -273,13 +286,17 @@ export default {
       });
     };
     window.addEventListener("hub:anatomy-highlight", highlightHandler);
+    ctx.onTeardown(() => {
+      window.removeEventListener("hub:anatomy-highlight", highlightHandler);
+      engine?.dispose?.();
+      engine = null;
+    });
 
     ctx.onRefresh(draw);
     draw();
   },
 };
 
-let highlightHandler = null;
 
 // ---------------------------------------------------------------------------
 // Tier C — 2D interactive SVG body
@@ -359,7 +376,10 @@ async function build3D(viewport, data, S, onSelect) {
   const mat = (hex, opts = {}) => new THREE.MeshStandardMaterial({
     color: new THREE.Color(hex), roughness: 0.7, metalness: 0.05, ...opts });
   const add = (layer, id, geo, material, pos, scale) => {
-    const m = new THREE.Mesh(geo, material);
+    // Clone per mesh: highlighting mutates material.emissive, and a material
+    // shared across meshes would have each write overwrite the previous one
+    // (so highlighting one bone silently lit nothing).
+    const m = new THREE.Mesh(geo, material.clone());
     if (pos) m.position.set(...pos);
     if (scale) m.scale.set(...scale);
     m.userData.structure = id;
@@ -466,7 +486,16 @@ async function build3D(viewport, data, S, onSelect) {
     const a = VIEW_ANGLES[name] || VIEW_ANGLES.front;
     rotX = a[0]; rotY = a[1]; if (name === "reset") dist = 6;
   };
-  const setGhost = (on) => { skinMat.opacity = on ? 0.07 : 0.28; skinMat.needsUpdate = true; };
+  // Materials are cloned per mesh, so walk the skin layer rather than mutating
+  // the shared template (which no mesh references any more).
+  const setGhost = (on) => {
+    for (const m of meshes) {
+      if (m.userData.layer !== "skin" && m.parent !== groups.skin) continue;
+      if (!m.material.transparent) continue;
+      m.material.opacity = on ? 0.07 : 0.28;
+      m.material.needsUpdate = true;
+    }
+  };
   const focus = (id) => {
     const m = meshes.find((mm) => mm.userData.structure === id);
     if (!m) return;
@@ -477,13 +506,30 @@ async function build3D(viewport, data, S, onSelect) {
 
   // Tier A — load a high-detail GLB atlas on demand (pluggable; see ANATOMY.md).
   const MODEL_URL = "/anatomy/models/body.glb";
-  const loadHighDetail = async (report) => {
+  let hdRoot = null;   // currently-loaded high-detail scene, if any
+  const loadHighDetail = async (report, apiClient) => {
     try {
-      const status = await fetch("/api/anatomy/model").then((r) => r.json()).catch(() => ({}));
+      // Goes through api.js so the Bearer token is sent on token-protected
+      // deployments; a raw fetch would 401 and look like "not installed".
+      const status = await (apiClient?.anatomyModel
+        ? apiClient.anatomyModel().catch(() => ({}))
+        : fetch("/api/anatomy/model").then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
       if (!status.available) { report?.("No high-detail model installed. See ANATOMY.md to add one."); return false; }
       report?.("Loading high-detail model…");
-      const { GLTFLoader } = await import("../vendor/three/GLTFLoader.js");
-      const gltf = await new GLTFLoader().loadAsync(status.url || MODEL_URL);
+      // Everything that can fail is awaited BEFORE the procedural body is torn
+      // down, so a failure leaves the working model on screen.
+      const [{ GLTFLoader }, { DRACOLoader }, { buildResolver }] = await Promise.all([
+        import("../vendor/three/GLTFLoader.js"),
+        import("../vendor/three/DRACOLoader.js"),
+        import("../anatomy-names.js"),
+      ]);
+      const loader = new GLTFLoader();
+      // ANATOMY.md tells users to export Draco-compressed; without this the
+      // loader throws "No DRACOLoader instance provided" on those files.
+      const draco = new DRACOLoader();
+      draco.setDecoderPath("/js/vendor/three/draco/gltf/");
+      loader.setDRACOLoader(draco);
+      const gltf = await loader.loadAsync(status.url || MODEL_URL);
       const hd = gltf.scene;
       // auto-fit: centre at origin and scale to the procedural body's height,
       // so a GLB in any units/position frames correctly with no Blender fuss.
@@ -493,11 +539,10 @@ async function build3D(viewport, data, S, onSelect) {
       const scl = 3.4 / (size.y || 1);
       hd.scale.setScalar(scl);
       hd.position.set(-centre.x * scl, -centre.y * scl, -centre.z * scl);
-      // hide the procedural body, index the GLB meshes by structure + layer
+      // swap in: drop any previous GLB, hide the procedural body, re-index
+      if (hdRoot) { pivot.remove(hdRoot); disposeObject(hdRoot); }
       for (const g of Object.values(groups)) g.visible = false;
       meshes.length = 0;
-      // Resolve Latin / laterality-suffixed atlas names (Z-Anatomy et al.)
-      const { buildResolver } = await import("../anatomy-names.js");
       const resolve = buildResolver(data.structures);
       let mapped = 0;
       hd.traverse((o) => {
@@ -505,14 +550,18 @@ async function build3D(viewport, data, S, onSelect) {
         const id = resolve(o.name);
         const st = id ? data.byId[id] : null;
         if (st) mapped++;
+        // clone so per-mesh highlighting can't be clobbered by shared materials
+        if (o.material) o.material = o.material.clone();
         o.userData.structure = st ? id : (o.name || "structure");
         o.userData.layer = st ? st.layer : "organ";
         o.userData.baseEmissive = o.material?.emissive?.getHex?.() ?? 0x000000;
         meshes.push(o);
       });
       pivot.add(hd);
+      hdRoot = hd;
       hdActive = true;
       for (const l of data.layers) setLayer(l.id, !!S.layers[l.id]);
+      draco.dispose?.();
       report?.(`High-detail model loaded — ${meshes.length} parts, ${mapped} mapped to structures.`);
       return true;
     } catch (err) {
@@ -521,22 +570,58 @@ async function build3D(viewport, data, S, onSelect) {
     }
   };
 
-  if (anatRaf) cancelAnimationFrame(anatRaf);
   setView(S.view || "front");
   if (S.ghost) setGhost(true);
+
+  // Size is driven by a ResizeObserver rather than measured every frame — the
+  // old per-frame clientWidth/clientHeight read forced a layout flush at 60fps,
+  // and comparing width alone missed height-only changes (mobile column, info
+  // panel growth, orientation change) leaving a squashed body + wrong aspect.
+  let pendingResize = { w: width, h: height };
+  const resizeObserver = new ResizeObserver((entries) => {
+    const r = entries[0]?.contentRect;
+    if (r && r.width > 0 && r.height > 0) pendingResize = { w: r.width, h: r.height };
+  });
+  resizeObserver.observe(viewport);
+
+  let raf = null;                       // per-instance, not module-level
   const loop = () => {
-    if (!dom.isConnected) return; // self-terminate on unmount
+    if (!dom.isConnected) { raf = null; return; }  // self-terminate on unmount
     pivot.rotation.x = rotX; pivot.rotation.y = rotY;
     camera.position.z = dist;
-    const w = viewport.clientWidth || width, hgt = viewport.clientHeight || height;
-    if (dom.width !== Math.floor(w * renderer.getPixelRatio()) ) { renderer.setSize(w, hgt); camera.aspect = w / hgt; camera.updateProjectionMatrix(); }
+    const { w, h: hgt } = pendingResize;
+    if (renderer.domElement.clientWidth !== Math.round(w)
+        || renderer.domElement.clientHeight !== Math.round(hgt)) {
+      renderer.setSize(w, hgt, true);
+      camera.aspect = w / (hgt || 1);
+      camera.updateProjectionMatrix();
+    }
     renderer.render(scene, camera);
-    anatRaf = requestAnimationFrame(loop);
+    raf = requestAnimationFrame(loop);
   };
   loop();
 
-  return { setLayer, highlight, select: onSelect, setView, setGhost, focus, loadHighDetail,
-    dispose() { if (anatRaf) cancelAnimationFrame(anatRaf); renderer.dispose(); } };
+  return {
+    setLayer, highlight, select: onSelect, setView, setGhost, focus, loadHighDetail,
+    dispose() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      resizeObserver.disconnect();
+      disposeObject(scene);
+      renderer.dispose();
+      renderer.forceContextLoss?.();   // release the WebGL context immediately
+      dom.remove();
+    },
+  };
 }
 
-let anatRaf = null;
+/** Release geometries/materials/textures under an object3D. */
+function disposeObject(root) {
+  root.traverse?.((o) => {
+    o.geometry?.dispose?.();
+    const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+    for (const m of mats) {
+      for (const v of Object.values(m)) v?.isTexture && v.dispose?.();
+      m.dispose?.();
+    }
+  });
+}
