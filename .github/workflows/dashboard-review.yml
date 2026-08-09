@@ -39,10 +39,27 @@ jobs:
             echo "::notice::ANTHROPIC_API_KEY not set — skipping auto-review."
           fi
 
+      # issue_comment events run against the DEFAULT branch, so a "/review"
+      # re-run would review main instead of the PR. Resolve the PR head first.
+      - name: Resolve PR head
+        if: steps.gate.outputs.enabled == 'true'
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            ref=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" \
+                  --jq .head.sha)
+            echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
         if: steps.gate.outputs.enabled == 'true'
         with:
           fetch-depth: 0
+          ref: ${{ steps.pr.outputs.ref }}
 
       - name: Claude review
         if: steps.gate.outputs.enabled == 'true'

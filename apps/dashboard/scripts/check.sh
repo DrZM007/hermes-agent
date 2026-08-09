@@ -58,6 +58,26 @@ else
   bad "invariant violated — rerun: python -m unittest tests.test_invariants -v"
 fi
 
+step "Service worker freshness"
+# A hardcoded floor in a unit test can never force a bump — this is a git
+# question: if any cached asset changed vs the merge base, VERSION must too.
+BASE=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+if [ -z "$BASE" ]; then
+  printf "  (no origin/main to compare — skipped)\n"
+else
+  # Diff the WORKING TREE against the merge base (not BASE..HEAD): a pre-commit
+  # hook must judge what is about to be committed, not what already is.
+  changed=$(git diff --name-only "$BASE" -- public/js public/css public/index.html \
+            public/anatomy/structures.json public/anatomy/conditions.json 2>/dev/null)
+  if [ -z "$changed" ]; then
+    ok "no cached assets changed"
+  elif git diff "$BASE" -- public/sw.js | grep -q '^[-+]const VERSION'; then
+    ok "VERSION bumped for changed assets"
+  else
+    bad "cached assets changed but sw.js VERSION was not bumped — clients will run stale code"
+  fi
+fi
+
 step "Unit tests"
 if "$PY" -m unittest discover -s tests -q >/dev/null 2>&1; then
   ok "unit suite passes"

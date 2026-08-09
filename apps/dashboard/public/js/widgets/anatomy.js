@@ -31,14 +31,19 @@ async function loadData() {
 // draw() leaked one throwaway context per mount, on top of the renderer's.
 let webglSupport = null;
 function hasWebGL() {
-  if (webglSupport !== null) return webglSupport;
+  // Only a positive result is cached: a transient failure (GPU restart, context
+  // cap, memory pressure) must not pin the widget to 2D for the page lifetime.
+  if (webglSupport === true) return true;
   try {
     const c = document.createElement("canvas");
     const gl = c.getContext("webgl2") || c.getContext("webgl");
-    webglSupport = !!gl;
-    gl?.getExtension("WEBGL_lose_context")?.loseContext();
-  } catch { webglSupport = false; }
-  return webglSupport;
+    if (gl) {
+      webglSupport = true;
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      return true;
+    }
+  } catch { /* fall through */ }
+  return false;
 }
 
 // Detect the best renderer for this device (or honour a manual override).
@@ -107,6 +112,7 @@ export default {
     S.layers = S.layers || { skin: false, muscle: false, skeleton: true, organ: true };
 
     let engine = null;      // active renderer with { highlight(ids), setLayer(id,on), select(id), dispose() }
+    let drawToken = 0;      // guards against overlapping draw() builds
     let selectHandler = () => {};
 
     const persist = () => store.update((s) => { s.anatomy = S; }, "anatomy");
@@ -248,16 +254,22 @@ export default {
       };
       ctx._applyCondition = applyCondition;
 
-      // build the active renderer — dispose the previous one first, or each
-      // re-draw would leak a WebGL context (browsers cap these at ~16).
-      engine?.dispose?.();
-      engine = null;
+      // Build the replacement BEFORE disposing the incumbent: two overlapping
+      // draw()s (quality change + refresh) would otherwise both see null, build
+      // two renderers, and orphan one — the leak this is meant to prevent.
+      // `drawToken` makes the last caller win; superseded builds self-dispose.
+      const token = ++drawToken;
+      let next;
       if (tier === "3d") {
-        try { engine = await build3D(viewport, data, S, showStructure); }
-        catch (err) { engine = build2D(viewport, data, S, showStructure); }
+        try { next = await build3D(viewport, data, S, showStructure); }
+        catch (err) { next = build2D(viewport, data, S, showStructure); }
       } else {
-        engine = build2D(viewport, data, S, showStructure);
+        next = build2D(viewport, data, S, showStructure);
       }
+      if (token !== drawToken) { next.dispose?.(); return; }   // superseded
+      const previous = engine;
+      engine = next;
+      previous?.dispose?.();
       // apply persisted layer visibility
       for (const layer of data.layers) engine.setLayer(layer.id, !!S.layers[layer.id]);
       if (S.selected) showStructure(S.selected);
@@ -491,8 +503,9 @@ async function build3D(viewport, data, S, onSelect) {
   const setGhost = (on) => {
     for (const m of meshes) {
       if (m.userData.layer !== "skin" && m.parent !== groups.skin) continue;
-      if (!m.material.transparent) continue;
-      m.material.opacity = on ? 0.07 : 0.28;
+      if (!m.material?.transparent) continue;
+      if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.material.opacity;
+      m.material.opacity = on ? 0.07 : m.userData.baseOpacity;
       m.material.needsUpdate = true;
     }
   };
@@ -507,6 +520,7 @@ async function build3D(viewport, data, S, onSelect) {
   // Tier A — load a high-detail GLB atlas on demand (pluggable; see ANATOMY.md).
   const MODEL_URL = "/anatomy/models/body.glb";
   let hdRoot = null;   // currently-loaded high-detail scene, if any
+  let draco = null;
   const loadHighDetail = async (report, apiClient) => {
     try {
       // Goes through api.js so the Bearer token is sent on token-protected
@@ -524,7 +538,7 @@ async function build3D(viewport, data, S, onSelect) {
       const loader = new GLTFLoader();
       // ANATOMY.md tells users to export Draco-compressed; without this the
       // loader throws "No DRACOLoader instance provided" on those files.
-      const draco = new DRACOLoader();
+      draco = new DRACOLoader();
       draco.setDecoderPath("/js/vendor/three/draco/gltf/");
       loader.setDRACOLoader(draco);
       const gltf = await loader.loadAsync(status.url || MODEL_URL);
@@ -559,12 +573,15 @@ async function build3D(viewport, data, S, onSelect) {
       hdRoot = hd;
       hdActive = true;
       for (const l of data.layers) setLayer(l.id, !!S.layers[l.id]);
-      draco.dispose?.();
+      if (S.ghost) setGhost(true);
       report?.(`High-detail model loaded — ${meshes.length} parts, ${mapped} mapped to structures.`);
       return true;
     } catch (err) {
       report?.(`Couldn't load model: ${err.message}`);
       return false;
+    } finally {
+      // release the decoder worker pool on every path, not just success
+      draco?.dispose?.();
     }
   };
 
