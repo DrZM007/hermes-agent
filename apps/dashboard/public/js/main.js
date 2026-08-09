@@ -909,10 +909,15 @@ if ("serviceWorker" in navigator) {
   // Only reload when an EXISTING controller is replaced (i.e. a new build took
   // over). On a first-ever visit there is no controller, and clients.claim()
   // would otherwise fire this and reload the page out from under the user.
-  const hadController = !!navigator.serviceWorker.controller;
+  // A tab that loaded uncontrolled (first visit, cleared data) gets its
+  // controller via clients.claim() — that must NOT reload, but it must also not
+  // pin the tab forever: once controlled, a LATER controllerchange is a new
+  // build taking over and does warrant one reload.
+  let controlled = !!navigator.serviceWorker.controller;
   let reloadedForSW = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!hadController || reloadedForSW) return;
+    if (reloadedForSW) return;
+    if (!controlled) { controlled = true; return; }   // initial claim
     reloadedForSW = true;
     location.reload();
   });

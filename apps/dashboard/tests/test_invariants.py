@@ -23,6 +23,25 @@ def read(p: Path) -> str:
 class DeployInvariants(unittest.TestCase):
     """The container must contain everything the app imports."""
 
+    @staticmethod
+    def _image_files():
+        """Expand the Dockerfile's COPY sources into the set of files that will
+        exist in the image. Checking for the literal string "*.py" would be a
+        tautology — this resolves the globs for real."""
+        files = set()
+        for line in read(APP / "Dockerfile").splitlines():
+            m = re.match(r"\s*COPY\s+(?!--)(.+)", line)
+            if not m:
+                continue
+            parts = m.group(1).split()
+            for src in parts[:-1]:            # last token is the destination
+                for path in APP.glob(src):
+                    if path.is_file():
+                        files.add(path.name)
+                    else:
+                        files.update(p.name for p in path.rglob("*") if p.is_file())
+        return files
+
     def test_dockerfile_copies_every_local_module(self):
         local = {p.stem for p in APP.glob("*.py")}
         imported = set()
@@ -31,11 +50,11 @@ class DeployInvariants(unittest.TestCase):
                 m = re.match(r"\s*(?:from|import)\s+([A-Za-z_]\w*)", line)
                 if m and m.group(1) in local:
                     imported.add(m.group(1))
-        dockerfile = read(APP / "Dockerfile")
-        for mod in sorted(imported):
-            self.assertTrue("*.py" in dockerfile or f"{mod}.py" in dockerfile,
-                            f"Dockerfile does not COPY {mod}.py — container will "
-                            f"crash at import")
+        in_image = self._image_files()
+        missing = sorted(f"{m}.py" for m in imported if f"{m}.py" not in in_image)
+        self.assertEqual(missing, [],
+                         f"Dockerfile COPY set omits {missing} — the container "
+                         f"will crash at import")
 
     def test_dockerfile_has_import_smoke_check(self):
         # A build-time import guards against this regressing silently.
@@ -45,21 +64,29 @@ class DeployInvariants(unittest.TestCase):
 class ServiceWorkerInvariants(unittest.TestCase):
     """A module missing from the SW shell is served stale or not at all."""
 
-    def test_shell_lists_every_js_module(self):
+    @staticmethod
+    def _shell_entries():
         sw = read(PUBLIC / "sw.js")
+        block = re.search(r"const SHELL = \[(.*?)\];", sw, re.S)
+        assert block, "SHELL array not found in sw.js"
+        return set(re.findall(r'"([^"]+)"', block.group(1)))
+
+    def test_shell_lists_every_js_module(self):
+        shell = self._shell_entries()
         missing = []
         for path in sorted(JS.rglob("*.js")):
             if "vendor" in path.parts:      # vendored libs load on demand
                 continue
             rel = "/" + str(path.relative_to(PUBLIC)).replace("\\", "/")
-            if f'"{rel}"' not in sw:
+            if rel not in shell:
                 missing.append(rel)
         self.assertEqual(missing, [], f"sw.js SHELL is missing: {missing}")
 
-    def test_version_is_bumped_beyond_shipped_baseline(self):
+    def test_version_is_well_formed(self):
+        # Whether it was BUMPED for this change is a git question — see
+        # scripts/check.sh, which compares against the merge base.
         m = re.search(r'VERSION = "hub-v(\d+)"', read(PUBLIC / "sw.js"))
-        self.assertIsNotNone(m, "sw.js VERSION not found")
-        self.assertGreaterEqual(int(m.group(1)), 61)
+        self.assertIsNotNone(m, "sw.js VERSION missing or malformed")
 
 
 class WidgetInvariants(unittest.TestCase):
@@ -67,13 +94,24 @@ class WidgetInvariants(unittest.TestCase):
 
     def test_every_widget_module_is_registered(self):
         main = read(JS / "main.js")
-        unregistered = []
+        registry = re.search(r"const WIDGETS = Object\.fromEntries\(\s*\[(.*?)\]",
+                             main, re.S)
+        self.assertIsNotNone(registry, "WIDGETS registry not found in main.js")
+        registered = {n.strip() for n in registry.group(1).split(",") if n.strip()}
+        problems = []
         for path in sorted(WIDGETS.glob("*.js")):
-            # a widget is registered if main.js imports its module
-            if f'widgets/{path.name}"' not in main:
-                unregistered.append(path.name)
-        self.assertEqual(unregistered, [],
-                         f"widget modules not imported by main.js: {unregistered}")
+            imported = re.findall(
+                rf'import\s+(?:(\w+)|\{{([^}}]+)\}})\s+from\s+"\./widgets/{re.escape(path.name)}"',
+                main)
+            if not imported:
+                problems.append(f"{path.name}: not imported by main.js")
+                continue
+            default, named = imported[0]
+            names = [default] if default else [n.strip() for n in named.split(",")]
+            for name in names:
+                if name not in registered:
+                    problems.append(f"{path.name}: '{name}' imported but not in WIDGETS")
+        self.assertEqual(problems, [], f"widget registration: {problems}")
 
     def test_widgets_never_fetch_api_directly(self):
         """Raw fetch skips authHeaders(), so it 401s on token-protected
@@ -111,9 +149,17 @@ class StateMigrationInvariants(unittest.TestCase):
         migrate_block = re.search(r"function migrate\(parsed\)\s*\{(.*?)\n\}",
                                   store, re.S)
         self.assertIsNotNone(migrate_block, "migrate() not found")
-        keys = re.findall(r"^\s*(\w*(?:[Rr]ev|Seed|onboarded)\w*)\s*:",
-                          default_block.group(1), re.M)
-        unpinned = [k for k in keys if f"parsed.{k}" not in migrate_block.group(1)]
+        load_block = re.search(r"function load\(\)\s*\{(.*?)\n\}", store, re.S)
+        self.assertIsNotNone(load_block, "load() not found")
+        # The requirement is that the STORED value is consulted before the
+        # defaults merge — as an assignment in migrate() or a guard in load()
+        # (e.g. `parsed.version !== 1`). Either satisfies it.
+        consulted = migrate_block.group(1) + load_block.group(1)
+        # Only true schema-version counters and one-time flags, anchored so
+        # words merely CONTAINING "rev"/"seed" (preview, reverseSort…) don't match.
+        keys = [k for k in re.findall(r"^\s*(\w+)\s*:", default_block.group(1), re.M)
+                if re.fullmatch(r"(?:\w+?)(?:Rev|Seed)|onboarded|version", k)]
+        unpinned = [k for k in keys if f"parsed.{k}" not in consulted]
         self.assertEqual(unpinned, [],
                          f"defaultState keys not pinned in migrate(): {unpinned} "
                          f"— stored states will look up-to-date and skip upgrades")
@@ -136,7 +182,10 @@ class AnatomyDataInvariants(unittest.TestCase):
     def test_draco_decoder_present_when_docs_promise_it(self):
         """ANATOMY.md tells users to export Draco-compressed GLB; without the
         decoder the loader throws 'No DRACOLoader instance provided'."""
-        docs = read(APP / "ANATOMY.md") + read(PUBLIC / "anatomy/models/README.md")
+        docs = read(APP / "ANATOMY.md")
+        model_readme = PUBLIC / "anatomy/models/README.md"
+        if model_readme.is_file():
+            docs += read(model_readme)
         if "draco" not in docs.lower():
             self.skipTest("docs no longer recommend Draco")
         self.assertTrue((JS / "vendor/three/DRACOLoader.js").is_file(),

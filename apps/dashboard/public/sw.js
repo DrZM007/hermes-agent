@@ -6,7 +6,7 @@
 //                 (news, weather, worldstate…) still renders with no signal
 // POST /api/*   → network only (agent, sync writes never come from cache)
 
-const VERSION = "hub-v62";
+const VERSION = "hub-v63";
 const SHELL = [
   "/",
   "/css/dashboard.css",
@@ -68,6 +68,10 @@ self.addEventListener("fetch", (event) => {
   // that. Lie-fi (captive portals, stalled cellular, a cold-starting host)
   // neither resolves nor rejects, which would otherwise show a blank page.
   const SHELL_TIMEOUT_MS = 2000;
+  // Hold the revalidation open even after we answer from cache, or the SW can
+  // be terminated mid-put and the client stays pinned to the install-time shell.
+  let settleRevalidation;
+  event.waitUntil(new Promise((res) => { settleRevalidation = res; }));
   event.respondWith((async () => {
     const network = fetch(request).then((response) => {
       if (response.ok) {
@@ -76,6 +80,7 @@ self.addEventListener("fetch", (event) => {
       }
       return response;
     });
+    network.catch(() => {}).finally(() => settleRevalidation());
     const cached = await caches.match(request);
     if (!cached) return network.catch(() => caches.match(request));
     const timeout = new Promise((resolve) => setTimeout(() => resolve(null), SHELL_TIMEOUT_MS));
