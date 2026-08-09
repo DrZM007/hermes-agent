@@ -1,0 +1,84 @@
+name: Dashboard auto-review
+
+# Reviews every dashboard PR with Claude and posts findings as a comment.
+# Requires an ANTHROPIC_API_KEY repo secret; the job no-ops without one so
+# forks and secret-less checkouts don't fail.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/dashboard/**"
+  # Re-run on demand by commenting "/review" on a PR.
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: dashboard-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.issue.pull_request && contains(github.event.comment.body, '/review'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check for API key
+        id: gate
+        run: |
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ANTHROPIC_API_KEY not set — skipping auto-review."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Claude review
+        if: steps.gate.outputs.enabled == 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request's diff for the HERMES//HUB dashboard
+            (apps/dashboard). Report only high-confidence defects with a concrete
+            failure scenario — no style nits, no speculation.
+
+            Weight these bug classes heavily; each has shipped here before and
+            was missed by the unit and e2e suites:
+
+            1. State migration "defaults-merge trap" — store.js load() does
+               {...defaultState(), ...parsed}, so any version/seed key present in
+               defaultState makes a STORED state look current unless migrate()
+               pins it from `parsed` first. This stranded users on stale layouts.
+            2. Deploy completeness — a new Python module must be COPYd into the
+               Dockerfile, or the container dies at import.
+            3. Service worker — new JS modules must be listed in the SHELL array,
+               and VERSION must be bumped, or clients run stale code.
+            4. Resource lifecycle — three.js renderers/contexts, requestAnimationFrame
+               loops, event listeners and store subscriptions must be released on
+               widget unmount (ctx.onTeardown), not leaked per mount.
+            5. Shared mutable objects — e.g. one three.js material reused across
+               meshes makes per-mesh highlighting silently no-op.
+            6. Auth — widgets must call ctx.api.* (which sends the Bearer token),
+               never raw fetch("/api/..."), which 401s on token-protected deploys.
+            7. Error paths — don't tear down working state before an await that
+               can reject; don't leave a blank/unusable view on failure.
+            8. Mobile/CSS — verify a property actually applies to the element's
+               display type (e.g. text-overflow is inert on inline-flex).
+
+            Post a PR comment with the findings, most severe first, each naming
+            file:line and the concrete failure. If you find nothing that meets the
+            bar, say so in one line.

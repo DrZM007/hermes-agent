@@ -511,9 +511,7 @@ async function build3D(viewport, data, S, onSelect) {
     try {
       // Goes through api.js so the Bearer token is sent on token-protected
       // deployments; a raw fetch would 401 and look like "not installed".
-      const status = await (apiClient?.anatomyModel
-        ? apiClient.anatomyModel().catch(() => ({}))
-        : fetch("/api/anatomy/model").then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+      const status = await apiClient.anatomyModel().catch(() => ({}));
       if (!status.available) { report?.("No high-detail model installed. See ANATOMY.md to add one."); return false; }
       report?.("Loading high-detail model…");
       // Everything that can fail is awaited BEFORE the procedural body is torn
