@@ -899,6 +899,15 @@ check("commodities groups metals & rates",
 await gotoWidget("marketsnews");
 await page.waitForSelector(".widget-marketsnews .news-item", { timeout: 5000 });
 check("markets news lists headlines", (await page.locator(".widget-marketsnews .news-item").count()) >= 1);
+// Regression: native Element.append stringifies null — a conditional child
+// rendered a literal "null" above every topic-news list.
+const strayNull = await page.evaluate(() => [...document.querySelectorAll(
+  ".widget-marketsnews, .widget-sportsnews, .widget-worldnews, .widget-healthnews")]
+  .some((w) => [...w.childNodes].some((n) =>
+    n.nodeType === 3 && n.textContent.trim() === "null")
+    || [...w.querySelectorAll("*")].some((e) => [...e.childNodes].some((n) =>
+      n.nodeType === 3 && n.textContent.trim() === "null"))));
+check("topic news renders no stray 'null' text node", strayNull === false);
 await gotoWidget("healthnews");
 await page.waitForSelector(".widget-healthnews .news-item", { timeout: 5000 });
 check("health news lists headlines", (await page.locator(".widget-healthnews .news-item").count()) >= 1);

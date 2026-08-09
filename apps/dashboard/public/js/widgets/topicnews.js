@@ -39,10 +39,15 @@ function makeTopicNews(type, title, icon, topic) {
                 data.source === "live" ? h("span.muted", {}, " · ", hostOf(item.url)) : null)),
             { url: item.url, title: item.title, source: item.source, mode: "reader" }));
         }
-        clear(body).append(
-          fellBack ? h("div.muted.small.tn-fallback", {},
-            `No “${topic}” feed configured — showing top stories. Add one in ⚙ → News sources.`) : null,
-          list);
+        // NB: native Element.append stringifies null into a "null" text node —
+        // only h() filters nullish children. Build the list, then append.
+        const parts = [];
+        if (fellBack) {
+          parts.push(h("div.muted.small.tn-fallback", {},
+            `No “${topic}” feed configured — showing top stories. Add one in ⚙ → News sources.`));
+        }
+        parts.push(list);
+        clear(body).append(...parts);
       };
       ctx.onRefresh(draw);
       draw();
