@@ -20,7 +20,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit:
+  checks:
+    name: Syntax, invariants & unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,9 +29,40 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Unit tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Same gate developers run locally (scripts/check.sh), so CI can never
+      # disagree with the pre-commit hook.
+      - name: Pre-commit gate
+        run: apps/dashboard/scripts/check.sh
+
+  docker:
+    name: Container builds & boots
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # Catches the class of bug where a new module isn't COPYd into the image
+      # and the container dies at import — invisible to unit/e2e tests.
+      - name: Build image
         working-directory: apps/dashboard
-        run: python3 -m unittest discover -s tests -v
+        run: docker build -t hermes-hub:ci .
+      - name: Boot and health-check
+        run: |
+          docker run -d --name hub -p 8787:8787 \
+            -e HERMES_HUB_TOKEN=ci-code hermes-hub:ci
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8787/api/health >/dev/null && ok=1 && break
+            sleep 1
+          done
+          if [ "${ok:-0}" != "1" ]; then
+            echo "::error::container failed to serve /api/health"
+            docker logs hub
+            exit 1
+          fi
+          echo "container healthy"
+          docker rm -f hub
 
   e2e:
     runs-on: ubuntu-latest

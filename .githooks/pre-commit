@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Fast gate (~10s): syntax, invariants, unit tests. Skip with --no-verify.
+if git diff --cached --name-only | grep -q '^apps/dashboard/'; then
+  echo "Running dashboard checks (pre-commit)…"
+  apps/dashboard/scripts/check.sh || {
+    echo
+    echo "Commit blocked. Fix the above, or bypass with: git commit --no-verify"
+    exit 1
+  }
+fi

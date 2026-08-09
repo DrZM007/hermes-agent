@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Full gate: everything above plus the end-to-end suite. Skip with --no-verify.
+if git diff --name-only "@{push}..HEAD" 2>/dev/null | grep -q '^apps/dashboard/' \
+   || git diff --name-only origin/main...HEAD 2>/dev/null | grep -q '^apps/dashboard/'; then
+  echo "Running dashboard checks + e2e (pre-push)…"
+  apps/dashboard/scripts/check.sh --full || {
+    echo
+    echo "Push blocked. Bypass with: git push --no-verify"
+    exit 1
+  }
+fi
