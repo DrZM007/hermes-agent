@@ -3,6 +3,7 @@
 Run:  python3 -m unittest discover -s apps/dashboard/tests -v
 """
 
+import re
 import json
 import sys
 import tempfile
@@ -1022,6 +1023,22 @@ class MarketsWatchlistTests(unittest.TestCase):
             self.assertTrue(c["slug"] and c["name"] and c["structures"])
             for sid in c["structures"]:
                 self.assertIn(sid, ids, f"{c['slug']} references unknown structure {sid}")
+
+    def test_dockerfile_copies_every_server_module(self):
+        """The image must contain every locally-imported module, or the
+        container dies at import time (the Fly deploy path in DEPLOY.md)."""
+        app = Path(__file__).resolve().parent.parent
+        local = {p.stem for p in app.glob("*.py")}
+        imported = set()
+        for src in app.glob("*.py"):
+            for line in src.read_text().splitlines():
+                m = re.match(r"\s*(?:from|import)\s+([a-zA-Z_][\w]*)", line)
+                if m and m.group(1) in local:
+                    imported.add(m.group(1))
+        copied = Path(app / "Dockerfile").read_text()
+        for mod in sorted(imported):
+            self.assertTrue("*.py" in copied or f"{mod}.py" in copied,
+                            f"Dockerfile does not COPY {mod}.py")
 
     def test_anatomy_alias_table(self):
         base = Path(__file__).resolve().parent.parent / "public" / "anatomy"

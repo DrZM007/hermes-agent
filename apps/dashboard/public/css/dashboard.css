@@ -2274,7 +2274,12 @@ a.trk-title:hover { color: var(--accent); }
   .pagetab {
     flex: 1 1 0; min-width: 0; justify-content: center;
     padding: 9px 6px; font-size: 11px; letter-spacing: 0.01em;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  /* .pagetab is inline-flex, so text-overflow must live on the label itself —
+     on the tab it is inert and long names hard-clip mid-glyph. */
+  .pagetab > span:first-child {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   /* clear the fixed bottom nav so no content hides behind it */
   .grid { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }

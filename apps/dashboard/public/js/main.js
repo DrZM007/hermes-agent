@@ -139,9 +139,13 @@ function makeCtx(card, itemId, badge) {
   const refreshHandlers = [];
   const storeHandlers = [];
   const timers = [];
+  const teardown = [];
+  // NB: these close over the arrays, so handlers registered *after* makeCtx
+  // returns are still torn down (spreading here would snapshot them empty).
   cleanups.set(itemId, [
     () => timers.forEach(clearInterval),
-    ...storeHandlers.map((off) => off),
+    () => storeHandlers.forEach((off) => off()),
+    () => teardown.forEach((fn) => { try { fn(); } catch { /* best effort */ } }),
   ]);
   return {
     store,
@@ -156,6 +160,8 @@ function makeCtx(card, itemId, badge) {
     onRefresh(fn) { refreshHandlers.push(fn); },
     triggerRefresh() { refreshHandlers.forEach((fn) => fn()); },
     onStore(fn) { storeHandlers.push(store.subscribe(fn)); },
+    /** Run fn when this widget is unmounted (page switch, re-render, removal). */
+    onTeardown(fn) { teardown.push(fn); },
     every(ms, fn) { timers.push(setInterval(fn, ms)); },
     onSummarize(getPayload) { this._summarize = getPayload; },
   };
@@ -900,9 +906,13 @@ if ("serviceWorker" in navigator) {
   // When a new service worker takes control (e.g. after a deploy), reload once
   // so the page picks up the latest JS/HTML automatically — important for
   // installed PWAs that can't be hard-refreshed by the user.
+  // Only reload when an EXISTING controller is replaced (i.e. a new build took
+  // over). On a first-ever visit there is no controller, and clients.claim()
+  // would otherwise fire this and reload the page out from under the user.
+  const hadController = !!navigator.serviceWorker.controller;
   let reloadedForSW = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloadedForSW) return;
+    if (!hadController || reloadedForSW) return;
     reloadedForSW = true;
     location.reload();
   });
