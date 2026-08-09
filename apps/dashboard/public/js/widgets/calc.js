@@ -820,6 +820,16 @@ const REFERENCE = [
   ["Vitamin D (25-OH)", "> 50", "nmol/L"],
 ];
 
+/** Search index for the command palette: every calculator by name. */
+export function searchIndex() {
+  return CALCULATORS.map((c) => ({
+    label: c.name, hint: "calculator", type: "calc",
+    apply: (store) => store.update((st) => {
+      st.calc = { ...(st.calc || {}), active: c.id, values: (st.calc || {}).values || {} };
+    }, "calc"),
+  }));
+}
+
 export default {
   type: "calc",
   title: "Clinical Tools",

@@ -135,6 +135,21 @@ const gotoWidget = async (type) => { await gotoPage(pageOf(type)); await page.wa
 
 // ---- widgets render (per page) ---------------------------------------------
 check("page tabs render", (await page.locator(".pagetab").count()) >= 3);
+// Command palette searches the user's own content, not just commands.
+await page.keyboard.press("Control+K");
+await page.waitForSelector(".palette-input", { timeout: 5000 });
+await page.fill(".palette-input", "eGFR");
+await page.waitForFunction(() =>
+  [...document.querySelectorAll("[class*=palette] button")]
+    .some((b) => /eGFR/i.test(b.textContent)), null, { timeout: 5000 });
+check("palette finds a clinical calculator", true);
+await page.fill(".palette-input", "Newly diagnosed HIV");
+await page.waitForFunction(() =>
+  [...document.querySelectorAll("[class*=palette] button")]
+    .some((b) => /OSCE/i.test(b.textContent)), null, { timeout: 5000 });
+check("palette finds an OSCE station", true);
+await page.keyboard.press("Escape");
+await page.waitForSelector(".palette-input", { state: "detached", timeout: 5000 });
 // first-run welcome card appears, dismisses, and stays dismissed
 check("first run shows a welcome card", (await page.locator(".notice-welcome").count()) === 1);
 await page.locator(".notice-welcome .notice-x").click();
