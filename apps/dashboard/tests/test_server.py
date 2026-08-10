@@ -1070,11 +1070,36 @@ class MarketsWatchlistTests(unittest.TestCase):
                                    "sources": [{"id": "1", "text": "y"}]})
 
     def test_notebook_prompt_forbids_outside_knowledge(self):
-        system, user = server.notebook_prompt(
+        prompt = server.notebook_prompt(
             [{"title": "N", "text": "some evidence"}], "q?", "ask")
-        self.assertIn("strictly from the numbered passages", system)
-        self.assertIn("do not speculate", system)
-        self.assertIn("[1]", user)
+        self.assertIn("strictly from the numbered passages", prompt)
+        self.assertIn("do not speculate", prompt)
+        self.assertIn("[1]", prompt)
+
+    def test_notebook_grounding_rules_reach_the_model(self):
+        """Regression: the rules were passed as context["systemOverride"], which
+        the assistant never reads — it freezes its own system prompt and JSON-
+        dumps context. The grounding guarantee silently vanished whenever a
+        model WAS configured. Assert the rules are in the sent message."""
+        import unittest.mock as mock
+        sent = {}
+
+        def fake_chat(payload):
+            sent.update(payload)
+            return {"content": [{"type": "text", "text": "answer [1]"}]}
+
+        # `mode` is a read-only property, so patch it on the type for the block
+        with mock.patch.object(type(self.api.assistant), "mode",
+                               property(lambda self: "claude")), \
+             mock.patch.object(self.api.assistant, "chat", side_effect=fake_chat):
+            out = self.api.notebook_ask({
+                "question": "what insulin?",
+                "sources": [{"id": "1", "title": "Ward", "text": "basal insulin 10 units"}]})
+        text = sent["messages"][0]["content"]
+        self.assertIn("strictly from the numbered passages", text)
+        self.assertIn("do not speculate", text)
+        self.assertIn("basal insulin", text)      # the evidence travelled too
+        self.assertEqual(out["mode"], "grounded")
 
     def test_anatomy_alias_table(self):
         base = Path(__file__).resolve().parent.parent / "public" / "anatomy"
