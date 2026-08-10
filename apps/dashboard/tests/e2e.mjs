@@ -123,7 +123,7 @@ const WIDGET_PAGES = {
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "worldnews"],
-  Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "healthnews"],
+  Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
 };
 const pageOf = (type) => Object.keys(WIDGET_PAGES).find((p) => WIDGET_PAGES[p].includes(type)) || "Main";
@@ -867,6 +867,30 @@ await page.locator(".widget-anatomy .an-view", { hasText: "Back" }).click();
 await page.waitForTimeout(150);
 check("anatomy back view hides anterior organs", await page.evaluate(() =>
   getComputedStyle(document.querySelector('.widget-anatomy [data-structure="heart"]')).display === "none"));
+
+// clinical cheat sheets
+await gotoWidget("cheatsheets");
+await page.waitForSelector(".widget-cheatsheets .cs-row", { timeout: 8000 });
+check("cheat sheet renders rows", (await page.locator(".widget-cheatsheets .cs-row").count()) >= 20);
+check("cheat sheet has sections", (await page.locator(".widget-cheatsheets .cs-heading").count()) >= 5);
+const csAll = await page.locator(".widget-cheatsheets .cs-row").count();
+await page.fill(".widget-cheatsheets .cs-search", "ketoacidosis");
+await page.waitForFunction((n) =>
+  document.querySelectorAll(".widget-cheatsheets .cs-row").length < n, csAll, { timeout: 5000 });
+check("cheat sheet filter narrows rows", (await page.locator(".widget-cheatsheets .cs-row").count()) < csAll);
+await page.fill(".widget-cheatsheets .cs-search", "");
+// new calculators
+await page.locator(".widget-calc .calc-picker").selectOption("qtcf");
+await page.locator(".widget-calc .calc-inputs input").first().fill("400");
+await page.locator(".widget-calc .calc-inputs input").nth(1).fill("100");
+await page.waitForFunction(() =>
+  document.querySelector(".widget-calc .calc-val")?.textContent === "474", null, { timeout: 5000 });
+check("QTcF computes Fridericia correction", true);
+await page.locator(".widget-calc .calc-picker").selectOption("hba1c");
+await page.locator(".widget-calc .calc-inputs input").first().fill("7");
+await page.waitForFunction(() =>
+  document.querySelector(".widget-calc .calc-val")?.textContent === "8.5", null, { timeout: 5000 });
+check("HbA1c converts to average glucose", true);
 
 await gotoWidget("meded");
 check("med ed lists OSCE stations", (await page.locator(".widget-meded .meded-station").count()) >= 10);

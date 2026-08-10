@@ -798,6 +798,101 @@ const CALCULATORS = [
       return { value: s, unit: "pts", tone, note: band + "." };
     },
   },
+  {
+    id: "qtcf", name: "Corrected QT (Fridericia, QTcF)",
+    blurb: "QT / ∛RR — preferred over Bazett at high/low heart rates.",
+    inputs: [
+      { key: "qt", label: "QT interval", unit: "ms", type: "number" },
+      { key: "hr", label: "Heart rate", unit: "bpm", type: "number" },
+    ],
+    compute(v) {
+      const qt = num(v.qt), hr = num(v.hr);
+      if (qt == null || hr == null || hr <= 0) return null;
+      const rr = 60 / hr;                                  // seconds
+      const qtcf = round(qt / Math.cbrt(rr), 0);
+      const fram = round(qt + 154 * (1 - rr), 0);          // Framingham
+      const hodges = round(qt + 1.75 * (hr - 60), 0);      // Hodges
+      const tone = qtcf >= 500 ? "bad" : qtcf >= 460 ? "warn" : "good";
+      const risk = qtcf >= 500 ? "Markedly prolonged — high torsades risk; review QT-prolonging drugs and electrolytes."
+        : qtcf >= 460 ? "Prolonged (≥460 ms). Check K⁺/Mg²⁺/Ca²⁺ and culprit drugs."
+          : "Within normal limits (♂ <450, ♀ <460 ms).";
+      return { value: qtcf, unit: "ms", tone,
+        note: `${risk} Framingham ${fram} ms · Hodges ${hodges} ms.` };
+    },
+  },
+  {
+    id: "hba1c", name: "HbA1c ↔ average glucose",
+    blurb: "ADA eAG conversion, plus DCCT% ↔ IFCC mmol/mol.",
+    inputs: [{ key: "a1c", label: "HbA1c", unit: "% (DCCT)", type: "number" }],
+    compute(v) {
+      const a1c = num(v.a1c);
+      if (a1c == null || a1c <= 0) return null;
+      const eag = round(1.59 * a1c - 2.59, 1);             // mmol/L
+      const eagMg = round(28.7 * a1c - 46.7, 0);           // mg/dL
+      const ifcc = round((a1c - 2.15) * 10.929, 0);        // mmol/mol
+      const tone = a1c < 7 ? "good" : a1c < 8 ? "warn" : "bad";
+      return { value: eag, unit: "mmol/L average glucose", tone,
+        note: `≈ ${eagMg} mg/dL · HbA1c ${a1c}% = ${ifcc} mmol/mol (IFCC). `
+          + "Most adults target <7%; individualise (frailty, hypo risk, comorbidity)." };
+    },
+  },
+  {
+    id: "insulin", name: "Insulin starting dose",
+    blurb: "Weight-based total daily dose with a basal/bolus split.",
+    inputs: [
+      { key: "wt", label: "Weight", unit: "kg", type: "number" },
+      { key: "type", label: "Setting", type: "select", options: [
+        { value: 0.2, label: "T2DM — basal only, cautious start (0.2 U/kg)" },
+        { value: 0.4, label: "T1DM — newly diagnosed (0.4 U/kg)" },
+        { value: 0.5, label: "T1DM — established / insulin resistant (0.5 U/kg)" }] },
+    ],
+    compute(v) {
+      const wt = num(v.wt), perKg = num(v.type);
+      if (wt == null || perKg == null || wt <= 0) return null;
+      const tdd = round(wt * perKg, 0);
+      const basal = round(tdd * 0.5, 0);
+      const meal = round((tdd * 0.5) / 3, 0);
+      return { value: tdd, unit: "U/day (total)", tone: "info",
+        note: perKg === 0.2
+          ? `Start basal ≈ ${tdd} U at night (many guidelines start at 10 U and titrate). `
+            + "Titrate ~2 U every 3 days to fasting target; review hypoglycaemia."
+          : `≈ ${basal} U basal + ≈ ${meal} U per meal. Titrate to the glucose profile; `
+            + "confirm carb counting and hypo awareness." };
+    },
+  },
+  {
+    id: "isf", name: "Correction factor & carb ratio",
+    blurb: "From total daily insulin dose (“100 rule” in mmol/L, “500 rule” for carbs).",
+    inputs: [{ key: "tdd", label: "Total daily insulin dose", unit: "U/day", type: "number" }],
+    compute(v) {
+      const tdd = num(v.tdd);
+      if (tdd == null || tdd <= 0) return null;
+      const isf = round(100 / tdd, 1);          // mmol/L drop per unit
+      const isfMg = round(1800 / tdd, 0);       // mg/dL equivalent
+      const carb = round(500 / tdd, 0);         // g carbohydrate per unit
+      return { value: isf, unit: "mmol/L per unit", tone: "info",
+        note: `1 unit drops glucose ≈ ${isf} mmol/L (${isfMg} mg/dL) and covers ≈ ${carb} g carbohydrate. `
+          + "Starting estimates only — refine against the patient's own readings." };
+    },
+  },
+  {
+    id: "homair", name: "HOMA-IR (insulin resistance)",
+    blurb: "Fasting insulin × fasting glucose ÷ 22.5.",
+    inputs: [
+      { key: "ins", label: "Fasting insulin", unit: "µIU/mL", type: "number" },
+      { key: "glu", label: "Fasting glucose", unit: "mmol/L", type: "number" },
+    ],
+    compute(v) {
+      const ins = num(v.ins), glu = num(v.glu);
+      if (ins == null || glu == null) return null;
+      const val = round((ins * glu) / 22.5, 2);
+      const tone = val < 2 ? "good" : val < 2.9 ? "warn" : "bad";
+      const band = val < 2 ? "normal insulin sensitivity"
+        : val < 2.9 ? "early / borderline insulin resistance" : "insulin resistance likely";
+      return { value: val, unit: "", tone,
+        note: `${band}. Cut-offs vary by assay and population; not validated in insulin-treated patients.` };
+    },
+  },
 ];
 
 // SA/NHLS-style adult reference ranges (SI units). Verify against your lab.
