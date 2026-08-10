@@ -2694,6 +2694,101 @@ SOURCES: dict[str, dict] = {
 }
 
 
+
+# ---------------------------------------------------------------------------
+# Notebook — grounded Q&A over the user's own notes (NotebookLM-style).
+#
+# Sources are chunked, ranked against the question with the same TF-IDF used
+# for memory recall, and the top passages become the ONLY evidence the model may
+# use. Without an API key we degrade to an extractive answer (the passages
+# themselves) rather than inventing prose — the notes are the user's record and
+# must never be paraphrased into something they didn't write.
+# ---------------------------------------------------------------------------
+NOTEBOOK_CHUNK_CHARS = 700
+
+
+def chunk_source(text: str, title: str, source_id: str) -> list[dict]:
+    """Split a source into paragraph-ish chunks that keep citation granularity
+    useful (a whole long note is a useless citation)."""
+    chunks = []
+    buf = ""
+    for para in re.split(r"\n\s*\n", (text or "").strip()):
+        para = para.strip()
+        if not para:
+            continue
+        if len(buf) + len(para) + 2 > NOTEBOOK_CHUNK_CHARS and buf:
+            chunks.append(buf.strip())
+            buf = ""
+        buf += ("\n\n" if buf else "") + para
+    if buf.strip():
+        chunks.append(buf.strip())
+    return [{"sourceId": source_id, "title": title, "text": c} for c in chunks]
+
+
+def notebook_passages(sources: list[dict], question: str, limit: int = 8) -> list[dict]:
+    """Rank every chunk of every source against the question."""
+    chunks = []
+    for src in sources:
+        chunks.extend(chunk_source(src.get("text", ""), src.get("title") or "Untitled",
+                                   str(src.get("id") or "")))
+    if not chunks:
+        return []
+    texts = [c["text"] for c in chunks]
+    ranked = rank_facts(texts, question, limit=limit)
+    by_text = {}
+    for c in chunks:
+        by_text.setdefault(c["text"], c)
+    out = []
+    for t in ranked:
+        c = by_text.get(t)
+        if c and c not in out:
+            out.append(c)
+    return out
+
+
+NOTEBOOK_TASKS = {
+    "ask": "Answer the question.",
+    "summary": "Write a concise summary of the sources.",
+    "keypoints": "List the key points as bullets.",
+    "questions": "List the questions these notes raise or leave unanswered.",
+    "studyguide": "Produce a study guide: key concepts, then short revision questions.",
+}
+
+
+def notebook_prompt(passages: list[dict], question: str, task: str) -> tuple[str, str]:
+    """Build (system, user) for a grounded, citation-bearing answer."""
+    numbered = []
+    for i, p in enumerate(passages, 1):
+        numbered.append(f"[{i}] ({p['title']})\n{p['text']}")
+    evidence = "\n\n".join(numbered) or "(no matching passages)"
+    system = (
+        "You answer strictly from the numbered passages supplied by the user's "
+        "own notes. Cite every claim with the bracketed number of the passage it "
+        "came from, e.g. [1] or [2][3]. If the passages do not contain the "
+        "answer, say so plainly and do not speculate or add outside knowledge. "
+        "Never invent a citation number that was not supplied."
+    )
+    instruction = NOTEBOOK_TASKS.get(task, NOTEBOOK_TASKS["ask"])
+    user = f"{instruction}\n\nQuestion: {question}\n\nPassages:\n{evidence}"
+    return system, user
+
+
+def notebook_extractive(passages: list[dict], question: str) -> str:
+    """No-model fallback: surface the most relevant passages verbatim."""
+    if not passages:
+        return ("No passage in the selected notes matches that. Try different "
+                "wording, or select more sources.")
+    lines = ["Most relevant passages from your notes "
+             "(no model configured — showing your own text, unedited):", ""]
+    for i, p in enumerate(passages[:4], 1):
+        excerpt = p["text"]
+        if len(excerpt) > 400:
+            excerpt = excerpt[:400].rsplit(" ", 1)[0] + "…"
+        lines.append(f"[{i}] {p['title']} — {excerpt}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
 # ---------------------------------------------------------------------------
 # Memory recall — lexical TF-IDF ranking (zero-dependency vector-recall stand-in)
 # ---------------------------------------------------------------------------
@@ -3161,6 +3256,36 @@ class Api:
         # Reports whether a high-detail Tier-A glTF atlas has been supplied.
         model = PUBLIC_DIR / "anatomy" / "models" / "body.glb"
         return {"available": model.is_file(), "url": "/anatomy/models/body.glb"}
+
+    def notebook_ask(self, body: dict) -> dict:
+        """Grounded Q&A over the caller's notes. Returns the answer plus the
+        exact passages it was allowed to use, so the client can render
+        citations that link back to the note they came from."""
+        question = (body.get("question") or "").strip()
+        task = (body.get("task") or "ask").strip()
+        sources = body.get("sources")
+        if task not in NOTEBOOK_TASKS:
+            raise ApiError(400, f"unknown task {task!r}; valid: {list(NOTEBOOK_TASKS)}")
+        if not isinstance(sources, list) or not sources:
+            raise ApiError(400, "sources must be a non-empty list")
+        if task == "ask" and not question:
+            raise ApiError(400, "question is required")
+        total = sum(len(str(src.get("text") or "")) for src in sources)
+        if total > 400_000:
+            raise ApiError(400, "sources too large (400k character limit)")
+
+        passages = notebook_passages(sources, question or NOTEBOOK_TASKS[task])
+        if self.assistant.mode != "claude":
+            return {"mode": "extractive", "passages": passages,
+                    "answer": notebook_extractive(passages, question)}
+        system, user = notebook_prompt(passages, question, task)
+        result = self.assistant.chat(
+            {"messages": [{"role": "user", "content": user}],
+             "context": {"systemOverride": system}})
+        text = "".join(b.get("text", "") for b in result.get("content", [])
+                       if b.get("type") == "text").strip()
+        return {"mode": "grounded", "passages": passages,
+                "answer": text or "No answer returned."}
 
     def podcast(self, params: dict) -> dict:
         url = params.get("url", [""])[0].strip()
@@ -3720,6 +3845,7 @@ class HubHandler(BaseHTTPRequestHandler):
 
     POST_ROUTES = {
         "/api/state": "state_put",
+        "/api/notebook/ask": "notebook_ask",
         "/api/assistant/chat": "assistant_chat",
         "/api/assistant/summarize": "assistant_summarize",
         "/api/assistant/briefing": "assistant_briefing",

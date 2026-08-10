@@ -1392,6 +1392,38 @@ a.trk-title:hover { color: var(--accent); }
 .notice-x:hover { color: var(--ink); }
 @media (max-width: 760px) { .notice-slot { padding: 8px 12px 0; } }
 
+/* ---------- notebook (grounded Q&A over your notes) ---------- */
+.nb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.nb-label { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); }
+.nb-sources { display: flex; flex-direction: column; gap: 2px; max-height: 120px; overflow-y: auto; margin: 6px 0 10px; }
+.nb-source { display: flex; align-items: center; gap: 7px; font-size: 12px; cursor: pointer; padding: 2px 0; }
+.nb-source-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-q { width: 100%; }
+.nb-actions { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0 10px; }
+.nb-output { border-top: 1px solid var(--hairline); padding-top: 10px; }
+.nb-answer { font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+.nb-cite {
+  background: var(--accent-dim, rgba(79,209,255,0.15)); color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 3px; font: inherit; font-size: 11px; padding: 0 4px;
+  margin: 0 1px; cursor: pointer; vertical-align: baseline;
+}
+.nb-cite:hover { background: var(--accent); color: var(--accent-ink); }
+.nb-sources-label { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); margin: 12px 0 4px; }
+.nb-passage-toggle {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  border-bottom: 1px solid var(--hairline); color: var(--ink-2);
+  font: inherit; font-size: 12px; padding: 5px 2px; cursor: pointer;
+}
+.nb-passage-toggle:hover { color: var(--accent); }
+.nb-passage {
+  font-size: 12px; line-height: 1.45; white-space: pre-wrap; color: var(--ink-2);
+  background: var(--surface-2); border-left: 2px solid var(--accent);
+  padding: 8px 10px; margin: 4px 0 8px;
+}
+.nb-mode { margin-top: 8px; }
+.nb-save { margin-top: 10px; }
+
 /* ---------- clinical cheat sheets ---------- */
 .cs-search { width: 100%; margin: 8px 0 4px; }
 .cs-blurb { margin-bottom: 8px; }
