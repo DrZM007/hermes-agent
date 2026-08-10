@@ -894,6 +894,17 @@ await page.waitForFunction((n) =>
   document.querySelectorAll(".widget-cheatsheets .cs-row").length < n, csAll, { timeout: 5000 });
 check("cheat sheet filter narrows rows", (await page.locator(".widget-cheatsheets .cs-row").count()) < csAll);
 await page.fill(".widget-cheatsheets .cs-search", "");
+// multiple sheets, each with real content
+check("cheat sheets cover several conditions",
+  (await page.locator(".widget-cheatsheets .tab").count()) >= 4);
+await page.locator(".widget-cheatsheets .tab", { hasText: "Tuberculosis" }).click();
+await page.waitForFunction(() =>
+  /rifampicin|Xpert/i.test(document.querySelector(".widget-cheatsheets .cs-content")?.textContent || ""),
+  null, { timeout: 5000 });
+check("cheat sheet switches to another condition", true);
+await page.locator(".widget-cheatsheets .tab", { hasText: "Diabetes" }).click();
+await page.waitForTimeout(150);
+await page.fill(".widget-cheatsheets .cs-search", "");
 // new calculators
 await page.locator(".widget-calc .calc-picker").selectOption("qtcf");
 await page.locator(".widget-calc .calc-inputs input").first().fill("400");
