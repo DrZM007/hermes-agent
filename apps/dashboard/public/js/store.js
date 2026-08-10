@@ -26,7 +26,7 @@ function defaultPages() {
     ] },
     { id: uid(), name: "Health", layout: [
       w("medbot", "l"), w("anatomy", "xl"), w("pubmed", "m"), w("trials", "m"), w("drug", "m"),
-      w("calc", "m"), w("meded", "l"), w("healthnews", "m"),
+      w("calc", "m"), w("meded", "l"), w("cheatsheets", "l"), w("healthnews", "m"),
     ] },
     { id: uid(), name: "AI Lab", layout: [
       w("aidaily", "xl"), w("ailearn", "l"), w("codelab", "l"),
@@ -182,6 +182,7 @@ const LAYOUT_REVISIONS = [
   { rev: 3, widgets: { markets: [["marketsnews", "m"]], sports: [["sportsnews", "m"]],
     intel: [["worldnews", "m"]], health: [["healthnews", "m"]] } },
   { rev: 4, widgets: { health: [["anatomy", "xl"]] } },
+  { rev: 5, widgets: { health: [["cheatsheets", "l"]] } },
 ];
 const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
 

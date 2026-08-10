@@ -100,14 +100,24 @@ class WidgetInvariants(unittest.TestCase):
         registered = {n.strip() for n in registry.group(1).split(",") if n.strip()}
         problems = []
         for path in sorted(WIDGETS.glob("*.js")):
+            # Handles all three ESM forms: `import d from`, `import {n} from`,
+            # and the combined `import d, {n} from`.
             imported = re.findall(
-                rf'import\s+(?:(\w+)|\{{([^}}]+)\}})\s+from\s+"\./widgets/{re.escape(path.name)}"',
+                rf'import\s+(?:(\w+)\s*,\s*)?(?:(\w+)|\{{([^}}]+)\}})\s+from\s+"\./widgets/{re.escape(path.name)}"',
                 main)
             if not imported:
                 problems.append(f"{path.name}: not imported by main.js")
                 continue
-            default, named = imported[0]
-            names = [default] if default else [n.strip() for n in named.split(",")]
+            combined, default, named = imported[0]
+            names = [n for n in [combined, default] if n]
+            if named:
+                names += [n.split(" as ")[-1].strip() for n in named.split(",") if n.strip()]
+            # `*Index` imports are search-index helpers, not widgets. Every other
+            # imported symbol must reach the registry.
+            names = [n for n in names if not n.endswith("Index")]
+            if not names:
+                problems.append(f"{path.name}: imported but exposes no widget")
+                continue
             for name in names:
                 if name not in registered:
                     problems.append(f"{path.name}: '{name}' imported but not in WIDGETS")
