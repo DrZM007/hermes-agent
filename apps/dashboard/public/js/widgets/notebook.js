@@ -7,6 +7,7 @@
 // passages verbatim rather than inventing prose — your notes are your record.
 
 import { h, clear, toast } from "../utils.js";
+import { renderCitations } from "../citations.js";
 
 const TASKS = [
   ["ask", "Ask"],
@@ -100,24 +101,19 @@ export default {
         }
         // Turn [n] markers into chips that reveal the cited passage.
         const answer = h("div.nb-answer");
-        const parts = String(result.answer).split(/(\[\d+\])/g);
-        for (const part of parts) {
-          const m = part.match(/^\[(\d+)\]$/);
-          if (!m) { answer.append(document.createTextNode(part)); continue; }
-          const idx = Number(m[1]) - 1;
+        const { fragment } = renderCitations(result.answer, (token) => {
+          const idx = Number(token) - 1;
           const passage = result.passages[idx];
-          if (!passage) {            // model cited a number we never supplied
-            answer.append(document.createTextNode(part));
-            continue;
-          }
-          const chip = h("button.nb-cite", { type: "button",
-            title: `${passage.title} — click to show` }, part);
-          chip.addEventListener("click", () => {
-            const box = output.querySelector(`.nb-passage[data-idx="${idx}"]`);
-            if (box) { box.hidden = !box.hidden; box.scrollIntoView({ block: "nearest" }); }
-          });
-          answer.append(chip);
-        }
+          if (!passage) return null;   // a number we never supplied
+          return {
+            title: `${passage.title} — click to show`,
+            onClick: () => {
+              const box = output.querySelector(`.nb-passage[data-idx="${idx}"]`);
+              if (box) { box.hidden = !box.hidden; box.scrollIntoView({ block: "nearest" }); }
+            },
+          };
+        });
+        answer.append(fragment);
         output.append(answer);
 
         if (result.passages.length) {
