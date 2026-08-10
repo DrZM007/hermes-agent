@@ -6,7 +6,7 @@
 // use those passages. Without an API key it degrades to showing the matching
 // passages verbatim rather than inventing prose — your notes are your record.
 
-import { h, clear } from "../utils.js";
+import { h, clear, toast } from "../utils.js";
 
 const TASKS = [
   ["ask", "Ask"],
@@ -73,7 +73,10 @@ export default {
       // ---- question + actions ----
       const input = h("input.input.nb-q", { type: "text", value: nb().question || "",
         placeholder: "Ask your notes…", "aria-label": "Ask your notes" });
-      input.addEventListener("input", () => persist({ question: input.value }));
+      // persist on commit, not per keystroke (each persist writes localStorage
+      // and notifies every subscribed widget)
+      input.addEventListener("change", () => persist({ question: input.value }));
+      input.addEventListener("blur", () => persist({ question: input.value }));
       input.addEventListener("keydown", (e) => { if (e.key === "Enter") run("ask"); });
 
       const actions = h("div.nb-actions", {}, TASKS.map(([task, label]) => {
@@ -103,8 +106,12 @@ export default {
           if (!m) { answer.append(document.createTextNode(part)); continue; }
           const idx = Number(m[1]) - 1;
           const passage = result.passages[idx];
+          if (!passage) {            // model cited a number we never supplied
+            answer.append(document.createTextNode(part));
+            continue;
+          }
           const chip = h("button.nb-cite", { type: "button",
-            title: passage ? `${passage.title} — click to show` : "unknown source" }, part);
+            title: `${passage.title} — click to show` }, part);
           chip.addEventListener("click", () => {
             const box = output.querySelector(`.nb-passage[data-idx="${idx}"]`);
             if (box) { box.hidden = !box.hidden; box.scrollIntoView({ block: "nearest" }); }
@@ -133,18 +140,18 @@ export default {
           store.update((s) => {
             s.notes.items.unshift({
               id: `nb-${Date.now()}`,
-              text: `Notebook — ${nb().question || "summary"} (${stamp})\n\n${result.answer}`,
+              text: `Notebook — ${input.value.trim() || "summary"} (${stamp})\n\n${result.answer}`,
               updated: new Date().toISOString(),
             });
           }, "notes-external");
-          ctx.card?.dispatchEvent(new CustomEvent("hub:toast"));
-          draw();
+          toast("Saved to Notes");
         });
         output.append(save);
       };
 
       const run = async (task) => {
-        const question = (nb().question || "").trim();
+        const question = input.value.trim();
+        if (question !== nb().question) persist({ question });
         if (task === "ask" && !question) return;
         const chosen = notes().filter((n) => new Set(selectedIds()).has(n.id));
         if (!chosen.length) { result = { answer: "Select at least one note as a source.", passages: [], mode: "extractive" }; renderResult(); return; }

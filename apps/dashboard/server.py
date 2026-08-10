@@ -2755,22 +2755,30 @@ NOTEBOOK_TASKS = {
 }
 
 
-def notebook_prompt(passages: list[dict], question: str, task: str) -> tuple[str, str]:
-    """Build (system, user) for a grounded, citation-bearing answer."""
+NOTEBOOK_RULES = (
+    "You answer strictly from the numbered passages below, which come from the "
+    "user's own notes. Cite every claim with the bracketed number of the passage "
+    "it came from, e.g. [1] or [2][3]. If the passages do not contain the answer, "
+    "say so plainly and do not speculate or add outside knowledge. Never invent a "
+    "citation number that was not supplied."
+)
+
+
+def notebook_prompt(passages: list[dict], question: str, task: str) -> str:
+    """Build the single user message for a grounded, citation-bearing answer.
+
+    The rules live in the message itself rather than a system override: the
+    assistant keeps its system prompt frozen for cache reuse and serialises any
+    `context` into a JSON block, so a system override would be silently dropped
+    — taking the grounding guarantee with it.
+    """
     numbered = []
     for i, p in enumerate(passages, 1):
         numbered.append(f"[{i}] ({p['title']})\n{p['text']}")
     evidence = "\n\n".join(numbered) or "(no matching passages)"
-    system = (
-        "You answer strictly from the numbered passages supplied by the user's "
-        "own notes. Cite every claim with the bracketed number of the passage it "
-        "came from, e.g. [1] or [2][3]. If the passages do not contain the "
-        "answer, say so plainly and do not speculate or add outside knowledge. "
-        "Never invent a citation number that was not supplied."
-    )
     instruction = NOTEBOOK_TASKS.get(task, NOTEBOOK_TASKS["ask"])
-    user = f"{instruction}\n\nQuestion: {question}\n\nPassages:\n{evidence}"
-    return system, user
+    return (f"{NOTEBOOK_RULES}\n\nTask: {instruction}\n\n"
+            f"Question: {question}\n\nPassages:\n{evidence}")
 
 
 def notebook_extractive(passages: list[dict], question: str) -> str:
@@ -3278,10 +3286,8 @@ class Api:
         if self.assistant.mode != "claude":
             return {"mode": "extractive", "passages": passages,
                     "answer": notebook_extractive(passages, question)}
-        system, user = notebook_prompt(passages, question, task)
-        result = self.assistant.chat(
-            {"messages": [{"role": "user", "content": user}],
-             "context": {"systemOverride": system}})
+        prompt = notebook_prompt(passages, question, task)
+        result = self.assistant.chat({"messages": [{"role": "user", "content": prompt}]})
         text = "".join(b.get("text", "") for b in result.get("content", [])
                        if b.get("type") == "text").strip()
         return {"mode": "grounded", "passages": passages,

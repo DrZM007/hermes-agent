@@ -125,8 +125,6 @@ export default {
     const draw = () => {
       const activeId = state().sheet || SHEETS[0].id;
       const sheet = SHEETS.find((s) => s.id === activeId) || SHEETS[0];
-      const query = (state().query || "").trim().toLowerCase();
-
       const tabs = h("div.tabs", { role: "tablist", "aria-label": "Cheat sheets" },
         SHEETS.map((s) => {
           const b = h("button.tab", { type: "button", role: "tab",
@@ -135,18 +133,17 @@ export default {
           return b;
         }));
 
-      const search = h("input.input.cs-search", { type: "search", value: state().query || "",
+      // The filter is transient view state: keeping it in a local variable
+      // avoids a localStorage write and a global store notification on every
+      // keystroke (which also stole focus by forcing a redraw).
+      let query = "";
+      const search = h("input.input.cs-search", { type: "search",
         placeholder: "Filter this sheet…", "aria-label": "Filter cheat sheet" });
-      search.addEventListener("input", () => {
-        persist({ query: search.value });
-        paint();
-        search.focus();
-        search.setSelectionRange(search.value.length, search.value.length);
-      });
+      search.addEventListener("input", () => { query = search.value; paint(); });
 
       const content = h("div.cs-content");
       const paint = () => {
-        const q = (state().query || "").trim().toLowerCase();
+        const q = query.trim().toLowerCase();
         clear(content);
         let shown = 0;
         for (const section of sheet.sections) {
@@ -168,8 +165,6 @@ export default {
         h("div.muted.small.cs-note", {},
           "Educational summary · verify against the current SEMDSA guideline, EML/STGs and local protocols."));
       paint();
-      // keep the query applied on redraw
-      if (query) paint();
     };
 
     ctx.onRefresh(draw);
