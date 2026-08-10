@@ -118,7 +118,7 @@ check("dark theme default", await page.evaluate(() => document.documentElement.d
 // Dashboard is split into pages; switch to the page holding a widget before
 // interacting with it. gotoPage clicks the page tab and settles.
 const WIDGET_PAGES = {
-  Main: ["glance", "clock", "worldstate", "agent", "weather", "launcher", "tasks", "calendar", "notes", "focus", "system"],
+  Main: ["glance", "clock", "worldstate", "agent", "weather", "launcher", "tasks", "calendar", "notes", "notebook", "focus", "system"],
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
@@ -869,6 +869,21 @@ check("anatomy back view hides anterior organs", await page.evaluate(() =>
   getComputedStyle(document.querySelector('.widget-anatomy [data-structure="heart"]')).display === "none"));
 
 // clinical cheat sheets
+// notebook — grounded Q&A over the user's own notes, with citations
+await gotoWidget("notebook");
+await page.waitForSelector(".widget-notebook .nb-source", { timeout: 8000 });
+check("notebook lists notes as sources", (await page.locator(".widget-notebook .nb-source").count()) >= 1);
+await page.fill(".widget-notebook .nb-q", "hermes hub");
+await page.locator(".widget-notebook .nb-actions button").first().click();
+await page.waitForSelector(".widget-notebook .nb-passage-toggle", { timeout: 10000 });
+check("notebook answers with cited sources",
+  (await page.locator(".widget-notebook .nb-passage-toggle").count()) >= 1);
+const nbHidden = await page.locator(".widget-notebook .nb-passage").first().isHidden();
+await page.locator(".widget-notebook .nb-passage-toggle").first().click();
+await page.waitForTimeout(200);
+check("notebook citation reveals the source passage",
+  nbHidden && !(await page.locator(".widget-notebook .nb-passage").first().isHidden()));
+
 await gotoWidget("cheatsheets");
 await page.waitForSelector(".widget-cheatsheets .cs-row", { timeout: 8000 });
 check("cheat sheet renders rows", (await page.locator(".widget-cheatsheets .cs-row").count()) >= 20);

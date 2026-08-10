@@ -1040,6 +1040,42 @@ class MarketsWatchlistTests(unittest.TestCase):
             self.assertTrue("*.py" in copied or f"{mod}.py" in copied,
                             f"Dockerfile does not COPY {mod}.py")
 
+    def test_notebook_grounded_retrieval(self):
+        sources = [
+            {"id": "n1", "title": "Ward round",
+             "text": "Patient started on basal insulin 10 units nocte.\n\n"
+                     "Metformin 1g bd continued.\n\nFollow up HbA1c in 3 months."},
+            {"id": "n2", "title": "Shopping", "text": "milk, bread, coffee"},
+        ]
+        d = self.api.notebook_ask({"question": "What insulin was started?",
+                                   "sources": sources})
+        # retrieval must prefer the clinical note over the shopping list
+        self.assertTrue(d["passages"])
+        self.assertEqual(d["passages"][0]["title"], "Ward round")
+        self.assertNotIn("milk", d["passages"][0]["text"])
+        # offline (no model) must be extractive — never invented prose
+        self.assertEqual(d["mode"], "extractive")
+        self.assertIn("insulin", d["answer"])
+
+    def test_notebook_chunking_and_validation(self):
+        chunks = server.chunk_source("a" * 900 + "\n\n" + "b" * 900, "T", "id")
+        self.assertGreaterEqual(len(chunks), 2)
+        self.assertTrue(all(c["title"] == "T" for c in chunks))
+        with self.assertRaises(server.ApiError):
+            self.api.notebook_ask({"question": "x", "sources": []})
+        with self.assertRaises(server.ApiError):
+            self.api.notebook_ask({"question": "", "sources": [{"id": "1", "text": "y"}]})
+        with self.assertRaises(server.ApiError):
+            self.api.notebook_ask({"question": "x", "task": "bogus",
+                                   "sources": [{"id": "1", "text": "y"}]})
+
+    def test_notebook_prompt_forbids_outside_knowledge(self):
+        system, user = server.notebook_prompt(
+            [{"title": "N", "text": "some evidence"}], "q?", "ask")
+        self.assertIn("strictly from the numbered passages", system)
+        self.assertIn("do not speculate", system)
+        self.assertIn("[1]", user)
+
     def test_anatomy_alias_table(self):
         base = Path(__file__).resolve().parent.parent / "public" / "anatomy"
         structures = json.loads((base / "structures.json").read_text())["structures"]

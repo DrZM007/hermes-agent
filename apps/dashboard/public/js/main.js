@@ -58,13 +58,14 @@ import anatomy from "./widgets/anatomy.js";
 import { searchIndex as calcIndex } from "./widgets/calc.js";
 import { searchIndex as mededIndex } from "./widgets/meded.js";
 import cheatsheets, { searchIndex as sheetsIndex } from "./widgets/cheatsheets.js";
+import notebook from "./widgets/notebook.js";
 import worldstate from "./widgets/worldstate.js";
 import reading from "./widgets/reading.js";
 import focus from "./widgets/focus.js";
 import system from "./widgets/system.js";
 
 const WIDGETS = Object.fromEntries(
-  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, racing, socials, gaming, stocks, worldclock, quakes, fx, convert, air, marine, space, alerts, flights, podcasts, medbot, pubmed, trials, drug, calc, meded, codelab, ailearn, snippets, repos, papers, ainews, aidaily, commodities, changelog, tracker, marketsnews, sportsnews, worldnews, healthnews, anatomy, cheatsheets, focus, system]
+  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, racing, socials, gaming, stocks, worldclock, quakes, fx, convert, air, marine, space, alerts, flights, podcasts, medbot, pubmed, trials, drug, calc, meded, codelab, ailearn, snippets, repos, papers, ainews, aidaily, commodities, changelog, tracker, marketsnews, sportsnews, worldnews, healthnews, anatomy, cheatsheets, notebook, focus, system]
     .map((w) => [w.type, w]),
 );
 

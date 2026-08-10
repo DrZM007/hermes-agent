@@ -150,6 +150,7 @@ export const api = {
   commodities: () => getJSON("/api/commodities"),
   changelog: () => getJSON("/api/changelog"),
   anatomyModel: () => getJSON("/api/anatomy/model"),
+  notebookAsk: (body) => postJSON("/api/notebook/ask", body),
   runTool: (name, input) => postJSON("/api/assistant/tool", { name, input }),
   cryptoCoin: (id) => getJSON("/api/crypto/coin", { id }),
   cryptoChart: (id, days) => getJSON("/api/crypto/chart", { id, days }),
