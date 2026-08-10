@@ -1001,6 +1001,25 @@ await page.locator(".widget-medbot .med-form .btn-primary").click();
 await page.waitForFunction(() =>
   document.querySelectorAll(".widget-medbot .med-msg").length >= 2, null, { timeout: 10000 });
 check("medbot answers a clinical question", (await page.locator(".widget-medbot .med-msg").count()) >= 2);
+// Inline citations: a real source becomes a chip; an invented reference must
+// NOT be dressed up as one (a plausible fake PMID is exactly what a reader
+// would trust without checking).
+const citeCheck = await page.evaluate(async () => {
+  const { renderCitations } = await import("/js/citations.js");
+  const known = { "12345678": { title: "Real study" } };
+  const r = renderCitations("Use TLD [12345678]. But [99999999] disagrees.",
+    (tok) => known[tok] || null);
+  const holder = document.createElement("div");
+  holder.append(r.fragment);
+  return {
+    chips: holder.querySelectorAll("button.cite").length,
+    unverified: holder.querySelectorAll(".cite-unverified").length,
+    unverifiedIsNotButton: holder.querySelector(".cite-unverified")?.tagName !== "BUTTON",
+  };
+});
+check("citation renderer links known sources", citeCheck.chips === 1);
+check("citation renderer flags invented references", citeCheck.unverified === 1);
+check("invented references are not clickable citations", citeCheck.unverifiedIsNotButton === true);
 // medicine is a news topic
 await gotoWidget("news");
 await page.locator(".widget-news .tab", { hasText: "Medicine" }).click();

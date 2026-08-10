@@ -1392,6 +1392,21 @@ a.trk-title:hover { color: var(--accent); }
 .notice-x:hover { color: var(--ink); }
 @media (max-width: 760px) { .notice-slot { padding: 8px 12px 0; } }
 
+/* ---------- inline citations (shared: medbot PMIDs, notebook passages) ---------- */
+.cite {
+  background: var(--accent-dim, rgba(79,209,255,0.15)); color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 3px; font: inherit; font-size: 11px; padding: 0 4px;
+  margin: 0 1px; cursor: pointer; vertical-align: baseline;
+}
+.cite:hover { background: var(--accent); color: var(--accent-ink); }
+/* A reference with no matching source must never look like a live citation. */
+.cite-unverified {
+  background: none; cursor: help; color: var(--status-serious, #e0a030);
+  border: 1px dashed color-mix(in srgb, var(--status-serious, #e0a030) 60%, transparent);
+}
+.med-unverified { color: var(--status-serious, #e0a030); margin-top: 6px; }
+
 /* ---------- notebook (grounded Q&A over your notes) ---------- */
 .nb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .nb-label { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); }

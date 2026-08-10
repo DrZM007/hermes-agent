@@ -5,6 +5,7 @@
 
 import { h, clear } from "../utils.js";
 import { openViewer } from "../viewer.js";
+import { renderCitations } from "../citations.js";
 
 // A single live handler so other widgets (e.g. Drug Reference) can hand the
 // MedBot a question via `window.dispatchEvent(new CustomEvent("hub:medbot-ask",
@@ -63,9 +64,32 @@ export default {
           + "your clinical judgement, examination, or current official guidance."));
       }
       for (const m of history()) {
+        const textEl = h("div.med-text", {});
+        if (m.role === "assistant" && m.content) {
+          // Wire inline [PMID] markers to the grounding sources; a PMID that
+          // isn't among them is flagged rather than rendered as a citation.
+          const byPmid = new Map((m.sources || []).map((s) => [String(s.pmid), s]));
+          const { fragment, unverified } = renderCitations(m.content, (token) => {
+            const src = byPmid.get(token);
+            if (!src) return null;
+            return {
+              title: `${src.title} — ${src.journal} (${src.date})`,
+              onClick: () => openViewer({ url: src.url, title: src.title,
+                source: src.journal, mode: "embed" }),
+            };
+          });
+          textEl.append(fragment);
+          if (unverified.size) {
+            textEl.append(h("div.med-unverified.small", {},
+              `⚠ ${unverified.size} reference${unverified.size > 1 ? "s" : ""} `
+              + "could not be matched to a retrieved source — verify before use."));
+          }
+        } else {
+          textEl.textContent = m.content;
+        }
         const msg = h(`div.med-msg.med-${m.role}`, {},
           h("span.med-role", {}, m.role === "user" ? "YOU" : "MEDBOT"),
-          h("div.med-text", {}, m.content));
+          textEl);
         if (m.sources?.length) {
           msg.append(h("div.med-sources", {},
             h("span.med-sources-label.muted.small", {}, "SOURCES (PubMed)"),
