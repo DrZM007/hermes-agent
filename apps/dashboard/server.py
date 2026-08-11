@@ -2668,8 +2668,59 @@ def sample_crypto_trending() -> dict:
 # args are forwarded to both functions and, unless an explicit key is given,
 # folded into the cache key. The convention: no source ships without a sample.
 # ---------------------------------------------------------------------------
+# On This Day — Wikipedia's "on this day" feed (no key, CC BY-SA)
+# ---------------------------------------------------------------------------
+ONTHISDAY_TTL = 6 * 60 * 60
+
+
+def _ontd_items(raw: dict, bucket: str, limit: int) -> list[dict]:
+    out = []
+    for item in (raw.get(bucket) or [])[:limit]:
+        pages = item.get("pages") or []
+        page = pages[0] if pages else {}
+        out.append({
+            "year": item.get("year"),
+            "text": (item.get("text") or "").strip(),
+            "url": ((page.get("content_urls") or {}).get("desktop") or {}).get("page")
+                   or "https://en.wikipedia.org/wiki/Main_Page",
+        })
+    return [i for i in out if i["text"]]
+
+
+def live_onthisday(month: str, day: str) -> dict:
+    # Wikipedia rejects unpadded path components and 404s rather than erroring
+    # usefully, so normalise before building the URL.
+    mm, dd = f"{int(month):02d}", f"{int(day):02d}"
+    raw = json.loads(fetch_url(
+        f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/all/{mm}/{dd}"))
+    return {
+        "source": "live", "month": int(mm), "day": int(dd),
+        "events": _ontd_items(raw, "selected", 8) or _ontd_items(raw, "events", 8),
+        "births": _ontd_items(raw, "births", 5),
+        "deaths": _ontd_items(raw, "deaths", 5),
+        "attribution": "Wikipedia (CC BY-SA)",
+    }
+
+
+def sample_onthisday(month: str = "1", day: str = "1") -> dict:
+    wiki = "https://en.wikipedia.org/wiki/Main_Page"
+    return {
+        "source": "sample", "month": int(month), "day": int(day),
+        "events": [
+            {"year": 1994, "text": "South Africa holds its first democratic election.", "url": wiki},
+            {"year": 1969, "text": "Apollo 11 lands the first humans on the Moon.", "url": wiki},
+            {"year": 1895, "text": "The first public film screening is held in Paris.", "url": wiki},
+        ],
+        "births": [{"year": 1918, "text": "Nelson Mandela, statesman.", "url": wiki}],
+        "deaths": [{"year": 1955, "text": "Albert Einstein, physicist.", "url": wiki}],
+        "attribution": "Wikipedia (CC BY-SA) — sample data",
+    }
+
+
+# ---------------------------------------------------------------------------
 SOURCES: dict[str, dict] = {
     "quakes": {"ttl": QUAKES_TTL, "live": live_quakes, "sample": sample_quakes},
+    "onthisday": {"ttl": ONTHISDAY_TTL, "live": live_onthisday, "sample": sample_onthisday},
     "spaceweather": {"ttl": SPACE_TTL, "live": live_spaceweather, "sample": sample_spaceweather},
     "crypto:global": {"ttl": CRYPTO_GLOBAL_TTL,
                       "live": live_crypto_global, "sample": sample_crypto_global},
@@ -3304,6 +3355,17 @@ class Api:
     def quakes(self, params: dict) -> dict:
         return self.fetch_source("quakes")
 
+    def onthisday(self, params: dict) -> dict:
+        today = datetime.now(timezone.utc)
+        try:
+            month = int(params.get("month", [today.month])[0])
+            day = int(params.get("day", [today.day])[0])
+        except (TypeError, ValueError):
+            raise ApiError(400, "month and day must be integers")
+        if not (1 <= month <= 12 and 1 <= day <= 31):
+            raise ApiError(400, "month must be 1-12 and day 1-31")
+        return self.fetch_source("onthisday", str(month), str(day))
+
     def spaceweather(self, params: dict) -> dict:
         return self.fetch_source("spaceweather")
 
@@ -3812,6 +3874,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/team-schedule": "team_schedule",
         "/api/team-news": "team_news",
         "/api/quakes": "quakes",
+        "/api/onthisday": "onthisday",
         "/api/fx": "fx",
         "/api/convert": "convert",
         "/api/podcast": "podcast",

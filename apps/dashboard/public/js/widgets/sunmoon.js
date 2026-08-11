@@ -133,12 +133,28 @@ export default {
           "Computed locally — works offline. Sun times within about a minute; moon rise/set a few minutes."));
     };
 
-    // Recompute on the hour: the arc and "day length vs yesterday" both drift,
-    // and a dashboard left open overnight should not show yesterday's sunrise.
-    const timer = setInterval(draw, 300000);
+    // Repaint every 5 minutes: the sun position on the arc drifts, and a
+    // dashboard left open overnight must not still show yesterday's sunrise.
+    const timer = setInterval(draw, 5 * 60 * 1000);
     ctx.onTeardown(() => clearInterval(timer));
     ctx.onRefresh(draw);
-    ctx.onStore(draw);   // follow the Weather widget's active location
+    // onStore fires on ANY state change, and a full redraw runs moonTimes (24
+    // altitude samples plus a bisection), so redraw only when the location the
+    // widget actually reads has changed.
+    const locKey = () => {
+      const w = store.state.weather || {};
+      const loc = (w.locations || [])[w.active] || (w.locations || [])[0];
+      return loc ? `${loc.name}:${loc.lat}:${loc.lon}` : "";
+    };
+    // Seeded from the current location, not null: draw() has already run below,
+    // so starting empty would force one pointless redraw on the next change.
+    let lastLoc = locKey();
+    ctx.onStore(() => {
+      const key = locKey();
+      if (key === lastLoc) return;
+      lastLoc = key;
+      draw();
+    });
     draw();
   },
 };

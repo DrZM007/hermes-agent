@@ -11,7 +11,7 @@ function defaultPages() {
     { id: uid(), name: "Main", layout: [
       w("glance", "xl"), w("clock", "m"), w("worldstate", "xl"), w("agent", "m"),
       w("weather", "m"), w("launcher", "m"), w("tasks", "m"), w("calendar", "m"),
-      w("notes", "m"), w("notebook", "l"), w("focus", "s"), w("system", "m"),
+      w("notes", "m"), w("notebook", "l"), w("onthisday", "m"), w("focus", "s"), w("system", "m"),
     ] },
     { id: uid(), name: "Markets", layout: [w("markets", "l"), w("stocks", "l"), w("commodities", "m"), w("marketsnews", "m")] },
     { id: uid(), name: "Feeds", layout: [
@@ -187,6 +187,7 @@ const LAYOUT_REVISIONS = [
   { rev: 6, widgets: { main: [["notebook", "l"]] } },
   { rev: 7, widgets: { health: [["guidelines", "m"]] } },
   { rev: 8, widgets: { intel: [["sunmoon", "m"]] } },
+  { rev: 9, widgets: { main: [["onthisday", "m"]] } },
 ];
 const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
 
