@@ -22,6 +22,7 @@ function defaultPages() {
     { id: uid(), name: "Intel", layout: [
       w("worldclock", "m"), w("quakes", "m"), w("fx", "m"), w("convert", "m"),
       w("air", "m"), w("marine", "m"), w("space", "m"), w("alerts", "m"), w("flights", "m"),
+      w("sunmoon", "m"),
       w("worldnews", "m"),
     ] },
     { id: uid(), name: "Health", layout: [
@@ -185,6 +186,7 @@ const LAYOUT_REVISIONS = [
   { rev: 5, widgets: { health: [["cheatsheets", "l"]] } },
   { rev: 6, widgets: { main: [["notebook", "l"]] } },
   { rev: 7, widgets: { health: [["guidelines", "m"]] } },
+  { rev: 8, widgets: { intel: [["sunmoon", "m"]] } },
 ];
 const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
 

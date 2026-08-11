@@ -2475,3 +2475,22 @@ a.trk-title:hover { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- sun & moon ---------- */
+.sm-place { text-transform: uppercase; letter-spacing: 0.08em; }
+.sm-arc { width: 100%; height: auto; margin: 2px 0 6px; display: block; }
+.sm-arc-track { fill: none; stroke: var(--hairline-2); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.sm-arc-horizon { stroke: var(--hairline); stroke-width: 1; }
+.sm-sun { fill: #f4b942; }
+.sm-sun.down { fill: var(--ink-3); }
+.sm-row { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; }
+.sm-label { flex: 0 0 92px; color: var(--ink-2); font-size: 12px; }
+.sm-value { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; }
+.sm-extra { margin-left: auto; }
+.sm-section-label { font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--ink-3); margin: 10px 0 2px; }
+.sm-polar { margin-top: 4px; color: var(--status-warn, var(--ink-2)); }
+.sm-moon { display: flex; align-items: center; gap: 10px; }
+.sm-moon-glyph { font-size: 30px; line-height: 1; }
+.sm-moon-name { font-weight: 600; font-size: 13px; }
+.sm-note { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--hairline); }

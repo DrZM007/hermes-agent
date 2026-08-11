@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
-  Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "worldnews"],
+  Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "sunmoon", "worldnews"],
   Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "guidelines", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
 };
@@ -788,6 +788,35 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// sun & moon — computed locally, so it must render with no network at all
+await gotoWidget("sunmoon");
+await page.waitForSelector(".widget-sunmoon .sm-value", { timeout: 8000 });
+{
+  const times = await page.locator(".widget-sunmoon .sm-value").allInnerTexts();
+  check("sun & moon shows clock times",
+    times.length >= 6 && times.filter((t) => /^\d\d:\d\d$/.test(t.trim())).length >= 4);
+  check("sun & moon draws the day arc",
+    (await page.locator(".widget-sunmoon .sm-arc .sm-sun").count()) === 1);
+  check("sun & moon reports a lunar phase",
+    /illuminated/.test(await page.locator(".widget-sunmoon").innerText()));
+  // Sunrise must precede sunset, and day length must agree with the two.
+  const consistent = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll(".widget-sunmoon .sm-row")];
+    const get = (label) => {
+      const r = rows.find((x) => x.querySelector(".sm-label")?.textContent === label);
+      return r?.querySelector(".sm-value")?.textContent?.trim() || "";
+    };
+    const mins = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    const rise = get("Sunrise"), set = get("Sunset"), len = get("Day length");
+    if (!/^\d\d:\d\d$/.test(rise) || !/^\d\d:\d\d$/.test(set)) return "no times";
+    const lm = /^(\d+)h (\d+)m$/.exec(len);
+    if (!lm) return "no length";
+    const spanned = mins(set) - mins(rise);
+    const stated = Number(lm[1]) * 60 + Number(lm[2]);
+    return mins(rise) < mins(set) && Math.abs(spanned - stated) <= 1 ? true : `${spanned} vs ${stated}`;
+  });
+  check("sun & moon day length matches sunrise→sunset", consistent === true);
+}
 // guideline directory — links only, every one to an external issuer
 await gotoWidget("guidelines");
 await page.waitForSelector(".widget-guidelines .gl-item", { timeout: 8000 });
