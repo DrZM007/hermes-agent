@@ -893,6 +893,186 @@ const CALCULATORS = [
         note: `${band}. Cut-offs vary by assay and population; not validated in insulin-treated patients.` };
     },
   },
+  {
+    id: "nihss", name: "NIHSS (stroke severity)",
+    blurb: "15 items, 0–42. Drives thrombolysis decisions and tracks deterioration.",
+    inputs: [
+      { key: "loc", label: "1a Level of consciousness", type: "select", options: [
+        { value: 0, label: "0 — alert" }, { value: 1, label: "1 — rouses to minor stimulation" },
+        { value: 2, label: "2 — requires repeated stimulation" }, { value: 3, label: "3 — unresponsive / reflex only" }] },
+      { key: "locq", label: "1b LOC questions (month, age)", type: "select", options: [
+        { value: 0, label: "0 — both correct" }, { value: 1, label: "1 — one correct" },
+        { value: 2, label: "2 — neither correct" }] },
+      { key: "locc", label: "1c LOC commands (open/close eyes, grip)", type: "select", options: [
+        { value: 0, label: "0 — both correct" }, { value: 1, label: "1 — one correct" },
+        { value: 2, label: "2 — neither correct" }] },
+      { key: "gaze", label: "2 Best gaze", type: "select", options: [
+        { value: 0, label: "0 — normal" }, { value: 1, label: "1 — partial gaze palsy" },
+        { value: 2, label: "2 — forced deviation" }] },
+      { key: "vf", label: "3 Visual fields", type: "select", options: [
+        { value: 0, label: "0 — no loss" }, { value: 1, label: "1 — partial hemianopia" },
+        { value: 2, label: "2 — complete hemianopia" }, { value: 3, label: "3 — bilateral hemianopia / blind" }] },
+      { key: "facial", label: "4 Facial palsy", type: "select", options: [
+        { value: 0, label: "0 — normal" }, { value: 1, label: "1 — minor" },
+        { value: 2, label: "2 — partial" }, { value: 3, label: "3 — complete" }] },
+      ...[["arml", "5a Left arm"], ["armr", "5b Right arm"],
+        ["legl", "6a Left leg"], ["legr", "6b Right leg"]].map(([key, label]) => ({
+        key, label, type: "select", options: [
+          { value: 0, label: "0 — no drift" }, { value: 1, label: "1 — drift" },
+          { value: 2, label: "2 — some effort against gravity" },
+          { value: 3, label: "3 — no effort against gravity" }, { value: 4, label: "4 — no movement" }] })),
+      { key: "ataxia", label: "7 Limb ataxia", type: "select", options: [
+        { value: 0, label: "0 — absent" }, { value: 1, label: "1 — one limb" },
+        { value: 2, label: "2 — two limbs" }] },
+      { key: "sensory", label: "8 Sensory", type: "select", options: [
+        { value: 0, label: "0 — normal" }, { value: 1, label: "1 — mild–moderate loss" },
+        { value: 2, label: "2 — severe / total loss" }] },
+      { key: "lang", label: "9 Best language", type: "select", options: [
+        { value: 0, label: "0 — no aphasia" }, { value: 1, label: "1 — mild–moderate" },
+        { value: 2, label: "2 — severe" }, { value: 3, label: "3 — mute / global aphasia" }] },
+      { key: "dys", label: "10 Dysarthria", type: "select", options: [
+        { value: 0, label: "0 — normal" }, { value: 1, label: "1 — mild–moderate" },
+        { value: 2, label: "2 — severe / anarthric" }] },
+      { key: "neglect", label: "11 Extinction / inattention", type: "select", options: [
+        { value: 0, label: "0 — none" }, { value: 1, label: "1 — one modality" },
+        { value: 2, label: "2 — profound / more than one modality" }] },
+    ],
+    compute(v) {
+      const keys = ["loc", "locq", "locc", "gaze", "vf", "facial", "arml", "armr",
+        "legl", "legr", "ataxia", "sensory", "lang", "dys", "neglect"];
+      const parts = keys.map((k) => num(v[k]));
+      if (parts.some((p) => p == null)) return null;
+      const s = parts.reduce((a, b) => a + b, 0);
+      const band = s === 0 ? "no stroke symptoms" : s <= 4 ? "minor" : s <= 15 ? "moderate"
+        : s <= 20 ? "moderate–severe" : "severe";
+      const tone = s <= 4 ? "good" : s <= 15 ? "warn" : "bad";
+      return { value: s, unit: "/42", tone,
+        note: `${band} stroke. Score alone does not decide thrombolysis — apply the current national stroke protocol, time window and contraindications.` };
+    },
+  },
+  {
+    id: "heart", name: "HEART score (chest pain)",
+    blurb: "Risk of major adverse cardiac events at 6 weeks in undifferentiated chest pain.",
+    inputs: [
+      { key: "hist", label: "History", type: "select", options: [
+        { value: 0, label: "0 — slightly suspicious" }, { value: 1, label: "1 — moderately suspicious" },
+        { value: 2, label: "2 — highly suspicious" }] },
+      { key: "ecg", label: "ECG", type: "select", options: [
+        { value: 0, label: "0 — normal" }, { value: 1, label: "1 — non-specific repolarisation" },
+        { value: 2, label: "2 — significant ST deviation" }] },
+      { key: "age", label: "Age", type: "select", options: [
+        { value: 0, label: "0 — under 45" }, { value: 1, label: "1 — 45–64" },
+        { value: 2, label: "2 — 65 or older" }] },
+      { key: "risk", label: "Risk factors", type: "select", options: [
+        { value: 0, label: "0 — none" }, { value: 1, label: "1 — one or two" },
+        { value: 2, label: "2 — three or more, or known atherosclerotic disease" }] },
+      { key: "trop", label: "Troponin", type: "select", options: [
+        { value: 0, label: "0 — at or below normal limit" }, { value: 1, label: "1 — 1–3× normal limit" },
+        { value: 2, label: "2 — over 3× normal limit" }] },
+    ],
+    compute(v) {
+      const parts = ["hist", "ecg", "age", "risk", "trop"].map((k) => num(v[k]));
+      if (parts.some((p) => p == null)) return null;
+      const s = parts.reduce((a, b) => a + b, 0);
+      const band = s <= 3 ? "low risk (~1.7% MACE) — early discharge often appropriate"
+        : s <= 6 ? "moderate risk (~17% MACE) — admit for observation"
+          : "high risk (~50% MACE) — early invasive strategy";
+      const tone = s <= 3 ? "good" : s <= 6 ? "warn" : "bad";
+      return { value: s, unit: "/10", tone,
+        note: `${band}. Requires serial troponin per your local pathway.` };
+    },
+  },
+  {
+    id: "perc", name: "PERC rule (PE rule-out)",
+    blurb: "Only valid when clinical gestalt for PE is already LOW. All 8 must be negative.",
+    inputs: [
+      ...[["age50", "Age 50 or older"], ["hr100", "Heart rate 100 or more"],
+        ["sao2", "SaO₂ below 95% on room air"], ["leg", "Unilateral leg swelling"],
+        ["hpt", "Haemoptysis"], ["surg", "Surgery or trauma needing hospitalisation in past 4 weeks"],
+        ["prior", "Prior DVT or PE"], ["horm", "Oestrogen use"]].map(([key, label]) => ({
+        key, label, type: "select", options: [
+          { value: 0, label: "No" }, { value: 1, label: "Yes" }] })),
+    ],
+    compute(v) {
+      const keys = ["age50", "hr100", "sao2", "leg", "hpt", "surg", "prior", "horm"];
+      const parts = keys.map((k) => num(v[k]));
+      if (parts.some((p) => p == null)) return null;
+      const s = parts.reduce((a, b) => a + b, 0);
+      return s === 0
+        ? { value: 0, unit: " criteria positive", tone: "good",
+          note: "PERC negative — in a genuinely low-risk patient, PE is excluded without D-dimer or imaging. If your pre-test probability is not low, PERC does not apply." }
+        : { value: s, unit: " criteria positive", tone: "warn",
+          note: "PERC positive — the rule cannot exclude PE. Continue with D-dimer or imaging per your pathway." };
+    },
+  },
+  {
+    id: "abcd2", name: "ABCD² (stroke risk after TIA)",
+    blurb: "Early stroke risk following a transient ischaemic attack.",
+    inputs: [
+      { key: "age", label: "Age 60 or older", type: "select", options: [
+        { value: 0, label: "No" }, { value: 1, label: "Yes" }] },
+      { key: "bp", label: "BP 140/90 or higher at presentation", type: "select", options: [
+        { value: 0, label: "No" }, { value: 1, label: "Yes" }] },
+      { key: "clin", label: "Clinical features", type: "select", options: [
+        { value: 0, label: "0 — other" }, { value: 1, label: "1 — speech disturbance without weakness" },
+        { value: 2, label: "2 — unilateral weakness" }] },
+      { key: "dur", label: "Duration", type: "select", options: [
+        { value: 0, label: "0 — under 10 min" }, { value: 1, label: "1 — 10–59 min" },
+        { value: 2, label: "2 — 60 min or longer" }] },
+      { key: "dm", label: "Diabetes", type: "select", options: [
+        { value: 0, label: "No" }, { value: 1, label: "Yes" }] },
+    ],
+    compute(v) {
+      const parts = ["age", "bp", "clin", "dur", "dm"].map((k) => num(v[k]));
+      if (parts.some((p) => p == null)) return null;
+      const s = parts.reduce((a, b) => a + b, 0);
+      const band = s <= 3 ? "low (~1% at 2 days)" : s <= 5 ? "moderate (~4% at 2 days)"
+        : "high (~8% at 2 days)";
+      const tone = s <= 3 ? "good" : s <= 5 ? "warn" : "bad";
+      return { value: s, unit: "/7", tone,
+        note: `2-day stroke risk ${band}. ABCD² is a poor discriminator on its own — urgent specialist assessment, carotid imaging and ECG are indicated regardless of score.` };
+    },
+  },
+  {
+    id: "sofa", name: "SOFA (organ failure)",
+    blurb: "Six organ systems, 0–24. Tracks organ dysfunction in critical illness.",
+    inputs: [
+      { key: "resp", label: "Respiration — PaO₂/FiO₂ (mmHg)", type: "select", options: [
+        { value: 0, label: "0 — 400 or more" }, { value: 1, label: "1 — under 400" },
+        { value: 2, label: "2 — under 300" }, { value: 3, label: "3 — under 200 with support" },
+        { value: 4, label: "4 — under 100 with support" }] },
+      { key: "coag", label: "Coagulation — platelets (×10⁹/L)", type: "select", options: [
+        { value: 0, label: "0 — 150 or more" }, { value: 1, label: "1 — under 150" },
+        { value: 2, label: "2 — under 100" }, { value: 3, label: "3 — under 50" },
+        { value: 4, label: "4 — under 20" }] },
+      { key: "liver", label: "Liver — bilirubin (µmol/L)", type: "select", options: [
+        { value: 0, label: "0 — under 20" }, { value: 1, label: "1 — 20–32" },
+        { value: 2, label: "2 — 33–101" }, { value: 3, label: "3 — 102–204" },
+        { value: 4, label: "4 — over 204" }] },
+      { key: "cv", label: "Cardiovascular", type: "select", options: [
+        { value: 0, label: "0 — MAP 70 mmHg or more" }, { value: 1, label: "1 — MAP under 70" },
+        { value: 2, label: "2 — dopamine ≤5 or any dobutamine" },
+        { value: 3, label: "3 — dopamine >5, adrenaline ≤0.1 or noradrenaline ≤0.1" },
+        { value: 4, label: "4 — dopamine >15, adrenaline >0.1 or noradrenaline >0.1" }] },
+      { key: "cns", label: "CNS — Glasgow Coma Scale", type: "select", options: [
+        { value: 0, label: "0 — 15" }, { value: 1, label: "1 — 13–14" },
+        { value: 2, label: "2 — 10–12" }, { value: 3, label: "3 — 6–9" },
+        { value: 4, label: "4 — under 6" }] },
+      { key: "renal", label: "Renal — creatinine (µmol/L) / urine output", type: "select", options: [
+        { value: 0, label: "0 — under 110" }, { value: 1, label: "1 — 110–170" },
+        { value: 2, label: "2 — 171–299" }, { value: 3, label: "3 — 300–440 or under 500 mL/day" },
+        { value: 4, label: "4 — over 440 or under 200 mL/day" }] },
+    ],
+    compute(v) {
+      const parts = ["resp", "coag", "liver", "cv", "cns", "renal"].map((k) => num(v[k]));
+      if (parts.some((p) => p == null)) return null;
+      const s = parts.reduce((a, b) => a + b, 0);
+      const tone = s <= 6 ? "good" : s <= 11 ? "warn" : "bad";
+      const band = s <= 6 ? "low" : s <= 11 ? "intermediate" : "high";
+      return { value: s, unit: "/24", tone,
+        note: `${band} organ-dysfunction burden. SOFA describes a population's mortality risk and the TREND matters more than one reading — it is not a triage tool for an individual.` };
+    },
+  },
 ];
 
 // SA/NHLS-style adult reference ranges (SI units). Verify against your lab.
