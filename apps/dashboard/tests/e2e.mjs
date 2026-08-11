@@ -123,7 +123,7 @@ const WIDGET_PAGES = {
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "worldnews"],
-  Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "healthnews"],
+  Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "guidelines", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
 };
 const pageOf = (type) => Object.keys(WIDGET_PAGES).find((p) => WIDGET_PAGES[p].includes(type)) || "Main";
@@ -788,6 +788,30 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// guideline directory — links only, every one to an external issuer
+await gotoWidget("guidelines");
+await page.waitForSelector(".widget-guidelines .gl-item", { timeout: 8000 });
+check("guideline directory lists guidelines",
+  (await page.locator(".widget-guidelines .gl-item").count()) >= 15);
+check("guideline links are external and open safely", await page.evaluate(() =>
+  [...document.querySelectorAll(".widget-guidelines .gl-item")].every((a) =>
+    /^https:\/\//.test(a.getAttribute("href"))
+    && a.getAttribute("target") === "_blank"
+    && /noopener/.test(a.getAttribute("rel") || ""))));
+await page.fill(".widget-guidelines .gl-search", "tuberculosis");
+await page.waitForTimeout(150);
+check("guideline filter narrows the list", await page.evaluate(() => {
+  const items = [...document.querySelectorAll(".widget-guidelines .gl-item")];
+  return items.length > 0 && items.length < 15
+    && items.some((a) => /TB|Tuberculosis/i.test(a.textContent));
+}));
+await page.fill(".widget-guidelines .gl-search", "zzzznotathing");
+await page.waitForTimeout(150);
+check("guideline filter reports no matches cleanly",
+  (await page.locator(".widget-guidelines .gl-item").count()) === 0
+  && /No matching guideline/.test(await page.locator(".widget-guidelines").innerText()));
+await page.fill(".widget-guidelines .gl-search", "");
+await gotoWidget("calc");
 // NIHSS — 15 items, max 42. Every item must be answered before a score shows:
 // a partially-completed stroke scale that silently reads as a low score is the
 // dangerous failure mode here.
