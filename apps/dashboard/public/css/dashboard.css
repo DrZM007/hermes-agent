@@ -1459,6 +1459,23 @@ a.trk-title:hover { color: var(--accent); }
   .cs-content { max-height: none; }
 }
 
+/* ---------- guideline directory ---------- */
+.gl-search { width: 100%; margin: 8px 0 4px; }
+.gl-list { max-height: 460px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.gl-group { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-3); margin: 10px 0 2px; }
+.gl-group:first-child { margin-top: 2px; }
+.gl-item { display: block; padding: 7px 9px; border: 1px solid var(--hairline);
+  border-radius: 7px; text-decoration: none; color: inherit; transition: border-color 120ms, background 120ms; }
+.gl-item:hover, .gl-item:focus-visible { border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.gl-name { font-weight: 600; font-size: 13px; }
+.gl-name::after { content: " ↗"; opacity: 0.5; font-weight: 400; }
+.gl-issuer { margin-top: 1px; }
+.gl-covers { margin-top: 3px; color: var(--ink-2); line-height: 1.4; }
+.gl-note { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--hairline); }
+@media (max-width: 760px) { .gl-list { max-height: none; } }
+
 /* ---------- anatomy explorer ---------- */
 .an-wrap { display: flex; gap: 12px; align-items: stretch; min-height: 420px; }
 .an-rail { flex: 0 0 200px; display: flex; flex-direction: column; gap: 12px; }
