@@ -118,7 +118,7 @@ check("dark theme default", await page.evaluate(() => document.documentElement.d
 // Dashboard is split into pages; switch to the page holding a widget before
 // interacting with it. gotoPage clicks the page tab and settles.
 const WIDGET_PAGES = {
-  Main: ["glance", "clock", "worldstate", "agent", "weather", "launcher", "tasks", "calendar", "notes", "notebook", "focus", "system"],
+  Main: ["onthisday", "glance", "clock", "worldstate", "agent", "weather", "launcher", "tasks", "calendar", "notes", "notebook", "focus", "system"],
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
@@ -788,6 +788,29 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// on this day — Wikipedia feed, falls back to sample data offline
+await gotoWidget("onthisday");
+await page.waitForSelector(".widget-onthisday .otd-item", { timeout: 10000 });
+check("on this day lists historical entries",
+  (await page.locator(".widget-onthisday .otd-item").count()) >= 2);
+check("on this day entries carry a year and a safe external link",
+  await page.evaluate(() => [...document.querySelectorAll(".widget-onthisday .otd-link")]
+    .every((a) => /^https:\/\//.test(a.getAttribute("href"))
+      && a.getAttribute("rel")?.includes("noopener")
+      && /\S/.test(a.querySelector(".otd-year")?.textContent || ""))));
+{
+  const before = await page.locator(".widget-onthisday .otd-item").count();
+  await page.locator(".widget-onthisday .tab", { hasText: /Born/ }).click();
+  await page.waitForTimeout(400);
+  check("on this day switches sections",
+    // innerText returns RENDERED text and .tab is text-transform:uppercase,
+    // so match case-insensitively rather than on the source label.
+    /born/i.test(await page.locator(".widget-onthisday .tab[aria-selected=true]").innerText())
+    && (await page.locator(".widget-onthisday .otd-item").count()) >= 1
+    && before >= 1);
+  await page.locator(".widget-onthisday .tab", { hasText: /Events/ }).click();
+  await page.waitForTimeout(300);
+}
 // sun & moon — computed locally, so it must render with no network at all
 await gotoWidget("sunmoon");
 await page.waitForSelector(".widget-sunmoon .sm-value", { timeout: 8000 });

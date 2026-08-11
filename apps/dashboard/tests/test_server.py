@@ -2618,5 +2618,52 @@ class BackupHttpTests(unittest.TestCase):
         self.assertEqual(status, 404)
 
 
+
+
+class OnThisDayTests(unittest.TestCase):
+    """The Wikipedia feed is unreachable in CI, so exercise the shaping and the
+    parameter validation directly — the parts that can actually be wrong."""
+
+    def test_sample_shape(self):
+        data = server.SOURCES["onthisday"]["sample"]("8", "11")
+        self.assertEqual(data["source"], "sample")
+        self.assertEqual((data["month"], data["day"]), (8, 11))
+        for bucket in ("events", "births", "deaths"):
+            self.assertTrue(data[bucket], f"{bucket} empty")
+            for item in data[bucket]:
+                self.assertTrue(item["text"])
+                self.assertTrue(item["url"].startswith("https://"))
+        self.assertIn("CC BY-SA", data["attribution"])
+
+    def test_items_tolerate_missing_pages_and_drop_empties(self):
+        raw = {
+            "selected": [
+                {"year": 1994, "text": "An event.",
+                 "pages": [{"content_urls": {"desktop": {"page": "https://x/1"}}}]},
+                {"year": 1900, "text": "No pages at all."},
+                {"year": 1800, "text": "   "},
+                {"year": 1700, "text": "Malformed pages.", "pages": [{}]},
+            ],
+        }
+        items = server._ontd_items(raw, "selected", 8)
+        # The blank-text entry is dropped; the rest survive with a fallback URL.
+        self.assertEqual([i["year"] for i in items], [1994, 1900, 1700])
+        self.assertEqual(items[0]["url"], "https://x/1")
+        for item in items[1:]:
+            self.assertTrue(item["url"].startswith("https://en.wikipedia.org/"))
+
+    def test_missing_bucket_is_not_an_error(self):
+        self.assertEqual(server._ontd_items({}, "births", 5), [])
+        self.assertEqual(server._ontd_items({"births": None}, "births", 5), [])
+
+    def test_route_rejects_out_of_range_dates(self):
+        api = server.Api.__new__(server.Api)
+        for params in ({"month": ["13"], "day": ["1"]}, {"month": ["1"], "day": ["32"]},
+                       {"month": ["0"], "day": ["5"]}):
+            with self.assertRaises(server.ApiError):
+                server.Api.onthisday(api, params)
+        with self.assertRaises(server.ApiError):
+            server.Api.onthisday(api, {"month": ["abc"], "day": ["1"]})
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
