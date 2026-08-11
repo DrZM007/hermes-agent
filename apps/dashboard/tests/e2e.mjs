@@ -788,6 +788,40 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// NIHSS — 15 items, max 42. Every item must be answered before a score shows:
+// a partially-completed stroke scale that silently reads as a low score is the
+// dangerous failure mode here.
+await page.locator(".widget-calc .calc-picker").selectOption("nihss");
+await page.waitForSelector(".widget-calc .calc-field select", { timeout: 5000 });
+const nihssSel = await page.locator(".widget-calc .calc-field select").all();
+check("NIHSS has all 15 items", nihssSel.length === 15);
+await nihssSel[0].selectOption("3");
+check("NIHSS withholds a score until every item is scored",
+  (await page.locator(".widget-calc .calc-val").count()) === 0
+  || !/^\d+$/.test((await page.locator(".widget-calc .calc-val").innerText()).trim()));
+for (const sel of nihssSel) {
+  const max = await sel.evaluate((el) =>
+    String(Math.max(...[...el.options].map((o) => Number(o.value)).filter(Number.isFinite))));
+  await sel.selectOption(max);
+}
+await page.waitForFunction(() =>
+  document.querySelector(".widget-calc .calc-val")?.textContent === "42", null, { timeout: 5000 });
+check("clinical calc scores NIHSS", (await page.locator(".widget-calc .calc-val").innerText()) === "42");
+// PERC is only a rule-OUT when every criterion is negative.
+await page.locator(".widget-calc .calc-picker").selectOption("perc");
+await page.waitForSelector(".widget-calc .calc-field select", { timeout: 5000 });
+for (const sel of await page.locator(".widget-calc .calc-field select").all()) await sel.selectOption("0");
+await page.waitForFunction(() =>
+  /PERC negative/.test(document.querySelector(".widget-calc .calc-interp")?.textContent || ""),
+  null, { timeout: 5000 });
+check("PERC rules PE out only when all criteria are negative",
+  /PERC negative/.test(await page.locator(".widget-calc .calc-interp").innerText()));
+await (await page.locator(".widget-calc .calc-field select").all())[0].selectOption("1");
+await page.waitForFunction(() =>
+  /PERC positive/.test(document.querySelector(".widget-calc .calc-interp")?.textContent || ""),
+  null, { timeout: 5000 });
+check("PERC flips to positive on a single criterion",
+  /cannot exclude PE/.test(await page.locator(".widget-calc .calc-interp").innerText()));
 // med education / OSCE
 // anatomy explorer (force 2D tier for deterministic assertions)
 await gotoWidget("anatomy");
