@@ -19,6 +19,16 @@
       "id": "organ",
       "name": "Organs",
       "color": "#c65b6b"
+    },
+    {
+      "id": "nervous",
+      "name": "Nervous",
+      "color": "#e8d44d"
+    },
+    {
+      "id": "vascular",
+      "name": "Vascular",
+      "color": "#c0392b"
     }
   ],
   "structures": [
@@ -297,6 +307,105 @@
       "aliases": [
         "diaphragma",
         "thoracic diaphragm"
+      ]
+    },
+    {
+      "id": "spinal_cord",
+      "name": "Spinal cord",
+      "layer": "nervous",
+      "blurb": "Conducts motor and sensory tracts between brain and periphery; ends ~L1–L2 as the conus medullaris.",
+      "aliases": [
+        "medulla spinalis",
+        "cord",
+        "myelon"
+      ]
+    },
+    {
+      "id": "sciatic_nerve",
+      "name": "Sciatic nerve",
+      "layer": "nervous",
+      "blurb": "Largest peripheral nerve (L4–S3); supplies the posterior thigh and everything below the knee.",
+      "aliases": [
+        "nervus ischiadicus",
+        "ischiadic nerve"
+      ]
+    },
+    {
+      "id": "brachial_plexus",
+      "name": "Brachial plexus",
+      "layer": "nervous",
+      "blurb": "C5–T1 network supplying the upper limb; injury patterns follow root, trunk or cord level.",
+      "aliases": [
+        "plexus brachialis"
+      ]
+    },
+    {
+      "id": "vagus_nerve",
+      "name": "Vagus nerve",
+      "layer": "nervous",
+      "blurb": "Cranial nerve X — parasympathetic supply to thorax and abdomen; mediates the cough and gag reflexes.",
+      "aliases": [
+        "nervus vagus",
+        "cranial nerve x",
+        "cn x"
+      ]
+    },
+    {
+      "id": "aorta",
+      "name": "Aorta",
+      "layer": "vascular",
+      "blurb": "Main systemic artery; ascending, arch, descending thoracic and abdominal segments.",
+      "aliases": [
+        "aorta ascendens",
+        "aorta descendens",
+        "aortic arch",
+        "arcus aortae"
+      ]
+    },
+    {
+      "id": "vena_cava",
+      "name": "Venae cavae",
+      "layer": "vascular",
+      "blurb": "Superior and inferior vena cava return systemic venous blood to the right atrium.",
+      "aliases": [
+        "vena cava superior",
+        "vena cava inferior",
+        "ivc",
+        "svc"
+      ]
+    },
+    {
+      "id": "carotid",
+      "name": "Carotid arteries",
+      "layer": "vascular",
+      "blurb": "Common carotids bifurcate into internal (brain) and external (face/scalp) branches.",
+      "aliases": [
+        "arteria carotis",
+        "carotid artery",
+        "common carotid"
+      ]
+    },
+    {
+      "id": "femoral_vessels",
+      "name": "Femoral vessels",
+      "layer": "vascular",
+      "blurb": "Femoral artery and vein in the femoral triangle — access site and a common DVT location.",
+      "aliases": [
+        "arteria femoralis",
+        "vena femoralis",
+        "femoral artery",
+        "femoral vein"
+      ]
+    },
+    {
+      "id": "pulmonary_vessels",
+      "name": "Pulmonary vessels",
+      "layer": "vascular",
+      "blurb": "Pulmonary arteries carry deoxygenated blood to the lungs; pulmonary veins return oxygenated blood.",
+      "aliases": [
+        "arteria pulmonalis",
+        "pulmonary artery",
+        "vena pulmonalis"
       ]
     }
   ]

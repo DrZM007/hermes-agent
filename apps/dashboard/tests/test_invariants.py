@@ -189,6 +189,20 @@ class AnatomyDataInvariants(unittest.TestCase):
             for sid in c["structures"]:
                 self.assertIn(sid, ids, f"{c['slug']} → unknown structure {sid}")
 
+    def test_every_structure_has_2d_and_3d_geometry(self):
+        """A structure declared in structures.json but never built by a renderer
+        is invisible and unpickable — it shows up in search and in condition
+        highlights and then nothing happens on screen."""
+        ids = {s["id"] for s in
+               json.loads(read(PUBLIC / "anatomy/structures.json"))["structures"]}
+        src = read(WIDGETS / "anatomy.js")
+        two_d = src[src.index("function build2DRegions"):src.index("async function build3D")]
+        three_d = src[src.index("async function build3D"):]
+        for label, section in (("2D", two_d), ("3D", three_d)):
+            built = set(re.findall(r'"([a-z_]+)"', section))
+            missing = sorted(ids - built)
+            self.assertEqual(missing, [], f"{label} renderer builds no geometry for {missing}")
+
     def test_draco_decoder_present_when_docs_promise_it(self):
         """ANATOMY.md tells users to export Draco-compressed GLB; without the
         decoder the loader throws 'No DRACOLoader instance provided'."""

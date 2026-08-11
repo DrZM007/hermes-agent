@@ -812,6 +812,28 @@ check("anatomy info panel names the selection",
   /heart/i.test(await page.locator(".widget-anatomy .an-info-name").innerText()));
 // Phase 2 — view presets, search-to-structure, expanded conditions
 check("anatomy has view presets", (await page.locator(".widget-anatomy .an-view").count()) >= 5);
+// Phase 3 — nervous + vascular layers, cross-section
+check("anatomy exposes six layers", (await page.locator(".widget-anatomy .an-layer").count()) >= 6);
+check("anatomy draws nervous + vascular structures", await page.evaluate(() =>
+  ["spinal_cord", "sciatic_nerve", "brachial_plexus", "vagus_nerve", "aorta",
+    "vena_cava", "carotid", "femoral_vessels", "pulmonary_vessels", "musculature"]
+    .every((id) => !!document.querySelector(`.widget-anatomy [data-structure="${id}"]`))));
+// New layers default off; the toggle must actually reveal them.
+check("anatomy hides the vascular layer by default", await page.evaluate(() =>
+  document.querySelector('.widget-anatomy [data-structure="aorta"]').style.display === "none"));
+await page.locator('.widget-anatomy .an-layer[data-layer="vascular"]').click();
+await page.waitForTimeout(150);
+check("anatomy vascular toggle reveals vessels", await page.evaluate(() =>
+  document.querySelector('.widget-anatomy [data-structure="aorta"]').style.display !== "none"));
+check("anatomy hides the cross-section controls in 2D",
+  (await page.locator(".widget-anatomy .an-clip-axis").count()) === 0);
+{
+  const cond = await page.locator(".widget-anatomy .an-cond").evaluate((el) =>
+    [...el.options].map((o) => o.value));
+  check("anatomy carries the Phase 3 conditions",
+    ["sciatica", "aortic-dissection", "deep-vein-thrombosis", "carotid-stenosis"]
+      .every((s) => cond.includes(s)));
+}
 // Latin/laterality name resolution for imported atlases (Z-Anatomy et al.)
 const nameResolution = await page.evaluate(async () => {
   const { buildResolver } = await import("/js/anatomy-names.js");
@@ -839,6 +861,9 @@ await page.evaluate(() => {
 });
 await page.selectOption(".widget-anatomy .an-quality", "3d");
 await page.waitForSelector(".widget-anatomy canvas", { timeout: 8000 });
+check("anatomy offers a cross-section plane in 3D",
+  (await page.locator(".widget-anatomy .an-clip-axis").count()) === 1
+  && (await page.locator(".widget-anatomy .an-clip-pos").count()) === 1);
 for (let i = 0; i < 6; i++) {
   await gotoPage("Main");
   await gotoPage("Health");

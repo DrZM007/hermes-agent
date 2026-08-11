@@ -72,6 +72,14 @@ function build2DRegions() {
     + "L118 300 L122 300 L126 452 L144 452 L140 300 L144 250 L158 250 L158 128 L166 150 "
     + "L174 150 L182 100 L170 96 L162 120 C162 100 156 88 144 84 L130 72 C138 68 144 60 "
     + "144 48 C144 32 136 20 120 20 Z", class: "an2-skin" });
+  // musculature — an inset silhouette under the skin outline. Without this the
+  // Muscle layer toggle had nothing to show or hide in 2D.
+  add("musculature", "path", { d:
+    "M120 30 C108 30 102 39 102 50 C102 59 106 65 112 68 L100 80 C90 84 86 96 86 118 "
+    + "L80 100 L72 103 L79 145 L85 145 L91 126 L91 248 L102 248 L106 296 L102 442 L116 442 "
+    + "L119 296 L121 296 L124 442 L138 442 L134 296 L138 248 L149 248 L149 126 L155 145 "
+    + "L161 145 L168 103 L160 100 L154 118 C154 96 150 84 140 80 L128 68 C134 65 138 59 "
+    + "138 50 C138 39 132 30 120 30 Z", class: "an2-muscle" });
   // skeleton
   add("skull", "ellipse", { cx: 120, cy: 50, rx: 22, ry: 26, class: "an2-bone" });
   add("spine", "rect", { x: 116, y: 84, width: 8, height: 172, rx: 3, class: "an2-bone" });
@@ -94,6 +102,17 @@ function build2DRegions() {
   add("trachea", "rect", { x: 116, y: 94, width: 8, height: 16, rx: 3, class: "an2-organ" });
   add("gallbladder", "ellipse", { cx: 90, cy: 176, rx: 5, ry: 7, class: "an2-organ" });
   add("diaphragm", "path", { d: "M80 150 Q120 138 160 150", fill: "none", "stroke-width": 4, class: "an2-organ" });
+  // nervous
+  add("spinal_cord", "rect", { x: 118, y: 84, width: 4, height: 168, rx: 2, class: "an2-nerve" });
+  add("brachial_plexus", "path", { d: "M104 96 L92 108 M136 96 L148 108", fill: "none", "stroke-width": 3, class: "an2-nerve-outline" });
+  add("sciatic_nerve", "path", { d: "M110 282 L106 430 M130 282 L134 430", fill: "none", "stroke-width": 3, class: "an2-nerve-outline" });
+  add("vagus_nerve", "path", { d: "M114 88 L112 170 M126 88 L128 170", fill: "none", "stroke-width": 2, class: "an2-nerve-outline" });
+  // vascular
+  add("aorta", "path", { d: "M112 104 Q120 92 128 104 L126 252", fill: "none", "stroke-width": 5, class: "an2-artery" });
+  add("vena_cava", "path", { d: "M112 108 L110 252", fill: "none", "stroke-width": 5, class: "an2-vein" });
+  add("carotid", "path", { d: "M113 84 L112 62 M127 84 L128 62", fill: "none", "stroke-width": 3, class: "an2-artery" });
+  add("femoral_vessels", "path", { d: "M110 284 L108 340 M130 284 L132 340", fill: "none", "stroke-width": 4, class: "an2-artery" });
+  add("pulmonary_vessels", "path", { d: "M116 116 L100 124 M124 116 L140 124", fill: "none", "stroke-width": 4, class: "an2-vein" });
   return R;
 }
 
@@ -223,6 +242,25 @@ export default {
         hdBtn.textContent = ok ? "Reload high-detail model" : "Load high-detail model";
       });
 
+      // cross-section (3D only) — axis + slice position
+      S.clip = S.clip || { on: false, axis: "sagittal", offset: 0 };
+      const clipToggle = h("label.an-ghost", {},
+        h("input", { type: "checkbox", checked: !!S.clip.on }), "Cross-section");
+      const clipAxis = h("select.select.an-clip-axis", { "aria-label": "Section plane" },
+        ...[["sagittal", "Sagittal (L↔R)"], ["coronal", "Coronal (front↔back)"], ["axial", "Axial (top↔bottom)"]]
+          .map(([v, l]) => h("option", { value: v, selected: S.clip.axis === v }, l)));
+      const clipSlider = h("input.an-clip-pos", { type: "range", min: "-1.8", max: "1.8",
+        step: "0.05", value: String(S.clip.offset ?? 0), "aria-label": "Slice position" });
+      const pushClip = () => {
+        S.clip = { on: clipToggle.querySelector("input").checked, axis: clipAxis.value,
+          offset: Number(clipSlider.value) };
+        engine?.setClip?.(S.clip);
+      };
+      clipToggle.querySelector("input").addEventListener("change", () => { pushClip(); persist(); });
+      clipAxis.addEventListener("change", () => { pushClip(); persist(); });
+      clipSlider.addEventListener("input", pushClip);
+      clipSlider.addEventListener("change", persist);
+
       const viewport = h("div.an-viewport", { class: `an-viewport tier-${tier}` });
 
       const rail = h("div.an-rail", {},
@@ -230,6 +268,10 @@ export default {
         h("div.an-rail-group", {}, h("div.an-rail-label", {}, "FIND"), search, datalist),
         h("div.an-rail-group", {}, h("div.an-rail-label", {}, "VIEW"), viewRow,
           tier === "3d" ? ghost : null),
+        tier === "3d"
+          ? h("div.an-rail-group", {}, h("div.an-rail-label", {}, "SECTION"),
+            clipToggle, clipAxis, clipSlider)
+          : null,
         h("div.an-rail-group", {}, h("div.an-rail-label", {}, "LEARN"), condSelect),
         h("div.an-rail-group", {}, h("div.an-rail-label", {}, "QUALITY"),
           qual, tier === "3d" ? h("div.an-hd-wrap", {}, hdBtn, hdNote) : null,
@@ -354,7 +396,7 @@ function build2D(viewport, data, S, onSelect) {
     el?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   };
   return { setLayer, highlight, select: onSelect, setView, focus,
-    setGhost() {}, async loadHighDetail(report) { report?.("High-detail model needs the 3D renderer."); return false; },
+    setGhost() {}, setClip() {}, async loadHighDetail(report) { report?.("High-detail model needs the 3D renderer."); return false; },
     dispose() {} };
 }
 
@@ -441,6 +483,42 @@ async function build3D(viewport, data, S, onSelect) {
   organ("gallbladder", 0.06, [-0.28, 0.36, 0.18]);
   organ("diaphragm", 0.36, [0, 0.6, 0.05], [1, 0.16, 0.8]);
 
+  // nervous — cord + the three peripheral landmarks people actually look for
+  const nerveMat = mat(colorOf("nervous"), { roughness: 0.5 });
+  const nerve = (id, r, len, pos, rot) => {
+    const m = add("nervous", id, capsule(r, len), nerveMat, pos);
+    if (rot) m.rotation.set(...rot);
+    return m;
+  };
+  nerve("spinal_cord", 0.045, 1.45, [0, 0.42, -0.05]);        // cord ends ~L1/L2
+  nerve("brachial_plexus", 0.05, 0.3, [-0.42, 0.95, 0.02], [0, 0, -0.9]);
+  nerve("brachial_plexus", 0.05, 0.3, [0.42, 0.95, 0.02], [0, 0, 0.9]);
+  nerve("sciatic_nerve", 0.035, 1.5, [-0.28, -1.1, -0.12]);
+  nerve("sciatic_nerve", 0.035, 1.5, [0.28, -1.1, -0.12]);
+  nerve("vagus_nerve", 0.028, 1.3, [-0.1, 0.9, 0.1]);
+  nerve("vagus_nerve", 0.028, 1.3, [0.1, 0.9, 0.1]);
+
+  // vascular — great vessels, carotids, femorals, pulmonary trunk
+  const arteryMat = mat(colorOf("vascular"), { roughness: 0.4 });
+  const veinMat = mat("#2c5c9a", { roughness: 0.4 });
+  const vessel = (id, r, len, pos, rot, material) => {
+    const m = add("vascular", id, capsule(r, len), material || arteryMat, pos);
+    if (rot) m.rotation.set(...rot);
+    return m;
+  };
+  vessel("aorta", 0.07, 1.25, [0, 0.35, -0.02]);              // descending aorta
+  // Arch: the 0→π sweep of a torus is its UPPER half, which is the arch shape —
+  // no rotation, or it flips below the ascending aorta.
+  add("vascular", "aorta", new THREE.TorusGeometry(0.14, 0.06, 8, 20, Math.PI),
+    arteryMat, [0, 1.0, 0.02]);
+  vessel("vena_cava", 0.07, 1.3, [0.13, 0.4, 0.04], null, veinMat);
+  vessel("carotid", 0.035, 0.42, [-0.12, 1.16, 0.08]);
+  vessel("carotid", 0.035, 0.42, [0.12, 1.16, 0.08]);
+  vessel("femoral_vessels", 0.045, 0.8, [-0.28, -0.75, 0.1]);
+  vessel("femoral_vessels", 0.045, 0.8, [0.28, -0.75, 0.1], null, veinMat);
+  vessel("pulmonary_vessels", 0.05, 0.34, [-0.16, 0.9, 0.06], [0, 0, 0.9], veinMat);
+  vessel("pulmonary_vessels", 0.05, 0.34, [0.16, 0.9, 0.06], [0, 0, -0.9], veinMat);
+
   // remember base emissive for highlight restore
   for (const m of meshes) m.userData.baseEmissive = m.material.emissive?.getHex?.() ?? 0x000000;
 
@@ -509,6 +587,28 @@ async function build3D(viewport, data, S, onSelect) {
       m.material.needsUpdate = true;
     }
   };
+  // Cross-section: one global clipping plane. The normal is defined in BODY
+  // space and re-projected through the pivot each frame, so the cut stays
+  // anatomically sagittal/coronal/axial while you orbit rather than sweeping
+  // through the body as it turns.
+  const CLIP_AXES = { sagittal: [1, 0, 0], coronal: [0, 0, 1], axial: [0, 1, 0] };
+  const clipPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
+  const clipLocal = new THREE.Vector3(1, 0, 0);
+  let clipOn = false, clipOffset = 0;
+  renderer.localClippingEnabled = true;
+  const applyClip = () => { renderer.clippingPlanes = clipOn ? [clipPlane] : []; };
+  const setClip = ({ on, axis, offset } = {}) => {
+    if (on !== undefined) clipOn = !!on;
+    if (axis && CLIP_AXES[axis]) clipLocal.set(...CLIP_AXES[axis]);
+    if (offset !== undefined) clipOffset = offset;
+    applyClip();
+  };
+  const updateClip = () => {
+    if (!clipOn) return;
+    clipPlane.normal.copy(clipLocal).applyQuaternion(pivot.quaternion).normalize();
+    clipPlane.constant = clipOffset;
+  };
+
   const focus = (id) => {
     const m = meshes.find((mm) => mm.userData.structure === id);
     if (!m) return;
@@ -587,6 +687,7 @@ async function build3D(viewport, data, S, onSelect) {
 
   setView(S.view || "front");
   if (S.ghost) setGhost(true);
+  if (S.clip) setClip(S.clip);
 
   // Size is driven by a ResizeObserver rather than measured every frame — the
   // old per-frame clientWidth/clientHeight read forced a layout flush at 60fps,
@@ -603,6 +704,8 @@ async function build3D(viewport, data, S, onSelect) {
   const loop = () => {
     if (!dom.isConnected) { raf = null; return; }  // self-terminate on unmount
     pivot.rotation.x = rotX; pivot.rotation.y = rotY;
+    pivot.updateMatrixWorld();
+    updateClip();
     camera.position.z = dist;
     const { w, h: hgt } = pendingResize;
     if (renderer.domElement.clientWidth !== Math.round(w)
@@ -617,7 +720,7 @@ async function build3D(viewport, data, S, onSelect) {
   loop();
 
   return {
-    setLayer, highlight, select: onSelect, setView, setGhost, focus, loadHighDetail,
+    setLayer, highlight, select: onSelect, setView, setGhost, focus, loadHighDetail, setClip,
     dispose() {
       if (raf) { cancelAnimationFrame(raf); raf = null; }
       resizeObserver.disconnect();

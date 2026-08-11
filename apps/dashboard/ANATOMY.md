@@ -58,9 +58,32 @@ mirrors the existing `hub:medbot-ask` bridge. Any widget can drive the model:
   auto-detection + Quality override + MedBot bridge + curated conditions + tests.
 - **Phase 2:** search-to-structure, view presets, ghost-skin, Med Ed/OSCE + drug
   bridges, more conditions, richer 3D organs.
-- **Phase 3:** Tier A high-detail atlas via a Blender decimation pipeline
+- **Phase 3 (done):** Tier A high-detail atlas via a Blender decimation pipeline
   (Z-Anatomy / BodyParts3D, CC-BY-SA) loaded on demand on capable devices;
-  nervous/vascular layers; cross-section clipping plane.
+  nervous and vascular layers; cross-section clipping plane.
+
+### Phase 3 notes
+
+**Layers.** `nervous` (spinal cord, sciatic nerve, brachial plexus, vagus nerve)
+and `vascular` (aorta, venae cavae, carotids, femoral vessels, pulmonary
+vessels) ship in both renderers. They default to **off** — six layers on at once
+is unreadable — so a user has to opt in from the LAYERS rail. Arteries are red,
+veins blue, nerves yellow, matching the layer swatches.
+
+**Cross-section.** 3D only. A single `THREE.Plane` is set as the renderer's
+global clipping plane (`renderer.clippingPlanes`), so it applies to every
+material with no per-mesh bookkeeping. The plane's normal is stored in *body*
+space and re-projected through `pivot.quaternion` each frame — otherwise
+orbiting the model would sweep the cut through it instead of holding a fixed
+sagittal/coronal/axial section. State (`on`, `axis`, `offset`) persists in
+`store.state.anatomy.clip`; the slider persists on `change`, not per input event.
+
+**Structure/geometry parity** is enforced by
+`tests/test_invariants.py::test_every_structure_has_2d_and_3d_geometry`: a
+structure in `structures.json` with no shape in either renderer is a silent
+failure — it appears in search and in condition highlights, and then nothing
+happens on screen. That test caught `musculature` having no 2D shape at all,
+which had made the Muscle layer toggle a no-op in Tier C since Phase 1.
 
 ## Adding a high-detail model (Tier A)
 
