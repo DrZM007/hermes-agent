@@ -1500,7 +1500,7 @@ a.trk-title:hover { color: var(--accent); }
 .an-cond, .an-quality, .an-search { width: 100%; }
 .an-views { display: flex; flex-wrap: wrap; gap: 4px; }
 .an-view { flex: 1 1 auto; min-width: 40px; }
-.an-ghost { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; cursor: pointer; }
+.an-check, .an-ghost { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; cursor: pointer; }
 .an-hd-wrap { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
 .an-hd { width: 100%; }
 .an-note { margin-top: auto; }
