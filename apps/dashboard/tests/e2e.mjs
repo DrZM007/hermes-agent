@@ -179,6 +179,9 @@ await gotoWidget("news");
 await page.waitForSelector(".news-item", { timeout: 10000 });
 check("news items rendered", (await page.locator(".news-item").count()) > 3);
 await gotoWidget("markets");
+// gotoWidget only waits for the widget shell; rows arrive from an async fetch,
+// so asserting the count straight away raced the render (~1 run in 3).
+await page.waitForSelector(".market-row", { timeout: 10000 });
 check("market rows", (await page.locator(".market-row").count()) >= 3);
 await gotoPage("Main");
 await shot(page, "01-dashboard-dark-full");
@@ -728,6 +731,7 @@ await gotoWidget("pubmed");
 await page.waitForSelector(".widget-pubmed .pubmed-item", { timeout: 10000 });
 check("pubmed lists recent articles", (await page.locator(".widget-pubmed .pubmed-item").count()) >= 2);
 await gotoWidget("trials");
+await page.waitForSelector(".widget-trials .trial-item", { timeout: 10000 });
 check("clinical trials list renders", (await page.locator(".widget-trials .trial-item").count()) >= 2);
 check("trial shows a status chip", (await page.locator(".widget-trials .trial-status").count()) >= 1);
 await gotoWidget("drug");
@@ -864,6 +868,25 @@ await page.waitForSelector(".widget-anatomy canvas", { timeout: 8000 });
 check("anatomy offers a cross-section plane in 3D",
   (await page.locator(".widget-anatomy .an-clip-axis").count()) === 1
   && (await page.locator(".widget-anatomy .an-clip-pos").count()) === 1);
+// The body is ~2 units wide, ~0.8 deep and ~4 tall. One fixed slider range left
+// most of the travel outside the body on the narrow axes, so the slice range
+// must track the axis: coronal (depth) strictly narrower than axial (height).
+{
+  const range = async () => page.locator(".widget-anatomy .an-clip-pos")
+    .evaluate((el) => Number(el.max));
+  await page.selectOption(".widget-anatomy .an-clip-axis", "coronal");
+  const coronal = await range();
+  await page.selectOption(".widget-anatomy .an-clip-axis", "axial");
+  const axial = await range();
+  check("anatomy slice range tracks the section axis", coronal > 0 && coronal < axial);
+  // An offset set on a tall axis must not survive onto a narrow one off-body.
+  await page.locator(".widget-anatomy .an-clip-pos").fill("2");
+  await page.selectOption(".widget-anatomy .an-clip-axis", "coronal");
+  const clamped = await page.locator(".widget-anatomy .an-clip-pos")
+    .evaluate((el) => Number(el.value) <= Number(el.max));
+  check("anatomy clamps the slice offset when the axis narrows", clamped === true);
+  await page.selectOption(".widget-anatomy .an-clip-axis", "sagittal");
+}
 for (let i = 0; i < 6; i++) {
   await gotoPage("Main");
   await gotoPage("Health");
@@ -1064,12 +1087,15 @@ check("medicine news topic renders", (await page.locator(".news-item").count()) 
 
 // ---- intel widgets (world clock, seismic, currency) ------------------------------
 await gotoWidget("worldclock");
+await page.waitForSelector(".widget-worldclock .wc-row", { timeout: 10000 });
 check("world clock shows zones", (await page.locator(".widget-worldclock .wc-row").count()) >= 3);
 check("world clock shows a time", /\d\d:\d\d/.test(await page.locator(".widget-worldclock .wc-time").first().innerText()));
 await gotoWidget("quakes");
+await page.waitForSelector(".widget-quakes .quake-row", { timeout: 10000 });
 check("seismic monitor lists quakes", (await page.locator(".widget-quakes .quake-row").count()) >= 3);
 check("quake magnitude shown", /\d\.\d/.test(await page.locator(".widget-quakes .quake-mag").first().innerText()));
 await gotoWidget("fx");
+await page.waitForSelector(".widget-fx .fx-row", { timeout: 10000 });
 check("currency rows render", (await page.locator(".widget-fx .fx-row").count()) >= 3);
 await page.locator(".widget-fx .fx-amount").fill("200");
 await page.waitForTimeout(100);

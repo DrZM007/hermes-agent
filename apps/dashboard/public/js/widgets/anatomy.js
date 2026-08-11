@@ -14,6 +14,12 @@ const svgEl = (tag, attrs = {}) => {
   return el;
 };
 
+// Half-extent of the procedural body along each section axis, in scene units.
+// The slider is sized from these: a single fixed range left most of the travel
+// outside the body on the two narrow axes (the model is ~2 wide, ~0.8 deep and
+// ~4 tall), so the coronal slider did nothing over more than half its length.
+const CLIP_EXTENT = { sagittal: 1.05, coronal: 0.75, axial: 2.1 };
+
 let DATA = null;
 async function loadData() {
   if (DATA) return DATA;
@@ -221,7 +227,7 @@ export default {
       resetBtn.addEventListener("click", () => { S.view = "front"; persist(); engine?.setView?.("reset"); });
       viewRow.append(resetBtn);
 
-      const ghost = h("label.an-ghost", {},
+      const ghost = h("label.an-check.an-ghost", {},
         h("input", { type: "checkbox", checked: !!S.ghost }), "Ghost skin");
       ghost.querySelector("input").addEventListener("change", (e) => {
         S.ghost = e.target.checked; persist(); engine?.setGhost?.(S.ghost);
@@ -244,20 +250,31 @@ export default {
 
       // cross-section (3D only) — axis + slice position
       S.clip = S.clip || { on: false, axis: "sagittal", offset: 0 };
-      const clipToggle = h("label.an-ghost", {},
+      const clipToggle = h("label.an-check.an-clip-toggle", {},
         h("input", { type: "checkbox", checked: !!S.clip.on }), "Cross-section");
       const clipAxis = h("select.select.an-clip-axis", { "aria-label": "Section plane" },
         ...[["sagittal", "Sagittal (L↔R)"], ["coronal", "Coronal (front↔back)"], ["axial", "Axial (top↔bottom)"]]
           .map(([v, l]) => h("option", { value: v, selected: S.clip.axis === v }, l)));
-      const clipSlider = h("input.an-clip-pos", { type: "range", min: "-1.8", max: "1.8",
-        step: "0.05", value: String(S.clip.offset ?? 0), "aria-label": "Slice position" });
+      const clipSlider = h("input.an-clip-pos", { type: "range", step: "0.02",
+        "aria-label": "Slice position" });
+      const sizeSlider = () => {
+        const ext = CLIP_EXTENT[clipAxis.value] ?? 1.8;
+        clipSlider.min = String(-ext); clipSlider.max = String(ext);
+        // Clamp rather than reset: switching axes shouldn't jump the cut back to
+        // the midline, but an offset from a taller axis must not sit off-body.
+        clipSlider.value = String(Math.max(-ext, Math.min(ext, S.clip.offset ?? 0)));
+        // Write the clamp back, or the engine is built from the stored (possibly
+        // off-body) offset while the slider shows the clamped one.
+        S.clip.offset = Number(clipSlider.value);
+      };
+      sizeSlider();
       const pushClip = () => {
         S.clip = { on: clipToggle.querySelector("input").checked, axis: clipAxis.value,
           offset: Number(clipSlider.value) };
         engine?.setClip?.(S.clip);
       };
       clipToggle.querySelector("input").addEventListener("change", () => { pushClip(); persist(); });
-      clipAxis.addEventListener("change", () => { pushClip(); persist(); });
+      clipAxis.addEventListener("change", () => { sizeSlider(); pushClip(); persist(); });
       clipSlider.addEventListener("input", pushClip);
       clipSlider.addEventListener("change", persist);
 
@@ -553,7 +570,11 @@ async function build3D(viewport, data, S, onSelect) {
     ptr.y = -((y - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ptr, camera);
     const hits = ray.intersectObjects(meshes.filter((m) => m.visible !== false && m.parent?.visible !== false), false);
-    if (hits.length) { const id = hits[0].object.userData.structure; highlight([id]); onSelect(id); }
+    // Clipping only removes FRAGMENTS, not geometry, so the raycaster still hits
+    // the half that was cut away — without this, clicking into an open section
+    // selects the structure you just sliced off instead of the one on show.
+    const hit = hits.find((x) => !clipOn || clipPlane.distanceToPoint(x.point) >= 0);
+    if (hit) { const id = hit.object.userData.structure; highlight([id]); onSelect(id); }
   };
   dom.addEventListener("pointerdown", (e) => { onDown(e.clientX, e.clientY); dom.setPointerCapture?.(e.pointerId); });
   dom.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY));
