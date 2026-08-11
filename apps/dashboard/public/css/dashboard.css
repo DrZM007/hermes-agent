@@ -1477,11 +1477,21 @@ a.trk-title:hover { color: var(--accent); }
 .an2 { height: 420px; max-height: 100%; }
 .an2-region { cursor: pointer; transition: fill 120ms, opacity 120ms; }
 .an2-skin { fill: color-mix(in srgb, var(--accent) 6%, transparent); stroke: var(--hairline-2); stroke-width: 1.5; }
+.an2-muscle { fill: color-mix(in srgb, #b5473f 42%, transparent); stroke: color-mix(in srgb, #b5473f 65%, transparent); stroke-width: 0.8; }
 .an2-bone { fill: color-mix(in srgb, #e8e2d0 55%, transparent); stroke: var(--hairline-2); stroke-width: 0.6; }
 .an2-bone-outline { stroke: color-mix(in srgb, #e8e2d0 70%, transparent); }
 .an2-organ { fill: color-mix(in srgb, var(--status-critical) 45%, transparent); stroke: color-mix(in srgb, var(--status-critical) 70%, transparent); stroke-width: 0.8; }
+.an2-nerve { fill: color-mix(in srgb, #e8d44d 55%, transparent); stroke: color-mix(in srgb, #e8d44d 75%, transparent); stroke-width: 0.6; }
+.an2-nerve-outline { stroke: color-mix(in srgb, #e8d44d 80%, transparent); stroke-linecap: round; }
+.an2-artery { stroke: color-mix(in srgb, #c0392b 85%, transparent); stroke-linecap: round; }
+.an2-vein { stroke: color-mix(in srgb, #2c5c9a 85%, transparent); stroke-linecap: round; }
 .an2-region:hover { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
 .an2-region.an2-hot { fill: var(--accent); stroke: var(--accent); animation: an-pulse 1.4s ease-in-out infinite; }
+/* Stroke-only regions carry fill="none"; CSS fill beats the presentation
+   attribute, so hover/highlight would flood the outline. Keep them stroked. */
+.an2-region[fill="none"]:hover, .an2-region[fill="none"].an2-hot { fill: none; }
+.an-clip-axis, .an-clip-pos { width: 100%; margin-top: 6px; }
+.an-clip-pos { accent-color: var(--accent); }
 @keyframes an-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
 .an-info { border-top: 1px solid var(--hairline); padding-top: 8px; margin-top: 4px; }
 .an-info-name { font-weight: 600; font-size: 14px; }
