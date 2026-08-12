@@ -122,6 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
+  Space: ["orrery"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "sunmoon", "worldnews"],
   Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "guidelines", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
@@ -788,6 +789,49 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// orrery — 3D solar system computed locally (force 2D for deterministic DOM)
+await gotoPage("Space");
+await page.waitForSelector(".widget-orrery", { timeout: 10000 });
+await page.waitForSelector(".widget-orrery .or-viewport", { timeout: 10000 });
+check("space page exists with the orrery",
+  (await page.locator(".widget-orrery").count()) === 1);
+check("orrery renders a viewport",
+  (await page.locator(".widget-orrery .or-viewport canvas, .widget-orrery .or2").count()) >= 1);
+check("orrery shows a time readout",
+  /\d{4}/.test(await page.locator(".widget-orrery .or-clock").innerText()));
+// Selecting a body populates the info panel with real, body-specific data.
+await page.selectOption(".widget-orrery .or-jump", "saturn");
+await page.waitForTimeout(300);
+{
+  const info = await page.locator(".widget-orrery .or-info").innerText();
+  check("orrery body selection shows physical data",
+    /Saturn/i.test(info) && /Moons/i.test(info) && /AU/.test(info));
+  check("orrery reports Saturn's distance in the right ballpark", await page.evaluate(() => {
+    const rows = [...document.querySelectorAll(".widget-orrery .or-fact")];
+    const row = rows.find((r) => /Distance from Sun/i.test(r.querySelector("dt")?.textContent || ""));
+    const au = parseFloat(row?.querySelector("dd")?.textContent || "");
+    return au > 8.5 && au < 10.5;   // Saturn ranges 9.0–10.1 AU
+  }));
+}
+// Scope + toggles must not throw and must survive a redraw.
+await page.selectOption(".widget-orrery .or-scope", "inner");
+await page.waitForTimeout(200);
+await page.locator(".widget-orrery .an-check", { hasText: /Orbit paths/ }).locator("input").uncheck();
+await page.waitForTimeout(200);
+check("orrery survives scope and orbit toggles",
+  (await page.locator(".widget-orrery .or-viewport canvas, .widget-orrery .or2").count()) >= 1);
+await page.locator(".widget-orrery .an-check", { hasText: /Orbit paths/ }).locator("input").check();
+await page.selectOption(".widget-orrery .or-scope", "all");
+// Time controls: stepping forward must move the clock off "now".
+{
+  const before = await page.locator(".widget-orrery .or-clock").innerText();
+  await page.locator(".widget-orrery .or-rate", { hasText: /^1y$/ }).click();
+  await page.waitForTimeout(900);
+  const after = await page.locator(".widget-orrery .or-clock").innerText();
+  check("orrery time controls advance the clock", before !== after);
+  await page.locator(".widget-orrery .or-rate", { hasText: /^live$/ }).click();
+  await page.waitForTimeout(300);
+}
 // on this day — Wikipedia feed, falls back to sample data offline
 await gotoWidget("onthisday");
 await page.waitForSelector(".widget-onthisday .otd-item", { timeout: 10000 });

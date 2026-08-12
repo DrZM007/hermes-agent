@@ -19,6 +19,9 @@ function defaultPages() {
       w("podcasts", "m"),
     ] },
     { id: uid(), name: "Sports", layout: [w("scores", "l"), w("racing", "m"), w("sportsnews", "m")] },
+    { id: uid(), name: "Space", layout: [
+      w("orrery", "xl"), w("space", "m"), w("sunmoon", "m"),
+    ] },
     { id: uid(), name: "Intel", layout: [
       w("worldclock", "m"), w("quakes", "m"), w("fx", "m"), w("convert", "m"),
       w("air", "m"), w("marine", "m"), w("space", "m"), w("alerts", "m"), w("flights", "m"),
@@ -188,6 +191,7 @@ const LAYOUT_REVISIONS = [
   { rev: 7, widgets: { health: [["guidelines", "m"]] } },
   { rev: 8, widgets: { intel: [["sunmoon", "m"]] } },
   { rev: 9, widgets: { main: [["onthisday", "m"]] } },
+  { rev: 10, pages: ["Space"] },
 ];
 const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
 
