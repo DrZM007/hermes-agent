@@ -2545,3 +2545,28 @@ a.trk-title:hover { color: var(--accent); }
   .or-viewport { min-height: 340px; }
   .or-info { max-height: none; }
 }
+
+/* ---------- launches ---------- */
+.lx-list { display: flex; flex-direction: column; gap: 7px; max-height: 380px; overflow-y: auto; }
+.lx-row { border: 1px solid var(--hairline); border-radius: 7px; padding: 7px 9px; }
+.lx-top { display: flex; align-items: baseline; gap: 8px; }
+.lx-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; }
+.lx-status { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; border: 1px solid currentColor; flex: 0 0 auto; }
+.lx-status.tone-good { color: var(--status-ok, #4ade80); }
+.lx-status.tone-warn { color: var(--status-warn, #fbbf24); }
+.lx-status.tone-bad { color: var(--status-critical, #f87171); }
+.lx-status.tone-info { color: var(--ink-3); }
+.lx-meta { margin-top: 1px; }
+.lx-when { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+.lx-clock { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12.5px; color: var(--accent); }
+.lx-watch { margin-left: auto; font-size: 11px; color: var(--accent); text-decoration: none; }
+.lx-watch:hover { text-decoration: underline; }
+
+/* ---------- space news ---------- */
+.sn-list { display: flex; flex-direction: column; gap: 2px; max-height: 380px; overflow-y: auto; }
+.sn-item { display: block; padding: 6px 8px; border-radius: 6px; text-decoration: none;
+  color: inherit; transition: background 120ms; }
+.sn-item:hover, .sn-item:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.sn-title { font-size: 12.5px; line-height: 1.36; font-weight: 500; }
+.sn-meta { margin-top: 2px; }

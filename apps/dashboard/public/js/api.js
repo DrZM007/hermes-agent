@@ -162,6 +162,8 @@ export const api = {
   teamSchedule: (league, team) => getJSON("/api/team-schedule", { league, team }),
   teamNews: (team) => getJSON("/api/team-news", { team }),
   quakes: () => getJSON("/api/quakes"),
+  launches: () => getJSON("/api/launches"),
+  spacenews: () => getJSON("/api/spacenews"),
   onthisday: (month, day) => getJSON("/api/onthisday"
     + (month && day ? `?month=${encodeURIComponent(month)}&day=${encodeURIComponent(day)}` : "")),
   podcast: (url) => getJSON("/api/podcast", { url }),

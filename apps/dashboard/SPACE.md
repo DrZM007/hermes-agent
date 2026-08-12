@@ -42,12 +42,20 @@ pattern as the Anatomy Explorer:
 
 **`public/space/bodies.json`** — physical data and notable facts per body.
 
-## Phase 2 — next
+## Phase 2 — partly shipped
 
-- **Launch schedule.** Launch Library 2 (`ll.thespacedevs.com`) is keyless:
-  upcoming launches with vehicle, pad, window and stream link.
-- **Space news.** Spaceflight News API (`api.spaceflightnewsapi.net`), keyless,
-  plus the existing topic-news plumbing.
+**Shipped:**
+
+- **Launch schedule** — Launch Library 2 (`ll.thespacedevs.com`, keyless):
+  upcoming launches with vehicle, pad, window, status and stream link, plus a
+  live T− countdown that flips to T+ once a window passes.
+- **Space news** — Spaceflight News API (`api.spaceflightnewsapi.net`, keyless).
+- **Streams & trackers** — a link directory of agency and operator channels,
+  plus Spot the Station, Eyes on the Solar System, JPL Horizons, SWPC and the
+  Minor Planet Center. Links only: an embedded player would be blocked by most
+  content-security setups and fail silently.
+
+**Still to build:**
 - **ISS tracker.** Live ground position, and visible passes for the user's
   location computed locally from a TLE (fetched occasionally, cached long).
 - **Visible tonight.** Which planets are up after dark from the user's
