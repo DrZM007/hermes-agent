@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
-  Space: ["orrery", "launches", "spacenews", "spacestreams"],
+  Space: ["orrery", "launches", "spacenews", "spacestreams", "skytonight"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "sunmoon", "worldnews"],
   Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "guidelines", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
@@ -789,6 +789,42 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// sky tonight — planets and showers, all computed locally
+await gotoWidget("skytonight");
+await page.waitForSelector(".widget-skytonight .sk-row", { timeout: 10000 });
+check("sky tonight lists planets",
+  (await page.locator(".widget-skytonight .sk-row").count()) >= 5);
+check("sky tonight shows magnitudes and rise/set", await page.evaluate(() => {
+  const rows = [...document.querySelectorAll(".widget-skytonight .sk-row")];
+  return rows.some((r) => /mag -?\d/.test(r.textContent))
+    && rows.some((r) => /rises|up all night|below the horizon/.test(r.textContent));
+}));
+check("sky tonight reports the moon's interference",
+  /% lit/.test(await page.locator(".widget-skytonight").innerText()));
+// Meteor-shower selection must be date- and hemisphere-aware, not a fixed list.
+{
+  const showers = await page.evaluate(async () => {
+    const { activeShowers } = await import("/js/widgets/skytonight.js");
+    const aug = new Date("2026-08-12T20:00:00Z");
+    const dec = new Date("2026-12-14T20:00:00Z");
+    return {
+      augNorth: activeShowers(aug, 51.5).map((s) => s.name),
+      augSouth: activeShowers(aug, -29.9).map((s) => ({ n: s.name, f: s.favoured })),
+      decNames: activeShowers(dec, -29.9).map((s) => s.name),
+      decDays: activeShowers(dec, -29.9)[0].days,
+      // A date far from every peak yields nothing rather than a stale entry.
+      quiet: activeShowers(new Date("2026-03-10T20:00:00Z"), -29.9).length,
+    };
+  });
+  check("meteor showers are selected by date",
+    showers.augNorth.includes("Perseids") && showers.decNames.includes("Geminids")
+    && !showers.decNames.includes("Perseids"));
+  check("meteor shower peak-day offset is zero on the peak", showers.decDays === 0);
+  check("meteor showers are flagged by hemisphere", await page.evaluate(() => true)
+    && showers.augSouth.some((s) => s.n === "Perseids" && s.f === false)
+    && showers.augSouth.some((s) => s.n === "Delta Aquariids" && s.f === true));
+  check("quiet periods report no shower", showers.quiet === 0);
+}
 // launches — countdown maths must be right, not just present
 {
   const cd = await page.evaluate(async () => {

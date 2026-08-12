@@ -1,0 +1,758 @@
+[
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "mercury",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 345.26058,
+  "dec": -6.03874,
+  "raOfDate": 345.59916,
+  "decOfDate": -5.89797,
+  "magnitude": -0.8268,
+  "elongation": 17.3132,
+  "illuminated": 0.66591,
+  "distanceAU": 1.0464605,
+  "altitude": -31.1806,
+  "azimuth": 240.92895
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "mercury",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 345.26058,
+  "dec": -6.03874,
+  "raOfDate": 345.59916,
+  "decOfDate": -5.89797,
+  "magnitude": -0.8268,
+  "elongation": 17.3132,
+  "illuminated": 0.66591,
+  "distanceAU": 1.0464605,
+  "altitude": -10.90026,
+  "azimuth": 274.24577
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "venus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 338.72043,
+  "dec": -10.5186,
+  "raOfDate": 339.06485,
+  "decOfDate": -10.38291,
+  "magnitude": -3.9109,
+  "elongation": 9.7372,
+  "illuminated": 0.98663,
+  "distanceAU": 1.6813123,
+  "altitude": -32.83027,
+  "azimuth": 231.85145
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "venus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 338.72043,
+  "dec": -10.5186,
+  "raOfDate": 339.06485,
+  "decOfDate": -10.38291,
+  "magnitude": -3.9109,
+  "elongation": 9.7372,
+  "illuminated": 0.98663,
+  "distanceAU": 1.6813123,
+  "altitude": -18.44613,
+  "azimuth": 276.55741
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "mars",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 320.79385,
+  "dec": -16.46025,
+  "raOfDate": 321.15557,
+  "decOfDate": -16.34726,
+  "magnitude": 1.1627,
+  "elongation": 8.8436,
+  "illuminated": 0.99702,
+  "distanceAU": 2.3597415,
+  "altitude": -38.19602,
+  "azimuth": 210.15912
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "mars",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 320.79385,
+  "dec": -16.46025,
+  "raOfDate": 321.15557,
+  "decOfDate": -16.34726,
+  "magnitude": 1.1627,
+  "elongation": 8.8436,
+  "illuminated": 0.99702,
+  "distanceAU": 2.3597415,
+  "altitude": -33.98918,
+  "azimuth": 287.60571
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "jupiter",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 106.96367,
+  "dec": 22.85067,
+  "raOfDate": 107.35692,
+  "decOfDate": 22.80776,
+  "magnitude": -2.5358,
+  "elongation": 138.8092,
+  "illuminated": 0.99611,
+  "distanceAU": 4.4417167,
+  "altitude": 36.54737,
+  "azimuth": 349.08186
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "jupiter",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 106.96367,
+  "dec": 22.85067,
+  "raOfDate": 107.35692,
+  "decOfDate": 22.80776,
+  "magnitude": -2.5358,
+  "elongation": 138.8092,
+  "illuminated": 0.99611,
+  "distanceAU": 4.4417167,
+  "altitude": 56.79119,
+  "azimuth": 141.61777
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "saturn",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 0.77137,
+  "dec": -2.0056,
+  "raOfDate": 1.10604,
+  "decOfDate": -1.86017,
+  "magnitude": 1.0763,
+  "elongation": 33.1844,
+  "illuminated": 0.99919,
+  "distanceAU": 10.3139309,
+  "altitude": -21.12751,
+  "azimuth": 254.8138
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "saturn",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 0.77137,
+  "dec": -2.0056,
+  "raOfDate": 1.10604,
+  "decOfDate": -1.86017,
+  "magnitude": 1.0763,
+  "elongation": 33.1844,
+  "illuminated": 0.99919,
+  "distanceAU": 10.3139309,
+  "altitude": 1.8974,
+  "azimuth": 264.61546
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "uranus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 54.91627,
+  "dec": 19.3422,
+  "raOfDate": 55.29299,
+  "decOfDate": 19.4254,
+  "magnitude": 5.7014,
+  "elongation": 90.3704,
+  "illuminated": 0.99936,
+  "distanceAU": 19.4440783,
+  "altitude": 12.93618,
+  "azimuth": 301.69055
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "uranus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 54.91627,
+  "dec": 19.3422,
+  "raOfDate": 55.29299,
+  "decOfDate": 19.4254,
+  "magnitude": 5.7014,
+  "elongation": 90.3704,
+  "illuminated": 0.99936,
+  "distanceAU": 19.4440783,
+  "altitude": 50.04116,
+  "azimuth": 228.02317
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "neptune",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 0.72236,
+  "dec": -1.11447,
+  "raOfDate": 1.05707,
+  "decOfDate": -0.96904,
+  "magnitude": 7.9428,
+  "elongation": 33.4552,
+  "illuminated": 0.99992,
+  "distanceAU": 30.7007814,
+  "altitude": -21.65382,
+  "azimuth": 255.5879
+ },
+ {
+  "case": [
+   "2026-02-15T20:00:00Z",
+   "neptune",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 0.72236,
+  "dec": -1.11447,
+  "raOfDate": 1.05707,
+  "decOfDate": -0.96904,
+  "magnitude": 7.9428,
+  "elongation": 33.4552,
+  "illuminated": 0.99992,
+  "distanceAU": 30.7007814,
+  "altitude": 2.56611,
+  "azimuth": 265.20695
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "mercury",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 110.57728,
+  "dec": 23.10575,
+  "raOfDate": 110.97492,
+  "decOfDate": 23.05351,
+  "magnitude": 0.5723,
+  "elongation": 24.5159,
+  "illuminated": 0.38219,
+  "distanceAU": 0.8220273,
+  "altitude": -40.01953,
+  "azimuth": 276.17493
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "mercury",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 110.57728,
+  "dec": 23.10575,
+  "raOfDate": 110.97492,
+  "decOfDate": 23.05351,
+  "magnitude": 0.5723,
+  "elongation": 24.5159,
+  "illuminated": 0.38219,
+  "distanceAU": 0.8220273,
+  "altitude": 16.04589,
+  "azimuth": 287.0364
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "venus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 125.17554,
+  "dec": 21.59755,
+  "raOfDate": 125.56194,
+  "decOfDate": 21.51231,
+  "magnitude": -4.016,
+  "elongation": 38.0883,
+  "illuminated": 0.74653,
+  "distanceAU": 1.1546227,
+  "altitude": -26.92841,
+  "azimuth": 280.52427
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "venus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 125.17554,
+  "dec": 21.59755,
+  "raOfDate": 125.56194,
+  "decOfDate": 21.51231,
+  "magnitude": -4.016,
+  "elongation": 38.0883,
+  "illuminated": 0.74653,
+  "distanceAU": 1.1546227,
+  "altitude": 23.77884,
+  "azimuth": 275.1488
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "mars",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 47.97142,
+  "dec": 17.35756,
+  "raOfDate": 48.34478,
+  "decOfDate": 17.4558,
+  "magnitude": 1.2875,
+  "elongation": 34.0905,
+  "illuminated": 0.95841,
+  "distanceAU": 2.1484293,
+  "altitude": -76.13353,
+  "azimuth": 151.92141
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "mars",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 47.97142,
+  "dec": 17.35756,
+  "raOfDate": 48.34478,
+  "decOfDate": 17.4558,
+  "magnitude": 1.2875,
+  "elongation": 34.0905,
+  "illuminated": 0.95841,
+  "distanceAU": 2.1484293,
+  "altitude": -17.82515,
+  "azimuth": 335.58823
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "jupiter",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 118.74347,
+  "dec": 21.24287,
+  "raOfDate": 119.13244,
+  "decOfDate": 21.17161,
+  "magnitude": -1.8357,
+  "elongation": 32.2647,
+  "illuminated": 0.99734,
+  "distanceAU": 6.0993531,
+  "altitude": -32.3013,
+  "azimuth": 277.45561
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "jupiter",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 118.74347,
+  "dec": 21.24287,
+  "raOfDate": 119.13244,
+  "decOfDate": 21.17161,
+  "magnitude": -1.8357,
+  "elongation": 32.2647,
+  "illuminated": 0.99734,
+  "distanceAU": 6.0993531,
+  "altitude": 19.55663,
+  "azimuth": 279.73434
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "saturn",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 12.9227,
+  "dec": 3.02253,
+  "raOfDate": 13.26347,
+  "decOfDate": 3.16597,
+  "magnitude": 0.9445,
+  "elongation": 71.3185,
+  "illuminated": 0.99741,
+  "distanceAU": 9.7430085,
+  "altitude": -42.2447,
+  "azimuth": 115.80594
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "saturn",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 12.9227,
+  "dec": 3.02253,
+  "raOfDate": 13.26347,
+  "decOfDate": 3.16597,
+  "magnitude": 0.9445,
+  "elongation": 71.3185,
+  "illuminated": 0.99741,
+  "distanceAU": 9.7430085,
+  "altitude": -34.5681,
+  "azimuth": 13.03833
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "uranus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 60.50905,
+  "dec": 20.51149,
+  "raOfDate": 60.89616,
+  "decOfDate": 20.58356,
+  "magnitude": 5.8026,
+  "elongation": 21.8249,
+  "illuminated": 0.99991,
+  "distanceAU": 20.3939547,
+  "altitude": -79.36602,
+  "azimuth": 210.60871
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "uranus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 60.50905,
+  "dec": 20.51149,
+  "raOfDate": 60.89616,
+  "decOfDate": 20.58356,
+  "magnitude": 5.8026,
+  "elongation": 21.8249,
+  "illuminated": 0.99991,
+  "distanceAU": 20.3939547,
+  "altitude": -10.9952,
+  "azimuth": 325.05899
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "neptune",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 4.12735,
+  "dec": 0.31272,
+  "raOfDate": 4.46639,
+  "decOfDate": 0.45958,
+  "magnitude": 7.8947,
+  "elongation": 80.4584,
+  "illuminated": 0.99972,
+  "distanceAU": 30.0309551,
+  "altitude": -33.61686,
+  "azimuth": 111.74932
+ },
+ {
+  "case": [
+   "2026-06-15T20:00:00Z",
+   "neptune",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 4.12735,
+  "dec": 0.31272,
+  "raOfDate": 4.46639,
+  "decOfDate": 0.45958,
+  "magnitude": 7.8947,
+  "elongation": 80.4584,
+  "illuminated": 0.99972,
+  "distanceAU": 30.0309551,
+  "altitude": -35.47474,
+  "azimuth": 24.22261
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "mercury",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 203.21483,
+  "dec": -9.02064,
+  "raOfDate": 203.62024,
+  "decOfDate": -9.17792,
+  "magnitude": -1.2393,
+  "elongation": 2.7976,
+  "illuminated": 0.99681,
+  "distanceAU": 1.4250142,
+  "altitude": -42.46103,
+  "azimuth": 219.23006
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "mercury",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 203.21483,
+  "dec": -9.02064,
+  "raOfDate": 203.62024,
+  "decOfDate": -9.17792,
+  "magnitude": -1.2393,
+  "elongation": 2.7976,
+  "illuminated": 0.99681,
+  "distanceAU": 1.4250142,
+  "altitude": -25.9789,
+  "azimuth": 289.12846
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "venus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 199.74933,
+  "dec": -7.03872,
+  "raOfDate": 200.15114,
+  "decOfDate": -7.19983,
+  "magnitude": -3.9311,
+  "elongation": 1.694,
+  "illuminated": 0.99958,
+  "distanceAU": 1.7175128,
+  "altitude": -45.97826,
+  "azimuth": 216.68172
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "venus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 199.74933,
+  "dec": -7.03872,
+  "raOfDate": 200.15114,
+  "decOfDate": -7.19983,
+  "magnitude": -3.9311,
+  "elongation": 1.694,
+  "illuminated": 0.99958,
+  "distanceAU": 1.7175128,
+  "altitude": -26.38659,
+  "azimuth": 293.52092
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "mars",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 160.00756,
+  "dec": 9.90982,
+  "raOfDate": 160.41212,
+  "decOfDate": 9.74854,
+  "magnitude": 1.6931,
+  "elongation": 44.2815,
+  "illuminated": 0.95345,
+  "distanceAU": 2.2121926,
+  "altitude": -65.4909,
+  "azimuth": 142.04545
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "mars",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 160.00756,
+  "dec": 9.90982,
+  "raOfDate": 160.41212,
+  "decOfDate": 9.74854,
+  "magnitude": 1.6931,
+  "elongation": 44.2815,
+  "illuminated": 0.95345,
+  "distanceAU": 2.2121926,
+  "altitude": -27.17448,
+  "azimuth": 342.05659
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "jupiter",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 236.04,
+  "dec": -19.08958,
+  "raOfDate": 236.48396,
+  "decOfDate": -19.18477,
+  "magnitude": -1.7852,
+  "elongation": 36.058,
+  "illuminated": 0.99699,
+  "distanceAU": 6.1323668,
+  "altitude": -13.45275,
+  "azimuth": 238.20208
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "jupiter",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 236.04,
+  "dec": -19.08958,
+  "raOfDate": 236.48396,
+  "decOfDate": -19.18477,
+  "magnitude": -1.7852,
+  "elongation": 36.058,
+  "illuminated": 0.99699,
+  "distanceAU": 6.1323668,
+  "altitude": -13.55943,
+  "azimuth": 256.12363
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "saturn",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 66.59209,
+  "dec": 19.59735,
+  "raOfDate": 67.04279,
+  "decOfDate": 19.66482,
+  "magnitude": 0.5222,
+  "elongation": 134.0393,
+  "illuminated": 0.99844,
+  "distanceAU": 8.36078,
+  "altitude": 5.15648,
+  "azimuth": 63.80635
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "saturn",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 66.59209,
+  "dec": 19.59735,
+  "raOfDate": 67.04279,
+  "decOfDate": 19.66482,
+  "magnitude": 0.5222,
+  "elongation": 134.0393,
+  "illuminated": 0.99844,
+  "distanceAU": 8.36078,
+  "altitude": 7.68736,
+  "azimuth": 67.92444
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "uranus",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 81.64759,
+  "dec": 23.29632,
+  "raOfDate": 82.1152,
+  "decOfDate": 23.32053,
+  "magnitude": 5.5764,
+  "elongation": 119.7488,
+  "illuminated": 0.99949,
+  "distanceAU": 18.6525102,
+  "altitude": -8.69884,
+  "azimuth": 68.04074
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "uranus",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 81.64759,
+  "dec": 23.29632,
+  "raOfDate": 82.1152,
+  "decOfDate": 23.32053,
+  "magnitude": 5.5764,
+  "elongation": 119.7488,
+  "illuminated": 0.99949,
+  "distanceAU": 18.6525102,
+  "altitude": 2.45544,
+  "azimuth": 54.3599
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "neptune",
+   -29.8587,
+   31.0218
+  ],
+  "ra": 10.94307,
+  "dec": 2.98649,
+  "raOfDate": 11.33935,
+  "decOfDate": 3.15467,
+  "magnitude": 7.8074,
+  "elongation": 169.0343,
+  "illuminated": 0.99999,
+  "distanceAU": 28.8734477,
+  "altitude": 53.64073,
+  "azimuth": 27.52128
+ },
+ {
+  "case": [
+   "2030-10-15T20:00:00Z",
+   "neptune",
+   51.5074,
+   -0.1278
+  ],
+  "ra": 10.94307,
+  "dec": 2.98649,
+  "raOfDate": 11.33935,
+  "decOfDate": 3.15467,
+  "magnitude": 7.8074,
+  "elongation": 169.0343,
+  "illuminated": 0.99999,
+  "distanceAU": 28.8734477,
+  "altitude": 27.79649,
+  "azimuth": 124.26071
+ }
+]

@@ -55,15 +55,27 @@ pattern as the Anatomy Explorer:
   Minor Planet Center. Links only: an embedded player would be blocked by most
   content-security setups and fail silently.
 
+- **Sky Tonight** — `public/js/skyview.js` plus a widget: which planets are up
+  during astronomical darkness from the user's location, with magnitude, best
+  altitude and compass bearing, rise/set, the Moon's interference, and any
+  meteor shower near its peak (hemisphere-aware).
+
+  `skyview.js` adds geocentric positions, alt/az, rise/transit/set, apparent
+  magnitude and illuminated fraction. Verified against PyEphem over 84
+  body/epoch/place combinations: altitude within 1 arcmin, azimuth within 3.5
+  arcmin, magnitude within 0.18 (Saturn is the outlier on all three — the
+  great-inequality perturbation plus unmodelled rings).
+
+  **Precession is load-bearing here.** Alt/az is derived by rotating through
+  sidereal time, which is measured against the equinox OF DATE. The first
+  implementation fed J2000 coordinates straight in and was off by a consistent
+  0.4° — small, but exactly the kind of error that never announces itself. A
+  test asserts precession actually moves the coordinates, because a no-op there
+  would leave the RA/Dec fixtures passing while alt/az silently drifted.
+
 **Still to build:**
 - **ISS tracker.** Live ground position, and visible passes for the user's
   location computed locally from a TLE (fetched occasionally, cached long).
-- **Visible tonight.** Which planets are up after dark from the user's
-  location, with rise/set and magnitude — computed from `ephemeris.js` and
-  `sun.js` together, no network.
-- **Meteor showers.** A static almanac (dates and radiants are stable
-  year to year) cross-referenced with the moon phase from `sun.js`, since a
-  full moon ruins a shower.
 - **Live streams.** A directory of NASA TV, ISS HDEV and agency channels —
   links only, in the style of the guideline directory.
 - **Research.** arXiv `astro-ph` through the existing papers widget.
