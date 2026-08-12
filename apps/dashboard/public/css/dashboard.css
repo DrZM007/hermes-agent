@@ -2570,3 +2570,18 @@ a.trk-title:hover { color: var(--accent); }
 .sn-item:hover, .sn-item:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .sn-title { font-size: 12.5px; line-height: 1.36; font-weight: 500; }
 .sn-meta { margin-top: 2px; }
+
+/* ---------- sky tonight ---------- */
+.sk-window { margin: 3px 0 2px; }
+.sk-list { display: flex; flex-direction: column; gap: 5px; }
+.sk-row { border-left: 2px solid var(--accent); padding: 3px 0 3px 8px; }
+.sk-row.sk-dim { border-left-color: var(--hairline-2); opacity: 0.55; }
+.sk-name { font-weight: 600; font-size: 13px; display: flex; align-items: baseline; gap: 6px; }
+.sk-tele { font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-3); border: 1px solid var(--hairline-2); border-radius: 999px; padding: 0 5px; }
+.sk-figures { display: flex; gap: 10px; font-size: 12px; margin-top: 1px; flex-wrap: wrap; }
+.sk-mag { font-variant-numeric: tabular-nums; color: var(--accent); }
+.sk-alt { color: var(--ink-2); }
+.sk-rise { margin-top: 1px; }
+.sk-moonline { color: var(--ink-2); }
+.sk-note { color: var(--status-warn, var(--ink-2)); margin: 4px 0; }
