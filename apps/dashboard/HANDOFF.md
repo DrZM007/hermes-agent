@@ -17,15 +17,24 @@ React, bundlers, Docker-required flows, etc.). Everything must keep working with
 just `python3 server.py`.
 
 ## 2. Repo, branch, git rules
-- Repo: `DrZM007/hermes-agent` (aka `drzm007/hermes-agent`).
-- **Work only on branch `claude/all-in-one-dashboard-xqh6ct`.** Never push elsewhere.
-- Push with `git push -u origin claude/all-in-one-dashboard-xqh6ct`.
-- Do NOT open a PR unless explicitly asked.
-- Commit footer convention used so far (keep consistent):
+- Repo: `DrZM007/hermes-agent` (aka `drzm007/hermes-agent`). Default branch: `main`.
+- **Current workflow: topic branch → PR → squash-merge into `main`.** The old
+  single-branch rule (`claude/all-in-one-dashboard-xqh6ct`) is DEAD — that branch
+  was merged long ago. Branch from `origin/main` for each bundle.
+- Push with `git push -u origin <topic-branch>`.
+- After a squash-merge, a branch based on the pre-squash commit will conflict.
+  Fix by patch-and-rebase, never by merging:
+  ```bash
+  git diff HEAD~1 HEAD > /tmp/p.patch
+  git fetch origin main && git checkout -B <new-branch> origin/main
+  git apply --3way /tmp/p.patch
   ```
-  Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+- Commit footer convention (keep consistent):
+  ```
+  Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_<this-session-id>
   ```
+- Never put the model id in commits, PR bodies, or code.
 - Commit + push after each self-contained bundle (a stop-hook nags about
   uncommitted changes).
 
@@ -119,6 +128,8 @@ telemetry.py      bounded routing + tool-call telemetry (Phase 3)
 automations.py    standing-rules engine + kill switch (Phase 4)
 evolve.py         self-evolution / reflection engine (Phase 6)
 ics.py            minimal RFC 5545 calendar parser
+scripts/check.sh  ONE-COMMAND GATE (syntax, imports, invariants, SW, tests)
+.githooks/        pre-commit + pre-push running check.sh
 sample_data.json  bundled offline data
 Dockerfile        OPTIONAL container (user can't use Docker); prefer deploy/
 compose.yaml      OPTIONAL
@@ -135,9 +146,15 @@ public/           zero-build frontend
   js/evolve.js      Agent-proposals inbox panel (+ rollback/history)
   js/routing.js     Model-routing overrides panel
   js/sources.js / calendars.js   settings panels
-  js/widgets/*.js   one module per widget
-tests/test_server.py   140 unit tests
-tests/e2e.mjs          109-check Playwright suite
+  js/widgets/*.js   one module per widget (53)
+  js/sun.js         solar/lunar maths (verified vs astral)
+  js/ephemeris.js   planetary positions (verified vs PyEphem)
+  js/citations.js   shared citation rendering (MedBot + Notebook)
+  js/vendor/three/  vendored three.js + GLTF/Draco loaders
+  anatomy/*.json    layers, structures, conditions
+  space/bodies.json planetary physical data
+tests/test_server.py   unit tests (276 across all test modules)
+tests/e2e.mjs          295-check Playwright suite
 .github/workflows/dashboard.yml  CI
 ```
 
@@ -154,19 +171,38 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
 - `HERMES_HUB_MODEL_FAST/_CORE/_DEEP` — override individual tiers.
 
 ## 8. Testing + verification standard
-- **Unit:** `cd apps/dashboard && python3 -m unittest discover -s tests` (140 tests).
-- **E2E:** Playwright against a running server. Standard to ship anything =
-  full unit suite passes **plus 3 consecutive green e2e runs**.
+- **One command gates everything: `cd apps/dashboard && ./scripts/check.sh`.**
+  Runs Python syntax → `import server` (what the container actually does) → JS
+  module parse → JSON validity → structural invariants → service-worker
+  freshness → the unit suite. `--full` adds e2e. See `CHECKS.md`.
+- Git hooks run it automatically once the user enables them:
+  `git config core.hooksPath .githooks` (pre-commit + pre-push).
+- **Unit:** `python3 -m unittest discover -s tests` — **276 tests**.
+- **E2E:** Playwright, **295 checks**. Ship standard = full unit suite green
+  **plus 3 consecutive green e2e runs**.
 - E2E needs `playwright-core` installed somewhere and Chromium at
-  `/opt/pw-browsers/chromium`. Run pattern (two servers — open + token-locked):
+  `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Two servers (open +
+  token-locked):
   ```bash
-  # install playwright-core into a scratch dir once: npm install playwright-core
   python3 apps/dashboard/server.py --offline --port 8787 --data-dir <fresh1> &
   python3 apps/dashboard/server.py --offline --port 8788 --token e2e-access-code --data-dir <fresh2> &
   PW_CORE_DIR=<scratch-with-node_modules> AUTH_URL=http://127.0.0.1:8788 \
     AUTH_TOKEN=e2e-access-code node apps/dashboard/tests/e2e.mjs http://127.0.0.1:8787 <shotsdir>
   ```
   Expected tail: `ALL E2E CHECKS PASSED`.
+- **Give each e2e run a FRESH data dir.** The suite asserts first-run behaviour
+  (welcome card, first calendar event); a server carrying state synced by the
+  previous run fails runs 2 and 3 for no reason.
+- **Verify every regression test actually fails against the bug** before keeping
+  it. On this project that check has repeatedly exposed hollow tests — a
+  Dockerfile assertion that short-circuited, a service-worker check that only
+  diffed committed files, `node --check` silently passing malformed ESM
+  (probe as `.mjs` instead), and a Playwright assertion that could never pass
+  because `innerText()` returns text-transformed output.
+- **Cross-check computed science against an independent implementation.** PyPI
+  is reachable from the sandbox even though the web is not: `astral` verified
+  `sun.js`, `ephem` verified `ephemeris.js`. Both found real bugs that reading
+  the code did not.
 
 ## 9. Environment / session hazards (IMPORTANT for the agent)
 - **Backend changes require restarting the e2e servers** (server.py imports are
@@ -184,8 +220,12 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
   pushed after each bundle, so nothing is lost.
 - E2E resets client state + clears automations/calendars/killswitch at startup
   for idempotency; keep new e2e sections idempotent (clean up what you create).
-- Model identity: this session runs as `claude-fable-5`; when asked which model,
-  say the configured id. Do NOT put the model id in commits/PRs/code.
+- Model identity: say the configured model id when asked. Do NOT put it in
+  commits, PRs, or code.
+- **The sandbox blocks most outbound hosts** (403 from the agent proxy) but
+  **PyPI and npm ARE reachable**, and `WebSearch` works. That combination is how
+  external facts get verified here: search for URLs, install a reference library
+  to check maths against.
 
 ## 10. User preferences
 - Replies: **normal English, terse and direct, no unnecessary words.** (There is
@@ -196,30 +236,80 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
   the Phase 6 auto-apply boundary was confirmed via a question).
 
 ## 11. Current status
-- All 6 Jarvis phases + the post-phase additions, PLUS the big all-in-one
-  expansion (see ROADMAP2.md): dashboard **pages/tabs** (Main/Markets/Feeds/
-  Sports), a **crypto suite** (detail drawer, TA indicators, portfolio, global
-  bar + Fear & Greed, trending), **stocks/indices/FX** (Stooq), **live sports
-  scores + standings** (ESPN), a **socials hub** (HN/Lobsters/Reddit), a
-  **gaming** widget (Epic free games + Steam deals) + gaming news topic, an
-  **At-a-Glance hero**, **follow-any-search** news (Google News), and a **richer
-  reader** (image/byline/reading time). Shared infra: `chart.js` (SVG line/
-  candle/donut), `detail.js` (⤢ expand-window), `indicators.py`.
-- New widget files: `glance, markets(detail), scores, socials, gaming, stocks`;
-  new backend endpoints under `/api/crypto/*, /api/stocks*, /api/scores,
-  /api/standings, /api/social, /api/gaming/*`; new data files none (all cached +
-  sample-backed). PWA cache at **hub-v17**.
-- Test counts: **187 unit / ~165 e2e checks**, all green (3/3 consecutive e2e),
-  all pushed to `claude/all-in-one-dashboard-xqh6ct`.
-- Detailed plans live in `ROADMAP.md` (phase-1 ideas) and `ROADMAP2.md` (the
-  all-in-one expansion, with a shipped/pending status banner).
 
-## 12. Open / future ideas (not yet built — see ROADMAP.md for full plans)
-- **Web Push notifications** (Tier 1) — real push beyond in-app toasts; the
-  recommended path is a payload-less VAPID "tickle" so it stays stdlib-only.
-- **Agent multi-step plan preview** (Tier 2) — show a plan card before running
-  a multi-tool turn, with Run-all / auto-only / cancel.
-- **Command palette execution** (Tier 3) — run agent commands from ⌘-K, not
-  just navigate.
-- Smaller: per-widget refresh intervals; backup download/upload + off-box copy;
-  task recurrence (the due/priority groundwork is now in place).
+**Scale:** 8 pages (Main, Markets, Feeds, Sports, Space, Intel, Health, AI Lab),
+**53 widgets**, 276 unit tests, 295 e2e checks, PWA cache **hub-v76**.
+
+### Layout reconciler — read this before adding a widget or page
+`store.js` holds `LAYOUT_REVISIONS`, an append-only list where each revision
+declares **only what it introduced**. `LAYOUT_REV` derives from the last entry,
+and `migrate()` replays anything a stored state has not seen. This is how new
+widgets reach EXISTING users instead of only fresh installs. Currently at
+**rev 10**.
+
+Two traps, both of which shipped as bugs before being fixed:
+1. **The defaults-merge trap.** `load()` does `{...defaultState(), ...parsed}`,
+   so any version key present in `defaultState` makes a stored state look
+   current. `migrate()` must pin the version from `parsed` FIRST.
+2. Adding a widget to `defaultState()` alone does nothing for existing users.
+   It needs a `LAYOUT_REVISIONS` entry too.
+
+Also required for a new widget: import + registry array in `main.js`, entry in
+`sw.js` SHELL, a **VERSION bump in `sw.js`** (the check script enforces this),
+CSS, and the page map in `tests/e2e.mjs`.
+
+### Health page
+MedBot (SA decision support), Anatomy Explorer, PubMed, trials, drug lookup,
+**52 clinical calculators**, Med Ed/OSCE, cheat sheets (diabetes/hypertension/
+HIV/TB), **guideline directory**, health news.
+
+- **Anatomy Explorer** (`ANATOMY.md`) — adaptive 3D (three.js, vendored locally
+  under `public/js/vendor/three/`) with a 2D SVG fallback. 6 layers, 31
+  structures, 46 conditions, cross-section clipping plane, optional high-detail
+  GLB (Tier A) the user supplies themselves.
+- Clinical content is *educational*; the user has been told plainly it is worth
+  their own review before relying on it.
+
+### Space page (`SPACE.md`)
+- **`public/js/ephemeris.js`** — heliocentric planetary positions from Keplerian
+  elements. Verified against PyEphem; worst residual 8.6 arcmin.
+- **Orrery widget** — explorable 3D solar system at real positions, clickable
+  bodies, time controls, orbit paths, 2D fallback.
+- Phase 2 (launches, space news, ISS tracker, visible tonight, meteor showers,
+  stream directory, astro-ph research) is specced in `SPACE.md`.
+
+### Local-computation modules (no network, no key)
+- **`public/js/sun.js`** — sunrise/sunset, three twilights, solar noon, day
+  length, moon phase and moon rise/set. NOAA solar model; verified against
+  `astral` to <50 s.
+- **`public/js/ephemeris.js`** — see above.
+These exist because the sandbox blocks every weather/astronomy API, and because
+maths cannot go stale or rate-limit.
+
+### Build guards
+`scripts/check.sh` (5 layers), `.githooks/`, `tests/test_invariants.py` (encodes
+previously-shipped bug classes: Dockerfile COPY globs, SW shell parsing, widget
+registration reaching the `WIDGETS` map, no raw `fetch("/api/...")` in widgets,
+api.js routes existing server-side, version keys pinned in `migrate()`, anatomy
+condition→structure integrity, 2D/3D geometry parity), plus a CI auto-reviewer
+workflow (`.github/workflows/dashboard-review.yml`).
+
+## 12. Waiting on the user (cannot be done from a cloud session)
+- `git pull origin main` on their laptop.
+- `git config core.hooksPath .githooks` to enable the pre-commit/pre-push gates.
+- Add an **`ANTHROPIC_API_KEY` repo secret** — gates the CI auto-reviewer AND
+  the synthesised answers in MedBot / Notebook. Without it those degrade to
+  extractive answers and the reviewer no-ops.
+- Optionally supply a `body.glb` for Tier A anatomy (see `ANATOMY.md`).
+- Click through the guideline directory links once — they were sourced from
+  search results but could not be fetched from the sandbox to verify.
+- Authorise any claude.ai MCP connectors they want available.
+
+## 13. Open / future ideas
+- Space phase 2 and 3 (`SPACE.md`) — the fullest specced backlog.
+- `ROADMAP3.md` §C cross-cutting: palette entries for every new widget,
+  per-widget settings, export/share, first-run tooltips for new tabs.
+- **Web Push notifications** — payload-less VAPID "tickle" to stay stdlib-only.
+- **Agent multi-step plan preview** — plan card before a multi-tool turn.
+- **Command palette execution** — run agent commands from ⌘-K, not just navigate.
+- Smaller: per-widget refresh intervals; backup download/upload; task recurrence.

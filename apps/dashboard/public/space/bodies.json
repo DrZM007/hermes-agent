@@ -1,0 +1,135 @@
+{
+  "note": "Physical data for the orrery info panel. Radii in km, day/year in Earth units, temperatures in °C. Figures are standard published values (NASA planetary fact sheets).",
+  "bodies": [
+    {
+      "id": "sun", "name": "Sun", "kind": "star", "colour": "#ffcc33",
+      "radiusKm": 695700, "moons": 0,
+      "dayHours": 609.12, "yearDays": null,
+      "tempC": 5500, "gravity": 274,
+      "blurb": "A G-type main-sequence star holding 99.86% of the mass of the solar system. Fuses ~600 million tonnes of hydrogen a second.",
+      "facts": [
+        ["Composition", "~73% hydrogen, ~25% helium by mass"],
+        ["Core temperature", "~15 million °C"],
+        ["Age", "~4.6 billion years"],
+        ["Light to Earth", "8 minutes 20 seconds"]
+      ]
+    },
+    {
+      "id": "mercury", "name": "Mercury", "kind": "planet", "colour": "#9c8e82",
+      "radiusKm": 2439.7, "moons": 0,
+      "dayHours": 4222.6, "yearDays": 88.0,
+      "tempC": 167, "gravity": 3.7,
+      "blurb": "The smallest planet and the closest to the Sun. No atmosphere to speak of, so its surface swings by hundreds of degrees between day and night.",
+      "facts": [
+        ["Temperature range", "−173 °C to 427 °C"],
+        ["Orbital eccentricity", "0.206 — the most eccentric planet"],
+        ["Solar day", "176 Earth days, twice its year"],
+        ["Visited by", "Mariner 10, MESSENGER, BepiColombo"]
+      ]
+    },
+    {
+      "id": "venus", "name": "Venus", "kind": "planet", "colour": "#e8c07a",
+      "radiusKm": 6051.8, "moons": 0,
+      "dayHours": -5832.5, "yearDays": 224.7,
+      "tempC": 464, "gravity": 8.87,
+      "blurb": "The hottest planet — a runaway greenhouse under a CO₂ atmosphere 92 times Earth's surface pressure. Rotates backwards.",
+      "facts": [
+        ["Surface pressure", "92 bar — equivalent to 900 m underwater"],
+        ["Rotation", "Retrograde, and slower than its own year"],
+        ["Clouds", "Sulphuric acid"],
+        ["Brightest", "The brightest object in our sky after the Sun and Moon"]
+      ]
+    },
+    {
+      "id": "earth", "name": "Earth", "kind": "planet", "colour": "#4b8fd6",
+      "radiusKm": 6371.0, "moons": 1,
+      "dayHours": 23.93, "yearDays": 365.26,
+      "tempC": 15, "gravity": 9.81,
+      "blurb": "The only place known to hold liquid surface water and life. Its large moon stabilises the axial tilt that gives us seasons.",
+      "facts": [
+        ["Atmosphere", "78% nitrogen, 21% oxygen"],
+        ["Axial tilt", "23.4° — the reason for seasons"],
+        ["Surface water", "71% of the surface"],
+        ["Magnetic field", "Deflects the solar wind; drives the aurorae"]
+      ]
+    },
+    {
+      "id": "mars", "name": "Mars", "kind": "planet", "colour": "#c1440e",
+      "radiusKm": 3389.5, "moons": 2,
+      "dayHours": 24.62, "yearDays": 687.0,
+      "tempC": -65, "gravity": 3.72,
+      "blurb": "The most explored body beyond Earth. Thin CO₂ atmosphere, polar ice caps, and clear evidence of ancient flowing water.",
+      "facts": [
+        ["Olympus Mons", "The tallest volcano known — 22 km high"],
+        ["Valles Marineris", "A canyon system 4 000 km long"],
+        ["Moons", "Phobos and Deimos, probably captured asteroids"],
+        ["Day length", "24 h 37 m — almost Earth's"]
+      ]
+    },
+    {
+      "id": "jupiter", "name": "Jupiter", "kind": "planet", "colour": "#d8ca9d",
+      "radiusKm": 69911, "moons": 95,
+      "dayHours": 9.93, "yearDays": 4332.6,
+      "tempC": -110, "gravity": 24.79,
+      "blurb": "More massive than every other planet combined. A gas giant with no solid surface, and a magnetic field that dwarfs Earth's.",
+      "facts": [
+        ["Great Red Spot", "A storm wider than Earth, running for centuries"],
+        ["Rotation", "Under 10 hours — the fastest of any planet"],
+        ["Galilean moons", "Io, Europa, Ganymede, Callisto"],
+        ["Europa", "A subsurface ocean, a leading target in the search for life"]
+      ]
+    },
+    {
+      "id": "saturn", "name": "Saturn", "kind": "planet", "colour": "#e3d9a5",
+      "radiusKm": 58232, "moons": 146,
+      "dayHours": 10.66, "yearDays": 10759,
+      "tempC": -140, "gravity": 10.44,
+      "blurb": "The ringed planet. Its density is lower than water's, and its rings are mostly water ice spanning 280 000 km but only tens of metres thick.",
+      "facts": [
+        ["Rings", "Mostly water ice, from grains to house-sized chunks"],
+        ["Density", "0.69 g/cm³ — less dense than water"],
+        ["Titan", "Thick atmosphere and liquid methane lakes"],
+        ["Enceladus", "Vents water plumes from a subsurface ocean"]
+      ]
+    },
+    {
+      "id": "uranus", "name": "Uranus", "kind": "planet", "colour": "#a7d8de",
+      "radiusKm": 25362, "moons": 28,
+      "dayHours": -17.24, "yearDays": 30687,
+      "tempC": -195, "gravity": 8.87,
+      "blurb": "An ice giant tipped on its side — its axis lies almost in its orbital plane, so each pole spends 42 years in sunlight and 42 in darkness.",
+      "facts": [
+        ["Axial tilt", "98° — it orbits on its side"],
+        ["Coldest atmosphere", "Recorded as low as −224 °C"],
+        ["Colour", "Methane absorbs red light, leaving cyan"],
+        ["Visited by", "Voyager 2 only, in 1986"]
+      ]
+    },
+    {
+      "id": "neptune", "name": "Neptune", "kind": "planet", "colour": "#3f66c9",
+      "radiusKm": 24622, "moons": 16,
+      "dayHours": 16.11, "yearDays": 60190,
+      "tempC": -200, "gravity": 11.15,
+      "blurb": "The outermost planet, and the first found by mathematics rather than observation — predicted from irregularities in Uranus's orbit.",
+      "facts": [
+        ["Winds", "Up to 2 100 km/h — the fastest in the solar system"],
+        ["Discovery", "Predicted by Le Verrier, observed in 1846"],
+        ["Triton", "Retrograde orbit — a captured Kuiper Belt object"],
+        ["Year", "165 Earth years"]
+      ]
+    },
+    {
+      "id": "pluto", "name": "Pluto", "kind": "dwarf planet", "colour": "#c9b8a8",
+      "radiusKm": 1188.3, "moons": 5,
+      "dayHours": -153.3, "yearDays": 90560,
+      "tempC": -229, "gravity": 0.62,
+      "blurb": "Reclassified as a dwarf planet in 2006. Its orbit is eccentric enough to bring it inside Neptune's for 20 years of each circuit.",
+      "facts": [
+        ["Orbit", "Crosses inside Neptune's — last did so 1979–1999"],
+        ["Inclination", "17° to the ecliptic"],
+        ["Charon", "So large the pair orbit a point outside Pluto"],
+        ["New Horizons", "Flew past in July 2015"]
+      ]
+    }
+  ]
+}
