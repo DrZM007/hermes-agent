@@ -20,7 +20,8 @@ function defaultPages() {
     ] },
     { id: uid(), name: "Sports", layout: [w("scores", "l"), w("racing", "m"), w("sportsnews", "m")] },
     { id: uid(), name: "Space", layout: [
-      w("orrery", "xl"), w("space", "m"), w("sunmoon", "m"),
+      w("orrery", "xl"), w("launches", "m"), w("spacenews", "m"),
+      w("space", "m"), w("sunmoon", "m"), w("spacestreams", "m"),
     ] },
     { id: uid(), name: "Intel", layout: [
       w("worldclock", "m"), w("quakes", "m"), w("fx", "m"), w("convert", "m"),
@@ -192,6 +193,7 @@ const LAYOUT_REVISIONS = [
   { rev: 8, widgets: { intel: [["sunmoon", "m"]] } },
   { rev: 9, widgets: { main: [["onthisday", "m"]] } },
   { rev: 10, pages: ["Space"] },
+  { rev: 11, widgets: { space: [["launches", "m"], ["spacenews", "m"], ["spacestreams", "m"]] } },
 ];
 const LAYOUT_REV = LAYOUT_REVISIONS[LAYOUT_REVISIONS.length - 1].rev;
 

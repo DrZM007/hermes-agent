@@ -62,6 +62,9 @@ import guidelines, { searchIndex as guidelinesIndex } from "./widgets/guidelines
 import sunmoon from "./widgets/sunmoon.js";
 import onthisday, { searchIndex as onthisdayIndex } from "./widgets/onthisday.js";
 import orrery, { searchIndex as orreryIndex } from "./widgets/orrery.js";
+import launches from "./widgets/launches.js";
+import spacenews from "./widgets/spacenews.js";
+import spacestreams, { searchIndex as streamsIndex } from "./widgets/spacestreams.js";
 import notebook from "./widgets/notebook.js";
 import worldstate from "./widgets/worldstate.js";
 import reading from "./widgets/reading.js";
@@ -69,7 +72,7 @@ import focus from "./widgets/focus.js";
 import system from "./widgets/system.js";
 
 const WIDGETS = Object.fromEntries(
-  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, racing, socials, gaming, stocks, worldclock, quakes, fx, convert, air, marine, space, alerts, flights, podcasts, medbot, pubmed, trials, drug, calc, meded, codelab, ailearn, snippets, repos, papers, ainews, aidaily, commodities, changelog, tracker, marketsnews, sportsnews, worldnews, healthnews, anatomy, cheatsheets, guidelines, sunmoon, onthisday, orrery, notebook, focus, system]
+  [clock, glance, worldstate, agent, weather, launcher, news, reading, tasks, notes, calendar, markets, scores, racing, socials, gaming, stocks, worldclock, quakes, fx, convert, air, marine, space, alerts, flights, podcasts, medbot, pubmed, trials, drug, calc, meded, codelab, ailearn, snippets, repos, papers, ainews, aidaily, commodities, changelog, tracker, marketsnews, sportsnews, worldnews, healthnews, anatomy, cheatsheets, guidelines, sunmoon, onthisday, orrery, launches, spacenews, spacestreams, notebook, focus, system]
     .map((w) => [w.type, w]),
 );
 
@@ -727,6 +730,12 @@ function paletteDataMatches(q) {
   for (const entry of sheetsIndex()) {
     if (entry.label.toLowerCase().includes(q)) {
       matches.push({ label: entry.label, hint: entry.hint, run: () => flashWidget("cheatsheets") });
+    }
+  }
+  // Space streams and trackers
+  for (const entry of streamsIndex()) {
+    if (entry.label.toLowerCase().includes(q)) {
+      matches.push({ label: entry.label, hint: entry.hint, run: () => flashWidget("spacestreams") });
     }
   }
   // Solar-system bodies

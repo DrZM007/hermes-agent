@@ -122,7 +122,7 @@ const WIDGET_PAGES = {
   Markets: ["markets", "stocks", "commodities", "marketsnews"],
   Feeds: ["news", "reading", "socials", "gaming", "podcasts"],
   Sports: ["scores", "racing", "sportsnews"],
-  Space: ["orrery"],
+  Space: ["orrery", "launches", "spacenews", "spacestreams"],
   Intel: ["worldclock", "quakes", "fx", "convert", "air", "marine", "space", "alerts", "flights", "sunmoon", "worldnews"],
   Health: ["medbot", "anatomy", "pubmed", "trials", "drug", "calc", "meded", "cheatsheets", "guidelines", "healthnews"],
   "AI Lab": ["codelab", "ailearn", "snippets", "repos", "papers", "ainews", "aidaily", "changelog", "tracker"],
@@ -789,6 +789,50 @@ for (const cb of await page.locator(".widget-calc .calc-check input").all()) awa
 await page.waitForFunction(() =>
   document.querySelector(".widget-calc .calc-val")?.textContent === "10", null, { timeout: 5000 });
 check("clinical calc scores Alvarado", (await page.locator(".widget-calc .calc-val").innerText()) === "10");
+// launches — countdown maths must be right, not just present
+{
+  const cd = await page.evaluate(async () => {
+    const { countdown } = await import("/js/widgets/launches.js");
+    const t0 = 1_000_000_000_000;
+    return {
+      future: countdown(t0 + (2 * 86400 + 3 * 3600 + 4 * 60 + 5) * 1000, t0),
+      soon: countdown(t0 + (3 * 3600 + 4 * 60 + 5) * 1000, t0),
+      past: countdown(t0 - 65_000, t0),
+    };
+  });
+  check("launch countdown formats future windows", cd.future === "T−2d 03:04:05");
+  check("launch countdown drops the day part inside 24h", cd.soon === "T−03:04:05");
+  check("launch countdown flips to T+ after the window", cd.past === "T+00:01:05");
+}
+await gotoWidget("launches");
+await page.waitForSelector(".widget-launches .lx-row", { timeout: 10000 });
+check("launch schedule lists launches",
+  (await page.locator(".widget-launches .lx-row").count()) >= 2);
+check("launch rows carry a countdown and a provider", await page.evaluate(() =>
+  [...document.querySelectorAll(".widget-launches .lx-row")].every((r) =>
+    /T[−+]/.test(r.querySelector(".lx-clock")?.textContent || "")
+    && /\S/.test(r.querySelector(".lx-meta")?.textContent || ""))));
+// The countdown must actually tick.
+{
+  const first = await page.locator(".widget-launches .lx-clock").first().innerText();
+  await page.waitForTimeout(1600);
+  const later = await page.locator(".widget-launches .lx-clock").first().innerText();
+  check("launch countdown ticks", first !== later);
+}
+await gotoWidget("spacenews");
+await page.waitForSelector(".widget-spacenews .sn-item", { timeout: 10000 });
+check("space news lists articles",
+  (await page.locator(".widget-spacenews .sn-item").count()) >= 2);
+check("space news links are external and safe", await page.evaluate(() =>
+  [...document.querySelectorAll(".widget-spacenews .sn-item")].every((a) =>
+    /^https:\/\//.test(a.getAttribute("href")) && a.getAttribute("rel")?.includes("noopener"))));
+await gotoWidget("spacestreams");
+await page.waitForSelector(".widget-spacestreams .gl-item", { timeout: 10000 });
+check("stream directory lists channels",
+  (await page.locator(".widget-spacestreams .gl-item").count()) >= 10);
+check("stream links are external and safe", await page.evaluate(() =>
+  [...document.querySelectorAll(".widget-spacestreams .gl-item")].every((a) =>
+    /^https:\/\//.test(a.getAttribute("href")) && a.getAttribute("rel")?.includes("noopener"))));
 // orrery — 3D solar system computed locally (force 2D for deterministic DOM)
 await gotoPage("Space");
 await page.waitForSelector(".widget-orrery", { timeout: 10000 });

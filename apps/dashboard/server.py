@@ -2718,9 +2718,94 @@ def sample_onthisday(month: str = "1", day: str = "1") -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Space — upcoming launches (Launch Library 2) and spaceflight news
+# (Spaceflight News API). Both keyless.
+# ---------------------------------------------------------------------------
+LAUNCHES_TTL = 30 * 60
+SPACENEWS_TTL = 20 * 60
+
+
+def live_launches() -> dict:
+    raw = json.loads(fetch_url(
+        "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=12&mode=list"))
+    out = []
+    for r in raw.get("results", [])[:12]:
+        provider = (r.get("launch_service_provider") or {}).get("name")
+        pad = r.get("pad") or {}
+        out.append({
+            "id": r.get("id"),
+            "name": r.get("name") or "Launch",
+            "net": r.get("net"),
+            "status": ((r.get("status") or {}).get("abbrev")
+                       or (r.get("status") or {}).get("name") or "TBD"),
+            "provider": provider or "—",
+            "rocket": ((r.get("rocket") or {}).get("configuration") or {}).get("full_name")
+                      or ((r.get("rocket") or {}).get("configuration") or {}).get("name") or "—",
+            "mission": (r.get("mission") or {}).get("name") or r.get("name") or "—",
+            "pad": pad.get("name") or "—",
+            "location": (pad.get("location") or {}).get("name") or "—",
+            "webcast": next((v.get("url") for v in (r.get("vidURLs") or []) if v.get("url")), None),
+        })
+    return {"source": "live", "launches": out}
+
+
+def sample_launches() -> dict:
+    now = datetime.now(timezone.utc)
+    demo = [
+        (2, "Starlink Group 12-4", "SpaceX", "Falcon 9 Block 5",
+         "Cape Canaveral SLC-40", "Florida, USA", "Go"),
+        (5, "Ariane 6 / Galileo L14", "Arianespace", "Ariane 62",
+         "ELA-4", "Kourou, French Guiana", "Go"),
+        (9, "Electron / BlackSky", "Rocket Lab", "Electron",
+         "Rocket Lab LC-1A", "Mahia, New Zealand", "TBD"),
+        (14, "Crew-13", "SpaceX", "Falcon 9 Block 5",
+         "Kennedy LC-39A", "Florida, USA", "TBD"),
+    ]
+    return {"source": "sample", "launches": [
+        {"id": f"sample-{i}", "name": name,
+         "net": (now + timedelta(days=days)).isoformat().replace("+00:00", "Z"),
+         "status": status, "provider": provider, "rocket": rocket,
+         "mission": name, "pad": pad, "location": loc,
+         "webcast": "https://www.youtube.com/@SpaceX"}
+        for i, (days, name, provider, rocket, pad, loc, status) in enumerate(demo)]}
+
+
+def live_spacenews() -> dict:
+    raw = json.loads(fetch_url(
+        "https://api.spaceflightnewsapi.net/v4/articles/?limit=14"))
+    out = []
+    for a in raw.get("results", [])[:14]:
+        out.append({
+            "title": a.get("title") or "—",
+            "url": a.get("url"),
+            "site": a.get("news_site") or "—",
+            "published": a.get("published_at"),
+            "summary": (a.get("summary") or "").strip()[:400],
+        })
+    return {"source": "live", "articles": [a for a in out if a["url"]]}
+
+
+def sample_spacenews() -> dict:
+    now = datetime.now(timezone.utc)
+    demo = [
+        ("Webb spots water vapour in a protoplanetary disc", "NASA"),
+        ("Europa Clipper completes deep-space manoeuvre", "Spaceflight Now"),
+        ("Next Artemis crewed flight enters final review", "SpaceNews"),
+        ("New radio array begins survey of the southern sky", "Phys.org"),
+    ]
+    return {"source": "sample", "articles": [
+        {"title": t, "url": "https://www.nasa.gov/", "site": site,
+         "published": (now - timedelta(hours=3 * i)).isoformat().replace("+00:00", "Z"),
+         "summary": "Sample article — live spaceflight news requires network access."}
+        for i, (t, site) in enumerate(demo)]}
+
+
+# ---------------------------------------------------------------------------
 SOURCES: dict[str, dict] = {
     "quakes": {"ttl": QUAKES_TTL, "live": live_quakes, "sample": sample_quakes},
     "onthisday": {"ttl": ONTHISDAY_TTL, "live": live_onthisday, "sample": sample_onthisday},
+    "launches": {"ttl": LAUNCHES_TTL, "live": live_launches, "sample": sample_launches},
+    "spacenews": {"ttl": SPACENEWS_TTL, "live": live_spacenews, "sample": sample_spacenews},
     "spaceweather": {"ttl": SPACE_TTL, "live": live_spaceweather, "sample": sample_spaceweather},
     "crypto:global": {"ttl": CRYPTO_GLOBAL_TTL,
                       "live": live_crypto_global, "sample": sample_crypto_global},
@@ -3355,6 +3440,12 @@ class Api:
     def quakes(self, params: dict) -> dict:
         return self.fetch_source("quakes")
 
+    def launches(self, params: dict) -> dict:
+        return self.fetch_source("launches")
+
+    def spacenews(self, params: dict) -> dict:
+        return self.fetch_source("spacenews")
+
     def onthisday(self, params: dict) -> dict:
         today = datetime.now(timezone.utc)
         try:
@@ -3875,6 +3966,8 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/team-news": "team_news",
         "/api/quakes": "quakes",
         "/api/onthisday": "onthisday",
+        "/api/launches": "launches",
+        "/api/spacenews": "spacenews",
         "/api/fx": "fx",
         "/api/convert": "convert",
         "/api/podcast": "podcast",
