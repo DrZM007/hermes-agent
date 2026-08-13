@@ -71,3 +71,20 @@ notice rather than failing.
 When a bug escapes review, add an invariant here rather than only fixing the
 instance — then verify the new check *fails* against the broken code before
 committing the fix.
+
+## Naming invariants
+
+`tests/test_invariants.py::NamingInvariants` pins the deliberate split between
+the product name and the plumbing (HANDOFF.md §7):
+
+- `HERMES_HUB_TOKEN`, `_API_KEY`, `_MODEL*` must still be read by the server.
+  Renaming an env var fails **silently** — an unread token means the dashboard
+  comes up unlocked; an unread API key means the agent quietly degrades to
+  rule-based answers.
+- The service-worker cache prefix must stay `hub-vNN`. `activate` deletes
+  caches whose key differs from `VERSION`; change the prefix and the old caches
+  match nothing and are never evicted.
+- The user-visible brand must still say AIODashboard.
+
+A future rename must ADD the new name and keep the old one as a fallback, which
+leaves these tests passing.
