@@ -19,11 +19,18 @@ import threading
 import time
 from collections import deque
 
-# Tier → model id. Defaults track the current Claude line-up.
+# Tier → model id. Defaults track the current Claude line-up. These are BAKED
+# IN, not discovered: a new model release does not move them on its own. Bump
+# them here when the line-up changes, or override per tier at runtime (env var >
+# data/routing.json > this table) — GET /api/assistant/models lists what the
+# configured credentials can actually reach, so the routing UI can offer real
+# choices instead of this frozen list.
+#
+# Use bare aliases (claude-opus-5), never dated variants (…-20251001).
 _TIER_DEFAULTS = {
-    "fast": "claude-haiku-4-5-20251001",
+    "fast": "claude-haiku-4-5",
     "core": "claude-sonnet-5",
-    "deep": "claude-opus-4-8",
+    "deep": "claude-opus-5",
 }
 _TIER_ENV = {"fast": "HERMES_HUB_MODEL_FAST", "core": "HERMES_HUB_MODEL_CORE",
              "deep": "HERMES_HUB_MODEL_DEEP"}

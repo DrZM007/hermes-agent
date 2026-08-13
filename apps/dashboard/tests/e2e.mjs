@@ -1660,6 +1660,14 @@ await page.locator(".menu-wrap > .btn").click();
 await page.locator(".menu-item", { hasText: "Model routing" }).click();
 await page.waitForSelector(".routing-row", { timeout: 10000 });
 check("routing panel shows three tiers", (await page.locator(".routing-row").count()) === 3);
+// The live model catalogue is best-effort: the e2e server has no API key, so
+// the panel must still open and say so rather than erroring out.
+check("routing panel renders without a model catalogue",
+  (await page.locator(".sources-body p.muted", { hasText: "Model list unavailable" }).count()) === 1);
+const modelsProbe = await page.evaluate(async () =>
+  (await (await fetch("/api/assistant/models")).json()));
+check("models endpoint degrades cleanly with no credentials",
+  Array.isArray(modelsProbe.models) && modelsProbe.models.length === 0 && !!modelsProbe.error);
 const coreInput = page.locator(".routing-row", { hasText: "CORE" }).locator(".routing-input");
 await coreInput.fill("claude-sonnet-test");
 await page.locator(".routing-actions .btn-primary").click();

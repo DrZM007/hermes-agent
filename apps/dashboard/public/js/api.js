@@ -129,6 +129,7 @@ export const api = {
   assistantStatus: () => getJSON("/api/assistant/status"),
   routing: () => getJSON("/api/assistant/routing"),
   setRouting: (overrides) => postJSON("/api/assistant/routing", { overrides }),
+  models: (force) => getJSON("/api/assistant/models", force ? { force: 1 } : {}),
   telemetry: () => getJSON("/api/assistant/telemetry"),
   recordTelemetry: (event) => postJSON("/api/assistant/telemetry", event),
   killswitch: () => getJSON("/api/killswitch"),

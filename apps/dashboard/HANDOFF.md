@@ -223,6 +223,31 @@ These keep the old prefix on purpose — see §7 above before changing any of th
 - `HERMES_HUB_MODEL` — pin one model for all tiers (back-compat).
 - `HERMES_HUB_MODEL_FAST/_CORE/_DEEP` — override individual tiers.
 
+### Model versions — NOT self-updating
+The tier defaults are a hardcoded table in `router.py` (`_TIER_DEFAULTS`). A new
+Claude release does **not** move them: the dashboard keeps calling whatever is
+baked into the build until someone changes it. Three ways to change it, in
+precedence order — env var > `data/routing.json` > the table:
+
+1. `HERMES_HUB_MODEL_DEEP=claude-opus-5` (wins over everything, shows "locked"
+   in the UI)
+2. the **MODEL ROUTING** settings panel, which writes `data/routing.json`
+3. editing `_TIER_DEFAULTS` and shipping a new build
+
+Rules for that table:
+- **Bare aliases only** (`claude-opus-5`), never dated variants
+  (`claude-haiku-4-5-20251001`) — a dated id pins the tier to one frozen
+  snapshot forever. `test_tier_defaults_are_bare_aliases` enforces this.
+- Bump `assistant.DEFAULT_MODEL` at the same time; it is the pin fallback.
+
+The MODEL ROUTING panel calls `GET /api/assistant/models`
+(`Assistant.list_models`, a 6h-cached wrapper over the Models API) so it offers
+what the configured credentials can *actually* reach, flags a tier pointing at a
+model that is not in that list, and has a "Refresh model list" button. That call
+is best-effort by design: no key, no network, or an old SDK all degrade to an
+empty list plus a free-text field. It must never be able to stop the panel
+opening.
+
 ## 9. Testing + verification standard
 - **One command gates everything: `cd apps/dashboard && ./scripts/check.sh`.**
   Runs Python syntax → `import server` (what the container actually does) → JS

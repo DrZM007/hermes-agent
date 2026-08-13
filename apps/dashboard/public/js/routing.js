@@ -51,6 +51,28 @@ export async function openRouting() {
     body.append(h("p.muted.small", {},
       "Pick the model for each tier. Env vars (HERMES_HUB_MODEL_*) win over these and show as locked. Blank a field to fall back to the default."));
 
+    // Live catalogue, so the panel offers models these credentials can actually
+    // reach. The tier DEFAULTS are hardcoded in router.py and never move on
+    // their own — this is the only part of the dashboard that knows what the
+    // current line-up is. Never let it block the panel: on any failure we fall
+    // through to a plain text field, which is what shipped before.
+    let catalogue = { models: [] };
+    try {
+      catalogue = await api.models();
+    } catch (err) {
+      catalogue = { models: [], error: err.message };
+    }
+    const listId = "routing-models";
+    if (catalogue.models.length) {
+      body.append(h("datalist", { id: listId },
+        ...catalogue.models.map((m) => h("option", { value: m.id }, m.display_name))));
+    }
+
+    // A tier pointing at a model the account can't reach fails at call time
+    // with an opaque 404 — surface it here instead.
+    const known = new Set(catalogue.models.map((m) => m.id));
+    const stale = (id) => known.size > 0 && id && !known.has(id);
+
     const inputs = {};
     for (const tier of ["fast", "core", "deep"]) {
       const locked = snap.env_locked?.[tier];
@@ -59,6 +81,7 @@ export async function openRouting() {
         value: snap.overrides?.[tier] || "",
         placeholder: snap.defaults?.[tier] || "",
         disabled: locked,
+        list: catalogue.models.length ? listId : null,
         "aria-label": `${tier} tier model`,
       });
       inputs[tier] = input;
@@ -68,6 +91,10 @@ export async function openRouting() {
           h("div.muted.small", {}, locked
             ? `Locked by env → ${snap.tiers[tier]}`
             : `Active: ${snap.tiers[tier]} · default: ${snap.defaults?.[tier]}`),
+          stale(snap.tiers[tier])
+            ? h("div.small.routing-stale", {},
+              `⚠ ${snap.tiers[tier]} is not in this account's model list`)
+            : null,
         ),
         input,
       ));
@@ -98,7 +125,22 @@ export async function openRouting() {
           } catch (err) { toast(err.message, "error"); }
         },
       }, "Reset to defaults"),
+      h("button.btn", {
+        type: "button",
+        onclick: async () => {
+          try {
+            await api.models(true);   // bust the server-side cache
+            toast("Model list refreshed");
+            draw();
+          } catch (err) { toast(err.message, "error"); }
+        },
+      }, "Refresh model list"),
     ));
+
+    body.append(h("p.muted.small", {}, catalogue.models.length
+      ? `${catalogue.models.length} models available to these credentials${catalogue.cached ? " (cached)" : ""}. `
+        + "Tier defaults are baked into the build and do NOT update themselves when new models ship — set them here."
+      : `Model list unavailable${catalogue.error ? ` (${catalogue.error})` : ""} — type a model id by hand.`));
   }
 
   await draw();

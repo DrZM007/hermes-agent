@@ -23,6 +23,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
+import time
 from collections import Counter
 from datetime import date, datetime
 
@@ -30,8 +32,12 @@ from router import TIERS, Router
 
 # Legacy single-model knob. When set it pins every router tier to one model,
 # preserving the pre-router behaviour; when unset the router picks per task.
-DEFAULT_MODEL = os.environ.get("HERMES_HUB_MODEL", "claude-opus-4-8")
+DEFAULT_MODEL = os.environ.get("HERMES_HUB_MODEL", "claude-opus-5")
 _MODEL_PIN = os.environ.get("HERMES_HUB_MODEL")  # None → tiered routing
+
+# How long a Models API listing stays fresh. The catalogue changes on the
+# order of months; this only needs to beat a long-lived server process.
+MODELS_TTL = 6 * 3600
 
 try:  # optional dependency — the dashboard must work without it
     import anthropic
@@ -416,6 +422,8 @@ class Assistant:
         self.model = model
         self.router = Router(pin=_MODEL_PIN)
         self._client = None
+        self._models_cache = None
+        self._models_lock = threading.Lock()
         self.services = None  # set by server.Api — access to feeds/memory/automations
 
     def _log_route(self, decision: dict) -> None:
@@ -616,6 +624,38 @@ class Assistant:
         if self._client is None:
             self._client = anthropic.Anthropic()
         return self._client
+
+    # -- live model discovery -----------------------------------------------
+    def list_models(self, force: bool = False) -> dict:
+        """What models these credentials can actually reach, newest first.
+
+        The tier defaults in router.py are hardcoded, so they go stale silently
+        when the line-up moves. This asks the Models API instead and is what the
+        routing panel offers as choices. Cached for MODELS_TTL because the
+        answer changes on the order of months, and it must never be the reason a
+        settings panel fails to open: any error degrades to `models: []` plus a
+        readable `error`, never an exception.
+        """
+        if self.mode != "claude":
+            return {"models": [], "cached": False,
+                    "error": "no API credentials — running in local mode"}
+        now = time.time()
+        with self._models_lock:
+            cached = self._models_cache
+            if cached and not force and now - cached["at"] < MODELS_TTL:
+                return {**cached["payload"], "cached": True}
+        try:
+            page = self._get_client().models.list(limit=50)
+            models = [{"id": m.id,
+                       "display_name": getattr(m, "display_name", None) or m.id,
+                       "created_at": str(getattr(m, "created_at", "") or "")}
+                      for m in page.data]
+            payload = {"models": models, "error": None}
+        except Exception as exc:  # network, auth, SDK version — all non-fatal
+            return {"models": [], "cached": False, "error": str(exc)[:200]}
+        with self._models_lock:
+            self._models_cache = {"at": now, "payload": payload}
+        return {**payload, "cached": False}
 
     def status(self) -> dict:
         claude = self.mode == "claude"

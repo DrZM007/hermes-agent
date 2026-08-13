@@ -3630,6 +3630,11 @@ class Api:
     def routing_get(self, params: dict) -> dict:
         return self.assistant.router.snapshot()
 
+    def routing_models(self, params: dict) -> dict:
+        """Live catalogue from the Models API, so the routing panel offers what
+        the credentials can actually reach rather than a frozen list."""
+        return self.assistant.list_models(force=params.get("force") == ["1"])
+
     def routing_set(self, body: dict) -> dict:
         overrides = self._routing_load()
         updates = body.get("overrides") if isinstance(body.get("overrides"), dict) else body
@@ -3992,6 +3997,7 @@ class HubHandler(BaseHTTPRequestHandler):
         "/api/state/rev": "state_rev",
         "/api/assistant/status": "assistant_status",
         "/api/assistant/routing": "routing_get",
+        "/api/assistant/models": "routing_models",
         "/api/automations": "automations_list",
         "/api/notifications": "notifications",
         "/api/feeds": "feeds_config",

@@ -1705,7 +1705,8 @@ a.trk-title:hover { color: var(--accent); }
 .routing-tier { font-size: 12px; font-weight: 600; letter-spacing: 0.03em; }
 .routing-input { width: 220px; flex: 0 0 auto; font-size: 12px; }
 .routing-input:disabled { opacity: 0.5; cursor: not-allowed; }
-.routing-actions { display: flex; gap: 8px; margin-top: 14px; }
+.routing-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.routing-stale { color: var(--warn, #e0a33a); }
 
 /* ---------- focus timer ---------- */
 

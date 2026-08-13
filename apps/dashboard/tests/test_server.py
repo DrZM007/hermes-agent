@@ -2050,6 +2050,15 @@ class RouterTests(unittest.TestCase):
         self.assertEqual(deep["requested_tier"], "deep")  # tier still tracked
         self.assertEqual(fast["tier"], "fast")
 
+    def test_tier_defaults_are_bare_aliases(self):
+        """A dated variant (claude-haiku-4-5-20251001) pins the tier to one
+        frozen snapshot forever; the bare alias keeps tracking its line. This
+        shipped and went unnoticed for months because both resolve fine."""
+        for tier, model in router_mod._TIER_DEFAULTS.items():
+            self.assertRegex(model, r"^claude-[a-z]+-\d+(?:-\d+)?$",
+                             f"{tier} default {model!r} should be a bare alias, "
+                             f"not a dated variant")
+
     def test_snapshot_shape(self):
         r = router_mod.Router()
         r.route("chat", "hi")
@@ -2109,6 +2118,45 @@ class RouterTests(unittest.TestCase):
         # bad id rejected
         with self.assertRaises(server.ApiError):
             api.routing_set({"overrides": {"deep": "bad id!"}})
+
+    def test_models_listing_degrades_without_credentials(self):
+        """The settings panel must open with no API key — the catalogue is a
+        nicety, not a dependency."""
+        api = server.Api(offline=True, data_dir=Path(tempfile.mkdtemp()))
+        out = api.routing_models({})
+        self.assertEqual(out["models"], [])
+        self.assertTrue(out["error"])
+
+    def test_models_listing_never_raises_on_sdk_failure(self):
+        """A models.list() blow-up (network, auth, old SDK) must not 500 the
+        route; an exception here would make MODEL ROUTING unopenable."""
+        import unittest.mock as mock
+        a = assistant.Assistant()
+        boom = mock.Mock()
+        boom.models.list.side_effect = RuntimeError("connection reset")
+        with mock.patch.object(type(a), "mode", property(lambda self: "claude")), \
+             mock.patch.object(a, "_get_client", return_value=boom):
+            out = a.list_models()
+        self.assertEqual(out["models"], [])
+        self.assertIn("connection reset", out["error"])
+
+    def test_models_listing_caches_and_force_refetches(self):
+        import unittest.mock as mock
+        a = assistant.Assistant()
+        client = mock.Mock()
+        client.models.list.return_value = mock.Mock(data=[
+            mock.Mock(id="claude-opus-5", display_name="Claude Opus 5", created_at="2026-01-01"),
+        ])
+        with mock.patch.object(type(a), "mode", property(lambda self: "claude")), \
+             mock.patch.object(a, "_get_client", return_value=client):
+            first = a.list_models()
+            second = a.list_models()
+            third = a.list_models(force=True)
+        self.assertEqual([m["id"] for m in first["models"]], ["claude-opus-5"])
+        self.assertFalse(first["cached"])
+        self.assertTrue(second["cached"])
+        self.assertEqual(client.models.list.call_count, 2)  # cached hit skipped
+        self.assertFalse(third["cached"])
 
 
 class IndicatorTests(unittest.TestCase):
