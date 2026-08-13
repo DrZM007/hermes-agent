@@ -52,7 +52,7 @@ export function showLockScreen({ onUnlocked }) {
   lockEl = h("div.lock-backdrop", { role: "dialog", "aria-label": "Locked" },
     h("div.lock-panel", {},
       h("div.lock-mark", { "aria-hidden": "true" }, "◆"),
-      h("div.lock-title", {}, "HERMES", h("span.brand-sub", {}, "//HUB")),
+      h("div.lock-title", {}, "AIO", h("span.brand-sub", {}, "Dashboard")),
       h("div.lock-sub", {}, "RESTRICTED — ENTER ACCESS CODE"),
       form,
       status,

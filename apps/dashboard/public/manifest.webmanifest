@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "HERMES//HUB",
-  "short_name": "Hermes Hub",
+  "name": "AIODashboard",
+  "short_name": "AIODashboard",
   "description": "All-in-one personal dashboard: apps, news, world state, weather, lists, notes, calendar, markets, sports, health and a built-in agent.",
   "start_url": "/",
   "scope": "/",
