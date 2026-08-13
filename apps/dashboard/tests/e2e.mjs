@@ -111,8 +111,8 @@ await page.waitForTimeout(1600); // debounced sync push of the reset
 await page.reload({ waitUntil: "networkidle" });
 
 // ---- shell -----------------------------------------------------------------
-check("title", (await page.title()) === "Hermes Hub");
-check("topbar brand", await page.locator(".brand-name").innerText() === "HERMES//HUB");
+check("title", (await page.title()) === "AIODashboard");
+check("topbar brand", await page.locator(".brand-name").innerText() === "AIODashboard");
 check("dark theme default", await page.evaluate(() => document.documentElement.dataset.theme) === "dark");
 
 // Dashboard is split into pages; switch to the page holding a widget before
@@ -1501,7 +1501,7 @@ const manifestOk = await page.evaluate(async () => {
   const res = await fetch("/manifest.webmanifest");
   if (!res.ok) return false;
   const mf = await res.json();
-  return mf.name === "HERMES//HUB" && mf.icons.length >= 2;
+  return mf.name === "AIODashboard" && mf.icons.length >= 2;
 });
 check("PWA manifest served and valid", manifestOk);
 const iconOk = await page.evaluate(async () => (await fetch("/icons/icon-192.png")).ok);

@@ -488,7 +488,7 @@ function renderTopbar() {
   bar.append(
     h("div.brand", {},
       h("span.brand-mark", { "aria-hidden": "true" }, "◆"),
-      h("span.brand-name", {}, "HERMES", h("span.brand-sub", {}, "//HUB")),
+      h("span.brand-name", {}, "AIO", h("span.brand-sub", {}, "Dashboard")),
       h("span.brand-tag", {}, "LOCAL · EYES ONLY"),
     ),
     form,
@@ -903,7 +903,7 @@ function closePalette() {
 async function renderFooter() {
   const footer = document.getElementById("footer");
   clear(footer).append(
-    h("span.muted", {}, "HERMES//HUB — all sources, one console."),
+    h("span.muted", {}, "AIODashboard — all sources, one console."),
     h("span.muted", { id: "conn-status" }, "CHANNEL: PROBING…"),
   );
   try {
@@ -952,7 +952,7 @@ function renderNotice() {
   if (!store.state.onboarded) {
     slot.append(h("div.notice.notice-welcome", {},
       h("div.notice-body", {},
-        h("b", {}, "Welcome to HERMES//HUB. "),
+        h("b", {}, "Welcome to AIODashboard. "),
         h("span", {}, "Switch pages with the tabs above · press "),
         h("kbd", {}, "⌘K"), h("span", {}, " / "), h("kbd", {}, "Ctrl+K"),
         h("span", {}, " for commands · use "), h("b", {}, "Edit layout"),
