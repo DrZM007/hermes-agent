@@ -164,13 +164,66 @@ guidelines), `feeds.json`, `calendars.json`, `automations.json` (rules + frozen
 flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
 (per-tier model overrides), `backups/*.json`.
 
-## 7. Environment variables
+## 7. Naming — what is branded vs what is functional
+
+**The product is called AIODashboard. The plumbing is still called
+`hermes` / `HERMES_HUB_*`. That mismatch is deliberate. Do not "tidy" it.**
+
+The rename in #58 changed only what a user reads on screen:
+
+| Renamed (cosmetic) | Left alone (functional) |
+|---|---|
+| Topbar wordmark | `HERMES_HUB_TOKEN`, `HERMES_HUB_API_KEY` |
+| Lock screen title | `HERMES_HUB_MODEL`, `_FAST` / `_CORE` / `_DEEP` |
+| Footer line, welcome notice | `HERMES_HUB_SYNC_LOG` |
+| Browser tab title | `deploy/hermes-hub.service` (systemd unit name) |
+| PWA manifest `name` / `short_name` | `deploy/com.hermeshub.hub.plist` (launchd label) |
+| | The repo name `hermes-agent`, data dir layout, `hub.db` |
+| | `sw.js` cache prefix `hub-vNN` |
+
+### Why
+
+Every item in the right-hand column is **live in someone's environment**.
+Renaming an environment variable does not fail loudly — it fails by the token
+silently not being read, so the dashboard comes up unlocked, or the API key
+silently not being found, so the agent quietly degrades to the rule-based
+fallback. A renamed systemd unit orphans the running service. A changed cache
+prefix strands the old caches instead of evicting them.
+
+The user runs this on their own machine with a start script, and may have a Fly
+secret and an installed service. Cosmetic gain, real breakage. Not worth it.
+
+### If a future request IS to rename the functional names
+
+Do not do a find-and-replace. Ship a compatibility layer:
+
+1. Read the new name first, fall back to the old one, and keep the fallback for
+   good — there is no deprecation window for a single-user self-hosted app.
+   ```python
+   token = os.environ.get("AIO_DASHBOARD_TOKEN") or os.environ.get("HERMES_HUB_TOKEN")
+   ```
+2. Leave the old systemd/launchd unit files in place and add new ones beside
+   them, rather than renaming; an orphaned unit keeps a stale process alive.
+3. Never change the `hub-vNN` service-worker cache prefix. `activate` deletes
+   caches whose key differs from the current `VERSION`; changing the prefix
+   means the old ones match nothing and are never evicted.
+4. Say explicitly in the reply which env vars the user must update by hand, and
+   which keep working untouched.
+
+### When adding anything new
+New environment variables should use the current product name
+(`AIO_DASHBOARD_*`). The inconsistency is not a reason to rename the existing
+ones — it is the cost of not breaking a running install.
+
+## 8. Environment variables
+These keep the old prefix on purpose — see §7 above before changing any of them.
+
 - `HERMES_HUB_TOKEN` — access code (required when exposed beyond localhost).
 - `HERMES_HUB_API_KEY` (or `ANTHROPIC_API_KEY`) — enables live Claude agent.
 - `HERMES_HUB_MODEL` — pin one model for all tiers (back-compat).
 - `HERMES_HUB_MODEL_FAST/_CORE/_DEEP` — override individual tiers.
 
-## 8. Testing + verification standard
+## 9. Testing + verification standard
 - **One command gates everything: `cd apps/dashboard && ./scripts/check.sh`.**
   Runs Python syntax → `import server` (what the container actually does) → JS
   module parse → JSON validity → structural invariants → service-worker
@@ -204,7 +257,7 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
   `sun.js`, `ephem` verified `ephemeris.js`. Both found real bugs that reading
   the code did not.
 
-## 9. Environment / session hazards (IMPORTANT for the agent)
+## 10. Environment / session hazards (IMPORTANT for the agent)
 - **Backend changes require restarting the e2e servers** (server.py imports are
   loaded once). Frontend files are served fresh from disk (no restart needed).
 - **`pkill`/`pgrep` can match your own shell → exit 144 "suicide".** Use a
@@ -227,7 +280,7 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
   external facts get verified here: search for URLs, install a reference library
   to check maths against.
 
-## 10. User preferences
+## 11. User preferences
 - Replies: **normal English, terse and direct, no unnecessary words.** (There is
   NO "caveman skill" — that was a misunderstanding; write plainly.)
 - The user tests on their own Windows laptop; give Windows-exact commands when
@@ -235,7 +288,7 @@ flag + notifications), `telemetry.jsonl`, `proposals.json`, `routing.json`
 - Confirm genuinely irreversible/self-modifying decisions before building (e.g.
   the Phase 6 auto-apply boundary was confirmed via a question).
 
-## 11. Current status
+## 12. Current status
 
 **Scale:** 8 pages (Main, Markets, Feeds, Sports, Space, Intel, Health, AI Lab),
 **53 widgets**, 276 unit tests, 295 e2e checks, PWA cache **hub-v76**.
@@ -294,7 +347,7 @@ api.js routes existing server-side, version keys pinned in `migrate()`, anatomy
 condition→structure integrity, 2D/3D geometry parity), plus a CI auto-reviewer
 workflow (`.github/workflows/dashboard-review.yml`).
 
-## 12. Waiting on the user (cannot be done from a cloud session)
+## 13. Waiting on the user (cannot be done from a cloud session)
 - `git pull origin main` on their laptop.
 - `git config core.hooksPath .githooks` to enable the pre-commit/pre-push gates.
 - Add an **`ANTHROPIC_API_KEY` repo secret** — gates the CI auto-reviewer AND
@@ -305,7 +358,7 @@ workflow (`.github/workflows/dashboard-review.yml`).
   search results but could not be fetched from the sandbox to verify.
 - Authorise any claude.ai MCP connectors they want available.
 
-## 13. Open / future ideas
+## 14. Open / future ideas
 - Space phase 2 and 3 (`SPACE.md`) — the fullest specced backlog.
 - `ROADMAP3.md` §C cross-cutting: palette entries for every new widget,
   per-widget settings, export/share, first-run tooltips for new tabs.

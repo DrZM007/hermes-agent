@@ -116,6 +116,13 @@ finance-sensitive turns — and rate-caps the expensive tier. Override any tier
 with `HERMES_HUB_MODEL_FAST` / `_CORE` / `_DEEP`, or pin one model for
 everything with `HERMES_HUB_MODEL`.
 
+> **Why `HERMES_HUB_*` and not `AIO_*`?** The app was renamed to AIODashboard;
+> the environment variables, service unit names and data files were not. They
+> are live in running installs, and renaming an env var fails *silently* — an
+> unread token means the dashboard comes up unlocked, an unread API key means
+> the agent quietly falls back to rule-based answers. The old names keep
+> working, on purpose.
+
 **Advisor escalation.** If the core model's own answer signals it's stuck, the
 deep tier is consulted as a *scoped advisor* (guidance only, no tools) and the
 core model produces a confident answer with that guidance — you'll see a brief

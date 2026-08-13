@@ -175,6 +175,48 @@ class StateMigrationInvariants(unittest.TestCase):
                          f"— stored states will look up-to-date and skip upgrades")
 
 
+class NamingInvariants(unittest.TestCase):
+    """The product is branded AIODashboard; the plumbing keeps the HERMES_HUB_*
+    names. That split is deliberate and documented in HANDOFF.md §7.
+
+    Renaming an environment variable does not fail loudly — an unread token
+    means the dashboard comes up UNLOCKED, and an unread API key means the agent
+    silently degrades to rule-based answers. So the old names are pinned here.
+    A future rename must ADD a new name and keep these as a fallback, which
+    leaves this test passing.
+    """
+
+    LEGACY_ENV = ["HERMES_HUB_TOKEN", "HERMES_HUB_API_KEY", "HERMES_HUB_MODEL",
+                  "HERMES_HUB_MODEL_FAST", "HERMES_HUB_MODEL_CORE",
+                  "HERMES_HUB_MODEL_DEEP"]
+
+    def test_legacy_env_vars_are_still_read(self):
+        sources = "\n".join(read(APP / name) for name in
+                             ("server.py", "assistant.py", "router.py"))
+        missing = [v for v in self.LEGACY_ENV if v not in sources]
+        self.assertEqual(missing, [], f"env vars no longer read: {missing} — "
+                         "renaming these breaks running installs SILENTLY; "
+                         "see HANDOFF.md section 7")
+
+    def test_service_worker_cache_prefix_is_stable(self):
+        """activate deletes caches whose key != VERSION. Change the prefix and
+        the old caches match nothing and are never evicted."""
+        sw = read(PUBLIC / "sw.js")
+        m = re.search(r'const VERSION = "([^"]+)"', sw)
+        self.assertIsNotNone(m, "sw.js VERSION not found")
+        self.assertRegex(m.group(1), r"^hub-v\d+$",
+                         "service-worker cache prefix changed — old caches "
+                         "would never be evicted; see HANDOFF.md section 7")
+
+    def test_user_visible_brand_is_the_new_name(self):
+        """The other half of the policy: what a user READS should be renamed."""
+        for path, needle in ((JS / "main.js", "AIO"),
+                             (PUBLIC / "manifest.webmanifest", "AIODashboard"),
+                             (PUBLIC / "index.html", "AIODashboard")):
+            self.assertIn(needle, read(path), f"{path.name} lost the brand")
+        self.assertNotIn("HERMES//HUB", read(PUBLIC / "manifest.webmanifest"))
+
+
 class AnatomyDataInvariants(unittest.TestCase):
     def test_conditions_reference_known_structures(self):
         base = PUBLIC / "anatomy"
