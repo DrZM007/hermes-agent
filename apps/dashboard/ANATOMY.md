@@ -99,6 +99,11 @@ but won't be individually targetable. Recommended sources: **Z-Anatomy** or
 **BodyParts3D** (CC-BY-SA), decimated in Blender and exported as Draco-compressed
 `.glb`. Keep it a few MB for phones; desktops can take more.
 
+**See `BLENDER.md` for the full walkthrough** — what the loader auto-handles (so
+you don't do it by hand), which Blender material settings silently break ghost
+skin and highlighting, export settings, a verification checklist, and
+`scripts/blender_prep.py`, which reports what will map before you export.
+
 ## Attribution & licensing
 
 - three.js — MIT (`public/js/vendor/three/LICENSE`).
