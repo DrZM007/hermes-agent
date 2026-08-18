@@ -245,10 +245,20 @@ class AnatomyDataInvariants(unittest.TestCase):
             missing = sorted(ids - built)
             self.assertEqual(missing, [], f"{label} renderer builds no geometry for {missing}")
 
+    @staticmethod
+    def _anatomy_docs() -> str:
+        """ANATOMY.md sits beside the app here and under docs/ in the extracted
+        AIODashboard mirror. Hard-coding one location makes this test error out
+        (not fail — error) in the other repo, which is how it broke there."""
+        for candidate in (APP / "ANATOMY.md", APP / "docs" / "ANATOMY.md"):
+            if candidate.is_file():
+                return read(candidate)
+        raise AssertionError("ANATOMY.md not found beside the app or under docs/")
+
     def test_draco_decoder_present_when_docs_promise_it(self):
         """ANATOMY.md tells users to export Draco-compressed GLB; without the
         decoder the loader throws 'No DRACOLoader instance provided'."""
-        docs = read(APP / "ANATOMY.md")
+        docs = self._anatomy_docs()
         model_readme = PUBLIC / "anatomy/models/README.md"
         if model_readme.is_file():
             docs += read(model_readme)
