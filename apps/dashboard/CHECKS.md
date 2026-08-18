@@ -48,6 +48,8 @@ Each test encodes a bug class that shipped:
 | Version/seed keys pinned in `migrate()` | **Defaults-merge trap** — stored state looks current, skips upgrades (stranded users on a single "Main" tab, twice) |
 | Conditions reference known structures | Anatomy highlight silently no-ops |
 | Draco decoder vendored while docs recommend it | Loader throws on the documented export path |
+| 2D and 3D renderers both build every structure | Structure appears in search/conditions, then nothing happens on screen (caught `musculature` having no 2D shape since Phase 1) |
+| Tier model defaults are bare aliases | A dated id (`claude-haiku-4-5-20251001`) pins that tier to one frozen snapshot forever |
 
 ## 4. CI — `.github/workflows/dashboard.yml`
 
@@ -88,3 +90,19 @@ the product name and the plumbing (HANDOFF.md §7):
 
 A future rename must ADD the new name and keep the old one as a fallback, which
 leaves these tests passing.
+
+## Ported-algorithm parity — `tests/test_blender_prep.py`
+
+`scripts/blender_prep.py` reimplements `public/js/anatomy-names.js` in Python so
+it can report a model's structure mapping before you export from Blender. Two
+copies of one algorithm drift silently, and the failure mode is nasty: the
+script reports "31 of 31 mapped" while the browser resolves something else.
+
+So the test runs **both** implementations over the same atlas-style names (via
+`node --input-type=module`) and fails on any disagreement, plus asserts the
+Python side actually maps known Latin names — parity with two equally broken
+copies would otherwise pass.
+
+The script must stay importable outside Blender (`bpy` imported inside `main()`,
+asserted by a test) or none of this can run in CI.
+

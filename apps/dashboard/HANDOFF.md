@@ -44,7 +44,7 @@ just `python3 server.py`.
 - Their repo clone lives in their home dir (`C:\Users\ziyaad.moolla\hermes-agent`).
 - Daily start: `cd $HOME\hermes-agent\apps\dashboard` then `python3 server.py`,
   open `http://127.0.0.1:8787`. They also have a `start-dashboard.bat` on the Desktop.
-- To get updates: `git pull origin claude/all-in-one-dashboard-xqh6ct`.
+- To get updates: `git pull origin main` (the old single-branch flow is dead).
 - The dashboard only runs on THEIR machine — servers spun up in the cloud
   session are not reachable from their laptop.
 - Always-on without Docker: `apps/dashboard/deploy/serve.sh` (nohup runner),
@@ -62,6 +62,7 @@ state in SQLite). Agent loop lives in `public/js/widgets/agent.js` +
    DEEP=Opus; picks cheapest viable per task, escalates hard/security/finance
    turns to deep, deep-tier rate-capped. Env overrides
    `HERMES_HUB_MODEL_FAST/_CORE/_DEEP`; `HERMES_HUB_MODEL` pins one model.
+   Defaults are HARDCODED and do not track new Claude releases — see §8.
 2. **Permission gate** (`assistant.TOOL_TIERS`) — auto/confirm/blocked. Confirm
    tools (add_app, open_url, create/delete_automation) pop an approval card in
    the Agent widget; unknown/sensitive tools blocked. Mirrored client-side in
@@ -91,7 +92,7 @@ state in SQLite). Agent loop lives in `public/js/widgets/agent.js` +
   (push-to-talk + speak replies), command palette (Ctrl/⌘-K) that also searches
   your own data and jumps to it.
 - Cross-device sync (SQLite `data/hub.db`, optimistic concurrency), bearer-token
-  auth + lock screen, PWA (manifest + service worker, currently **hub-v10**).
+  auth + lock screen, PWA (manifest + service worker, currently **hub-v80**).
 - Automations engine (`automations.py`): daily/market/worldstate triggers →
   notify/briefing/backup/reflect actions; 20s daemon thread.
 - Server-side backups (`/api/backup`, `/api/backups`, `/api/backup/restore`);
@@ -117,6 +118,12 @@ state in SQLite). Agent loop lives in `public/js/widgets/agent.js` +
 - **SSRF hardening** — the reader resolves the host and rejects non-global
   addresses and re-validates every redirect hop (`host_is_blocked`); all
   upstream fetches capped at 8 MiB.
+- **Live model discovery** — `GET /api/assistant/models` (`Assistant.list_models`,
+  6h cache) lists what the configured credentials can actually reach; the Model
+  routing panel autocompletes from it, flags a tier pointing at a model not in
+  the list, and can force-refresh. Best-effort: degrades to a free-text field.
+- **Blender pipeline for Tier-A anatomy** — `BLENDER.md` + `scripts/blender_prep.py`
+  (`--dry-run` reports what will map before you export). See §15.
 
 ## 5. File map (`apps/dashboard/`)
 ```
@@ -129,12 +136,17 @@ automations.py    standing-rules engine + kill switch (Phase 4)
 evolve.py         self-evolution / reflection engine (Phase 6)
 ics.py            minimal RFC 5545 calendar parser
 scripts/check.sh  ONE-COMMAND GATE (syntax, imports, invariants, SW, tests)
+scripts/blender_prep.py  Blender-side prep for the Tier-A anatomy GLB (see §15)
 .githooks/        pre-commit + pre-push running check.sh
 sample_data.json  bundled offline data
 Dockerfile        OPTIONAL container (user can't use Docker); prefer deploy/
 compose.yaml      OPTIONAL
 deploy/           serve.sh + systemd/launchd units (no-Docker always-on)
 JARVIS.md         merged agent architecture + phase status
+ANATOMY.md        Anatomy Explorer design + how to supply a high-detail model
+BLENDER.md        FULL Blender walkthrough for that model (silent-failure list)
+SPACE.md          Space page spec + phase backlog
+CHECKS.md         what each gate layer checks and why
 HANDOFF.md        this file
 ROADMAP.md        detailed future-feature build plans
 README.md         full user docs
@@ -149,12 +161,16 @@ public/           zero-build frontend
   js/widgets/*.js   one module per widget (53)
   js/sun.js         solar/lunar maths (verified vs astral)
   js/ephemeris.js   planetary positions (verified vs PyEphem)
+  js/skyview.js     alt/az, rise/transit/set, magnitude (verified vs PyEphem)
+  js/anatomy-names.js  Latin/laterality mesh-name resolver for imported models
   js/citations.js   shared citation rendering (MedBot + Notebook)
   js/vendor/three/  vendored three.js + GLTF/Draco loaders
   anatomy/*.json    layers, structures, conditions
   space/bodies.json planetary physical data
-tests/test_server.py   unit tests (276 across all test modules)
-tests/e2e.mjs          295-check Playwright suite
+tests/test_server.py       unit tests (292 across all test modules)
+tests/test_invariants.py   structural invariants (encoded shipped bug classes)
+tests/test_blender_prep.py python/JS resolver parity (runs the JS via node)
+tests/e2e.mjs              314-check Playwright suite
 .github/workflows/dashboard.yml  CI
 ```
 
@@ -255,8 +271,8 @@ opening.
   freshness → the unit suite. `--full` adds e2e. See `CHECKS.md`.
 - Git hooks run it automatically once the user enables them:
   `git config core.hooksPath .githooks` (pre-commit + pre-push).
-- **Unit:** `python3 -m unittest discover -s tests` — **276 tests**.
-- **E2E:** Playwright, **295 checks**. Ship standard = full unit suite green
+- **Unit:** `python3 -m unittest discover -s tests` — **292 tests**.
+- **E2E:** Playwright, **314 checks**. Ship standard = full unit suite green
   **plus 3 consecutive green e2e runs**.
 - E2E needs `playwright-core` installed somewhere and Chromium at
   `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Two servers (open +
@@ -279,8 +295,18 @@ opening.
   because `innerText()` returns text-transformed output.
 - **Cross-check computed science against an independent implementation.** PyPI
   is reachable from the sandbox even though the web is not: `astral` verified
-  `sun.js`, `ephem` verified `ephemeris.js`. Both found real bugs that reading
-  the code did not.
+  `sun.js`, `ephem` verified `ephemeris.js` and `skyview.js`, Vallado's `sgp4`
+  verified `sgp4.js`. Every one of the four found a real bug that reading the
+  code did not.
+- **A weak reference is worse than none.** PyEphem's older propagator disagreed
+  with `sgp4.js` by ~12 km at epoch — the same order as a genuine K2 = J2/2
+  substitution bug in my code, so the noise hid the signal. Switching to the
+  Vallado port exposed it; after the fix the residual is **0.0000 m**.
+- **When one implementation is ported to another language, test them against
+  each other.** `anatomy-names.js` and `blender_prep.py` share an algorithm;
+  `test_blender_prep.py` runs both over the same names via node and fails on any
+  disagreement. Without it the script would happily report a mapping the browser
+  does not agree with.
 
 ## 10. Environment / session hazards (IMPORTANT for the agent)
 - **Backend changes require restarting the e2e servers** (server.py imports are
@@ -292,10 +318,18 @@ opening.
 - **Background bash cwd resets** — use absolute paths when starting servers.
 - **Never delete a SQLite data dir while a server is using it** → "readonly
   database" 500s. Stop server → wipe → start.
-- **Container restarts can roll the workspace back** to an old snapshot. Recover
-  with `git fetch origin claude/all-in-one-dashboard-xqh6ct &&
-  git reset --hard origin/claude/all-in-one-dashboard-xqh6ct`. Everything is
-  pushed after each bundle, so nothing is lost.
+- **Container restarts can roll the workspace back** to an old snapshot, and
+  this has actually happened mid-session: the tree looked untouched while the
+  work sat safely on the remote. **Check the remote before concluding anything
+  is lost** — `git fetch origin <branch> && git log --oneline origin/<branch>`.
+  Recover with `git reset --hard origin/<branch>`. Everything is pushed after
+  each bundle, so nothing is lost. `/workspace/` scratch clones do NOT survive.
+- **`rsync` is not installed.** Copy trees with
+  `tar -cf - . | (cd dest && tar -xf -)`.
+- **Python `%`-formatting collides with `%` in embedded JS** (e.g. `% 360`) when
+  building a page from a Python string. Use `.replace("__TOKEN__", js)`.
+- **Playwright text assertions see CSS-transformed text.** `.tab` is
+  `text-transform: uppercase`, so `innerText().includes("Born")` can never pass.
 - E2E resets client state + clears automations/calendars/killswitch at startup
   for idempotency; keep new e2e sections idempotent (clean up what you create).
 - Model identity: say the configured model id when asked. Do NOT put it in
@@ -316,14 +350,15 @@ opening.
 ## 12. Current status
 
 **Scale:** 8 pages (Main, Markets, Feeds, Sports, Space, Intel, Health, AI Lab),
-**53 widgets**, 276 unit tests, 295 e2e checks, PWA cache **hub-v76**.
+**57 widget modules**, 292 unit tests, 314 e2e checks, PWA cache **hub-v80**.
 
 ### Layout reconciler — read this before adding a widget or page
 `store.js` holds `LAYOUT_REVISIONS`, an append-only list where each revision
 declares **only what it introduced**. `LAYOUT_REV` derives from the last entry,
 and `migrate()` replays anything a stored state has not seen. This is how new
 widgets reach EXISTING users instead of only fresh installs. Currently at
-**rev 10**.
+**rev 12** (rev 10 added the Space page, rev 11 its launches/news/streams
+widgets, rev 12 Sky Tonight).
 
 Two traps, both of which shipped as bugs before being fixed:
 1. **The defaults-merge trap.** `load()` does `{...defaultState(), ...parsed}`,
@@ -344,7 +379,9 @@ HIV/TB), **guideline directory**, health news.
 - **Anatomy Explorer** (`ANATOMY.md`) — adaptive 3D (three.js, vendored locally
   under `public/js/vendor/three/`) with a 2D SVG fallback. 6 layers, 31
   structures, 46 conditions, cross-section clipping plane, optional high-detail
-  GLB (Tier A) the user supplies themselves.
+  GLB (Tier A) the user supplies themselves — **`BLENDER.md` is the full
+  walkthrough**, and `scripts/blender_prep.py --dry-run` reports what will map
+  before exporting.
 - Clinical content is *educational*; the user has been told plainly it is worth
   their own review before relying on it.
 
@@ -353,8 +390,13 @@ HIV/TB), **guideline directory**, health news.
   elements. Verified against PyEphem; worst residual 8.6 arcmin.
 - **Orrery widget** — explorable 3D solar system at real positions, clickable
   bodies, time controls, orbit paths, 2D fallback.
-- Phase 2 (launches, space news, ISS tracker, visible tonight, meteor showers,
-  stream directory, astro-ph research) is specced in `SPACE.md`.
+- **Shipped on the Space page:** orrery, launch schedule, space news, stream
+  directory, Sky Tonight (planets + meteor showers), sun/moon, space weather.
+- **`public/js/skyview.js`** — geocentric alt/az, rise/transit/set, magnitude,
+  phase. Verified against PyEphem. Needed `precessFromJ2000`: feeding J2000
+  coordinates into a sidereal-time rotation put everything 0.4° out.
+- Remaining Space work (moons at zoom, spacecraft positions, star chart,
+  eclipses, NEOs, astro-ph research) is specced in `SPACE.md`.
 
 ### Local-computation modules (no network, no key)
 - **`public/js/sun.js`** — sunrise/sunset, three twilights, solar noon, day
@@ -369,8 +411,9 @@ maths cannot go stale or rate-limit.
 previously-shipped bug classes: Dockerfile COPY globs, SW shell parsing, widget
 registration reaching the `WIDGETS` map, no raw `fetch("/api/...")` in widgets,
 api.js routes existing server-side, version keys pinned in `migrate()`, anatomy
-condition→structure integrity, 2D/3D geometry parity), plus a CI auto-reviewer
-workflow (`.github/workflows/dashboard-review.yml`).
+condition→structure integrity, 2D/3D geometry parity, the naming split of §7,
+Draco decoder presence), plus a CI auto-reviewer workflow
+(`.github/workflows/dashboard-review.yml`). `CHECKS.md` documents each layer.
 
 ## 13. Waiting on the user (cannot be done from a cloud session)
 - `git pull origin main` on their laptop.
@@ -378,16 +421,90 @@ workflow (`.github/workflows/dashboard-review.yml`).
 - Add an **`ANTHROPIC_API_KEY` repo secret** — gates the CI auto-reviewer AND
   the synthesised answers in MedBot / Notebook. Without it those degrade to
   extractive answers and the reviewer no-ops.
-- Optionally supply a `body.glb` for Tier A anatomy (see `ANATOMY.md`).
+- Supply a `body.glb` for Tier A anatomy. **Blender is now installed on their
+  machine** and `BLENDER.md` walks the whole pipeline; nothing further is
+  blocked on this side.
 - Click through the guideline directory links once — they were sourced from
   search results but could not be fetched from the sandbox to verify.
 - Authorise any claude.ai MCP connectors they want available.
+- Confirm the **Launch Library / Spaceflight News live paths work** — those hosts
+  are blocked from the sandbox, so only the sample fixtures have ever run.
+- Run `scripts/blender_prep.py` against a real Blender install — it was written
+  against the bpy API and the loader, never executed end-to-end.
 
 ## 14. Open / future ideas
-- Space phase 2 and 3 (`SPACE.md`) — the fullest specced backlog.
+
+**Next up, already half-built:** the **ISS tracker**. `public/js/sgp4.js` is
+written and verified to **0.0000 m** against Vallado's reference propagator, and
+sits with its fixtures and unit tests on branch **`claude/iss`** (commit
+`eb59c64`) — *unmerged, no PR, and no widget yet*. That branch was cut from
+`810bc7e`, which is now behind `main`, so it needs the patch-and-rebase in §2.
+Still to build: ground-track map, live position, visible-pass prediction
+(satellite above the horizon AND sunlit AND observer in darkness), a TLE source
+with a sample fixture, registration, e2e, PR.
+
+- Space phase 3 (`SPACE.md`) — the fullest specced backlog.
 - `ROADMAP3.md` §C cross-cutting: palette entries for every new widget,
   per-widget settings, export/share, first-run tooltips for new tabs.
 - **Web Push notifications** — payload-less VAPID "tickle" to stay stdlib-only.
 - **Agent multi-step plan preview** — plan card before a multi-tool turn.
 - **Command palette execution** — run agent commands from ⌘-K, not just navigate.
 - Smaller: per-widget refresh intervals; backup download/upload; task recurrence.
+
+## 15. Tier-A anatomy model pipeline (Blender)
+
+Full walkthrough: **`BLENDER.md`**. The essentials a new session needs:
+
+- Target path is exactly `public/anatomy/models/body.glb`. The server only does
+  `is_file()` on it (`anatomy_model`). **Not committed** — it is large and
+  CC-BY-SA, so it lives only on the user's machine.
+- **The loader already handles** scale, units and origin (`scale = 3.4 / height`,
+  then recentre), Latin/laterality name resolution, per-mesh material cloning,
+  and Draco. Do not re-explain those as manual Blender steps.
+- **Three failures are silent** — no console error, looks like a broken widget:
+  1. an opaque skin material makes ghost skin a no-op (`setGhost` skips meshes
+     that are not already `transparent`);
+  2. an unlit export gives `MeshBasicMaterial`, which has no `emissive`, so
+     selection highlighting does nothing;
+  3. thin single-sided shells look hollow under the cross-section, because
+     clipping drops fragments and three.js does not cap the cut.
+- **The success metric is the status line**: `N parts, M mapped to structures`.
+  Chase M; ignore N. Unmapped meshes still render but fall back to
+  `userData.layer = "organ"` and can never be highlighted, searched, or driven
+  by a condition.
+- `scripts/blender_prep.py --dry-run` reports the mapping without changing
+  anything; without `--dry-run` it deletes unmapped meshes, joins siblings per
+  structure, decimates and exports. It duplicates `anatomy-names.js` in Python,
+  which is why `tests/test_blender_prep.py` pins the two implementations
+  together.
+
+## 16. Session log — what changed most recently
+
+Newest first. Each landed on `main` via squash-merge unless noted.
+
+| PR / commit | What |
+|---|---|
+| `2ac5170` (branch `claude/waiting-for-commands-fj7btn`) | `BLENDER.md` + `scripts/blender_prep.py` + resolver-parity tests |
+| `af88363` (same branch) | Model tier defaults refreshed + `GET /api/assistant/models` live catalogue |
+| #59 | Documented the branded-vs-functional naming split (§7) + `NamingInvariants` |
+| #58 | Renamed the visible brand to AIODashboard (cosmetic only) |
+| #57 | Sky Tonight widget + `skyview.js` |
+| #56 | Launch schedule, space news, stream directory |
+| `eb59c64` (branch `claude/iss`, **unmerged**) | SGP4 propagator, verified to 0.0000 m |
+
+**Two open threads a new session should know about:**
+
+1. **`claude/iss` is real work sitting unmerged** — see §14.
+2. **The AIODashboard mirror is stale.** The whole project was once mirrored to
+   the user's separate `AIODashboard` repo from a `/workspace/aiodashboard`
+   clone. That scratch clone did **not** survive the container reset, and
+   nothing since (naming docs, model routing, Blender pipeline) has been mirrored
+   across. Re-cloning and re-syncing is the way to refresh it; the mirror puts
+   the dashboard at the repo root with docs under `docs/`.
+
+### Corrections worth carrying forward
+- I once told the user a commit was pushed, then "corrected" myself that the work
+  was lost after a container reset wiped the tree. **The first statement was
+  right** — the commit was on the remote all along. Check `origin` before
+  reporting loss, and before rebuilding anything from scratch.
+

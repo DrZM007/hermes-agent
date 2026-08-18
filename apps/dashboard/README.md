@@ -1,4 +1,7 @@
-# HERMES//HUB — all-in-one personal dashboard
+# AIODashboard — all-in-one personal dashboard
+
+*(Formerly HERMES//HUB. The product name changed; the internals — env vars,
+service units, cache keys — deliberately did not. See `HANDOFF.md` §7.)*
 
 A self-contained personal command center: your most-used apps, news of every
 kind, a state-of-the-world situation board, weather, markets, task lists,
@@ -112,9 +115,12 @@ agent's context automatically).
 **Cost-aware routing (Claude mode).** The agent doesn't burn the biggest model
 on every turn. A router (`router.py`) picks the cheapest viable tier per task —
 Haiku for summaries, Sonnet for chat, Opus only for hard/ambiguous/security- or
-finance-sensitive turns — and rate-caps the expensive tier. Override any tier
-with `HERMES_HUB_MODEL_FAST` / `_CORE` / `_DEEP`, or pin one model for
-everything with `HERMES_HUB_MODEL`.
+finance-sensitive turns — and rate-caps the expensive tier. **The models behind
+each tier are hardcoded and do not update themselves when new Claude models ship**
+— set them in the *Model routing…* panel (which autocompletes from the models
+your key can actually reach), or with `HERMES_HUB_MODEL_FAST` / `_CORE` /
+`_DEEP`. Pin one model for everything with `HERMES_HUB_MODEL`. Precedence is
+env var > the panel's saved override > the built-in default.
 
 > **Why `HERMES_HUB_*` and not `AIO_*`?** The app was renamed to AIODashboard;
 > the environment variables, service unit names and data files were not. They
@@ -235,17 +241,40 @@ public/            zero-build frontend (ES modules, design-system CSS)
   js/widgets/      one module per widget (clock, worldstate, agent, …)
   js/viewer.js     in-app reader/embed overlay
   js/actions.js    executes agent tool calls against local state
+router.py          cost-aware model routing (Jarvis Layer I)
+telemetry.py       bounded routing + tool-call telemetry (Jarvis Phase 3)
+evolve.py          bounded self-evolution / reflection engine (Jarvis Phase 6)
+scripts/
+  check.sh         one-command gate: syntax, imports, invariants, SW, tests
+  blender_prep.py  prepares a high-detail anatomy model (see BLENDER.md)
 tests/
-  router.py        cost-aware model routing (Jarvis Layer I)
-  telemetry.py     bounded routing + tool-call telemetry (Jarvis Phase 3)
-  evolve.py        bounded self-evolution / reflection engine (Jarvis Phase 6)
-  test_server.py   140 unit tests (feeds+sources, worldstate, reader, assistant,
-                   sync, auth, automations, memory, watchlist, SSE, ICS,
-                   backups, model router, permission tiers, telemetry,
-                   kill switch, advisor escalation, self-evolution, HTTP)
-  e2e.mjs          109-check Playwright suite (needs playwright-core + Chromium)
-                   — also runs in CI (.github/workflows/dashboard.yml)
+  test_server.py       unit tests (feeds+sources, worldstate, reader, assistant,
+                       sync, auth, automations, memory, watchlist, SSE, ICS,
+                       backups, model router, permission tiers, telemetry,
+                       kill switch, advisor escalation, self-evolution, HTTP)
+  test_invariants.py   structural invariants — each encodes a bug that shipped
+  test_blender_prep.py python/JS resolver parity
+  e2e.mjs              314-check Playwright suite (playwright-core + Chromium)
+                       — also runs in CI (.github/workflows/dashboard.yml)
 ```
+
+**292 unit tests, 314 e2e checks.** The single gate is `./scripts/check.sh`
+(`--full` adds e2e); `CHECKS.md` explains every layer.
+
+## Documentation index
+
+| File | What it covers |
+|---|---|
+| `README.md` | this file — install, run, features |
+| `STARTUP.md` | day-to-day start-up on the user's own machine |
+| `DEPLOY.md` | always-on options (no Docker required) |
+| `HANDOFF.md` | **full context for picking the project up cold** |
+| `JARVIS.md` | agent architecture, all six phases |
+| `CHECKS.md` | what each verification layer checks, and the bug it prevents |
+| `ANATOMY.md` | Anatomy Explorer design + supplying a high-detail model |
+| `BLENDER.md` | full Blender walkthrough for that model |
+| `SPACE.md` | Space page spec + backlog |
+| `ROADMAP*.md` | future feature plans |
 
 ## Tests
 

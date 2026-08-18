@@ -42,7 +42,13 @@ env-overridable; a single `HERMES_HUB_MODEL` pins all tiers (back-compat).
 
 - Tier FAST — Haiku 4.5: summaries, classification, formatting
 - Tier CORE — Sonnet 5: default chat and tool loops
-- Tier DEEP — Opus 4.8: hard reasoning, briefings-as-reflection, escalations
+- Tier DEEP — Opus 5: hard reasoning, briefings-as-reflection, escalations
+
+These defaults are a hardcoded table (`router._TIER_DEFAULTS`) and **do not
+follow new model releases** — bump them deliberately, always as bare aliases
+(`claude-opus-5`), never dated variants. `GET /api/assistant/models` lists what
+the configured credentials can actually reach so the routing panel can offer
+real choices; it is best-effort and degrades to a free-text field.
 
 **Phase 2 — Permission gate + approval inbox (Layers F + H).** Classify each
 `tool_use` auto/confirm/blocked. `confirm`-tier tools (add_app, open_url to
